@@ -38,9 +38,13 @@ export interface ITrack extends Document {
     | "rejected"
     | "sold_exclusive"
     | "removed";
+  processingStatus: "queued" | "processing" | "ready" | "failed";
+  processingError?: string | null;
+  waveform: number[];
   playCount: number;
   files: ITrackFile[];
   licenses: ILicenseOption[];
+  rightsConfirmedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -114,9 +118,18 @@ const TrackSchema = new Schema<ITrack>(
       default: "draft",
       index: true,
     },
+    processingStatus: {
+      type: String,
+      enum: ["queued", "processing", "ready", "failed"],
+      default: "ready",
+      index: true,
+    },
+    processingError: { type: String, default: null },
+    waveform: [{ type: Number }],
     playCount: { type: Number, default: 0 },
     files: [TrackFileSchema],
     licenses: [LicenseOptionSchema],
+    rightsConfirmedAt: { type: Date },
   },
   {
     timestamps: true,
@@ -135,4 +148,3 @@ TrackSchema.index({
 
 export const TrackModel: Model<ITrack> =
   mongoose.models.Track || mongoose.model<ITrack>("Track", TrackSchema);
-

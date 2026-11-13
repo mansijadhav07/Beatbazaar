@@ -52,6 +52,13 @@ export default async function DashboardLayout({
                   <span>My Beats</span>
                 </Link>
                 <Link
+                  href="/dashboard/profile"
+                  className="flex items-center gap-2.5 rounded px-3 py-2 text-xs font-medium text-steel-dark hover:bg-surface-muted hover:text-ink transition-colors"
+                >
+                  <User className="h-4 w-4 text-steel" />
+                  <span>Storefront Profile</span>
+                </Link>
+                <Link
                   href="/dashboard/payouts"
                   className="flex items-center gap-2.5 rounded px-3 py-2 text-xs font-medium text-steel-dark hover:bg-surface-muted hover:text-ink transition-colors"
                 >

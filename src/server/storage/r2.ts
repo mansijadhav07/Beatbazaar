@@ -2,6 +2,12 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "node:crypto";
@@ -28,10 +34,6 @@ export function createR2Client(): S3Client {
   });
 }
 
-/**
- * Generates an opaque random storage key with an optional prefix.
- * Keys never contain user IDs, names, or personally identifiable information.
- */
 export function generateStorageKey(
   category: "previews" | "covers" | "originals" | "stems" | "licenses",
   extension: string
@@ -45,14 +47,11 @@ export function generateStorageKey(
 export interface PresignedUploadOptions {
   key: string;
   contentType: string;
-  contentLengthMaxBytes?: number;
+  contentLength?: number;
   isPublic?: boolean;
   expiresInSeconds?: number;
 }
 
-/**
- * Creates a presigned PUT URL for direct browser uploads.
- */
 export async function createPresignedUploadUrl(
   options: PresignedUploadOptions,
   client: S3Client = createR2Client()
@@ -62,26 +61,18 @@ export async function createPresignedUploadUrl(
     Bucket: bucket,
     Key: options.key,
     ContentType: options.contentType,
+    ...(options.contentLength ? { ContentLength: options.contentLength } : {}),
   });
 
   const uploadUrl = await getSignedUrl(client, command, {
-    expiresIn: options.expiresInSeconds || 900, // 15 minutes default
+    expiresIn: options.expiresInSeconds || 900, // 15 minutes
   });
 
   return { uploadUrl, key: options.key };
 }
 
-export interface PresignedDownloadOptions {
-  key: string;
-  downloadFilename: string;
-  expiresInSeconds?: number;
-}
-
-/**
- * Creates a temporary presigned GET URL for authorized downloads from the private bucket.
- */
 export async function createPresignedDownloadUrl(
-  options: PresignedDownloadOptions,
+  options: { key: string; downloadFilename: string; expiresInSeconds?: number },
   client: S3Client = createR2Client()
 ): Promise<string> {
   const cleanFilename = encodeURIComponent(options.downloadFilename);
@@ -92,16 +83,153 @@ export async function createPresignedDownloadUrl(
   });
 
   return getSignedUrl(client, command, {
-    expiresIn: options.expiresInSeconds || 300, // 5 minutes default
+    expiresIn: options.expiresInSeconds || 300,
   });
 }
 
-/**
- * Resolves the public CDN URL for assets stored in the public bucket.
- */
 export function getPublicAssetUrl(key: string): string {
   const cleanKey = key.replace(/^\//, "");
   const base = publicDomain.replace(/\/$/, "");
   return `${base}/${cleanKey}`;
 }
 
+/**
+ * Delete an object from R2 (public or private bucket).
+ */
+export async function deleteObject(
+  key: string,
+  isPublic = false,
+  client: S3Client = createR2Client()
+): Promise<void> {
+  const bucket = isPublic ? publicBucketName : privateBucketName;
+  await client.send(
+    new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    })
+  );
+}
+
+/**
+ * Fetch object metadata from R2.
+ */
+export async function headObject(
+  key: string,
+  isPublic = false,
+  client: S3Client = createR2Client()
+): Promise<{ size: number; contentType: string; etag: string } | null> {
+  const bucket = isPublic ? publicBucketName : privateBucketName;
+  try {
+    const res = await client.send(
+      new HeadObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      })
+    );
+    return {
+      size: res.ContentLength || 0,
+      contentType: res.ContentType || "",
+      etag: res.ETag || "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch first bytes of an object for sniffing using HTTP Range GET.
+ */
+export async function getFirstBytes(
+  key: string,
+  bytesCount = 64,
+  isPublic = false,
+  client: S3Client = createR2Client()
+): Promise<Uint8Array | null> {
+  const bucket = isPublic ? publicBucketName : privateBucketName;
+  try {
+    const res = await client.send(
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Range: `bytes=0-${bytesCount - 1}`,
+      })
+    );
+    if (!res.Body) return null;
+    const array = await res.Body.transformToByteArray();
+    return array;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Multipart upload helpers for large WAV and Stems files.
+ */
+export async function startMultipartUpload(
+  key: string,
+  contentType: string,
+  isPublic = false,
+  client: S3Client = createR2Client()
+): Promise<string> {
+  const bucket = isPublic ? publicBucketName : privateBucketName;
+  const res = await client.send(
+    new CreateMultipartUploadCommand({
+      Bucket: bucket,
+      Key: key,
+      ContentType: contentType,
+    })
+  );
+  if (!res.UploadId) throw new Error("Failed to initialize multipart upload");
+  return res.UploadId;
+}
+
+export async function getPresignedPartUrl(
+  key: string,
+  uploadId: string,
+  partNumber: number,
+  isPublic = false,
+  client: S3Client = createR2Client()
+): Promise<string> {
+  const bucket = isPublic ? publicBucketName : privateBucketName;
+  const command = new UploadPartCommand({
+    Bucket: bucket,
+    Key: key,
+    UploadId: uploadId,
+    PartNumber: partNumber,
+  });
+  return getSignedUrl(client, command, { expiresIn: 900 });
+}
+
+export async function finishMultipartUpload(
+  key: string,
+  uploadId: string,
+  parts: Array<{ PartNumber: number; ETag: string }>,
+  isPublic = false,
+  client: S3Client = createR2Client()
+): Promise<void> {
+  const bucket = isPublic ? publicBucketName : privateBucketName;
+  await client.send(
+    new CompleteMultipartUploadCommand({
+      Bucket: bucket,
+      Key: key,
+      UploadId: uploadId,
+      MultipartUpload: { Parts: parts },
+    })
+  );
+}
+
+export async function abortMultipartUpload(
+  key: string,
+  uploadId: string,
+  isPublic = false,
+  client: S3Client = createR2Client()
+): Promise<void> {
+  const bucket = isPublic ? publicBucketName : privateBucketName;
+  await client.send(
+    new AbortMultipartUploadCommand({
+      Bucket: bucket,
+      Key: key,
+      UploadId: uploadId,
+    })
+  );
+}

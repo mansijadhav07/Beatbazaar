@@ -10,6 +10,14 @@ export const TrackStatusSchema = z.enum([
 ]);
 export type TrackStatus = z.infer<typeof TrackStatusSchema>;
 
+export const ProcessingStatusSchema = z.enum([
+  "queued",
+  "processing",
+  "ready",
+  "failed",
+]);
+export type ProcessingStatus = z.infer<typeof ProcessingStatusSchema>;
+
 export const FileKindSchema = z.enum(["preview", "mp3", "wav", "stems"]);
 export type FileKind = z.infer<typeof FileKindSchema>;
 
@@ -57,12 +65,15 @@ export const TrackSchema = z.object({
   tags: z.array(z.string()).default([]),
   coverKey: z.string().nullable().optional(),
   status: TrackStatusSchema.default("draft"),
+  processingStatus: ProcessingStatusSchema.default("ready"),
+  processingError: z.string().nullable().optional(),
+  waveform: z.array(z.number().min(0).max(1)).default([]), // ~500 normalized waveform peaks (0 to 1)
   playCount: z.number().int().nonnegative().default(0),
   files: z.array(TrackFileSchema).default([]),
   licenses: z.array(LicenseOptionSchema).default([]),
+  rightsConfirmedAt: z.date().optional(),
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
 });
 
 export type Track = z.infer<typeof TrackSchema>;
-

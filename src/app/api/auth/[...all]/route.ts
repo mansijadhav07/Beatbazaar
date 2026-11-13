@@ -39,19 +39,20 @@ export const POST = async (request: NextRequest) => {
     );
   }
 
-  // Reject explicit sign-up attempts requesting admin role
-  if (request.nextUrl.pathname.includes("/sign-up")) {
+  // Second defense layer: reject explicit role setting or admin attempts in client payloads
+  const path = request.nextUrl.pathname;
+  if (path.includes("/sign-up") || path.includes("/update-user")) {
     try {
       const cloned = request.clone();
       const body = await cloned.json();
-      if (body && (body.role === "admin" || (typeof body.role === "string" && body.role.toLowerCase() === "admin"))) {
+      if (body && body.role && body.role.toLowerCase() === "admin") {
         return NextResponse.json(
-          { error: "Admin role cannot be self-assigned during sign-up." },
+          { error: "Admin role cannot be self-assigned or updated via client request." },
           { status: 403 }
         );
       }
     } catch {
-      // Body may not be JSON or already consumed; continue to handler
+      // Body may not be JSON; continue to handler
     }
   }
 
