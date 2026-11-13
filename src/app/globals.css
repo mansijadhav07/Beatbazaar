@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Primary brand palette */
+  --ink: #2C3947;
+  --ink-dark: #1E2732;
+  --ink-light: #3D4E60;
+
+  --steel: #547A95;
+  --steel-dark: #3F5E75;
+  --steel-light: #6C93AF;
+
+  --brass: #C2A56D;
+  --brass-dark: #A38750;
+  --brass-light: #D4BD8D;
+
+  --mist: #E8EDF2;
+  --mist-light: #F4F7F9;
+  --mist-dark: #DCE3E8;
+
+  /* Surfaces and neutral tiers */
+  --surface: #FFFFFF;
+  --surface-muted: #F5F7FA;
+  --surface-subtle: #EBF0F4;
+
+  --border: #D8E0E6;
+  --border-strong: #A8B8C6;
+
+  /* Semantic status colors (muted) */
+  --status-success: #2E6B4A;
+  --status-success-bg: #EDF7F2;
+  --status-warning: #8F5E24;
+  --status-warning-bg: #FCF5EB;
+  --status-danger: #9E3735;
+  --status-danger-bg: #FAEEEE;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  color: var(--ink);
+  background-color: var(--surface);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* iOS tap handling and form zoom prevention */
+input,
+select,
+textarea,
+button {
+  font-size: 16px; /* Prevents Safari auto-zoom on mobile focus */
+  touch-action: manipulation; /* Removes 300ms mobile tap delay */
+}
+
+/* Safe area insets for iOS devices */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
