@@ -22,7 +22,7 @@ export async function POST(
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
       "127.0.0.1";
-    const rateCheck = checkRateLimit(`play:${ip}`, { windowMs: 60 * 1000, maxRequests: 60 });
+    const rateCheck = await checkRateLimit(`play:${ip}`, { windowMs: 60 * 1000, maxRequests: 60 });
     if (!rateCheck.success) {
       return NextResponse.json({ error: "Too many play requests." }, { status: 429 });
     }

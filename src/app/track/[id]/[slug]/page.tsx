@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getTrackById, getRelatedTracks } from "@/server/catalog/repository";
 import { BeatCard, type BeatCardTrack } from "@/components/catalog/BeatCard";
 import { TrackAudioPlayer } from "@/components/catalog/TrackAudioPlayer";
+import { TrackBuyButton } from "@/components/catalog/TrackBuyButton";
 import { siteConfig } from "@/config/site";
 import { ShieldCheck, FileAudio, Disc3, Lock } from "lucide-react";
 
@@ -339,12 +340,20 @@ export default async function TrackPage({ params }: TrackPageProps) {
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-border">
-                    <button
-                      disabled
-                      className="w-full rounded-md border border-border bg-surface-muted py-2.5 text-xs font-semibold text-steel cursor-not-allowed"
-                    >
-                      {isSoldExclusive ? "Sold Exclusively" : "Checkout opens soon"}
-                    </button>
+                    <TrackBuyButton
+                      trackId={track._id.toString()}
+                      trackTitle={track.title}
+                      producerName={track.producerName || "Beatbazaar Producer"}
+                      coverKey={track.coverKey}
+                      licenseTier={lic.tier}
+                      isExclusive={isExclusive}
+                      isSoldExclusive={isSoldExclusive}
+                      priceFormatted={
+                        isFree
+                          ? "Free"
+                          : `₹${(lic.price.amount / 100).toLocaleString("en-IN")}`
+                      }
+                    />
                   </div>
                 </div>
               );

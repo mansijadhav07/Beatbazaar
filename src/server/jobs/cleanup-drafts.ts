@@ -21,8 +21,8 @@ export async function cleanupAbandonedDrafts(): Promise<{ deletedCount: number }
 
     let deletedCount = 0;
     for (const c of candidates) {
-      // Atomic claim & delete to prevent duplicate worker operations
-      const draft = await TrackModel.findOneAndDelete({
+      // Find candidate details first to extract storage keys
+      const draft = await TrackModel.findOne({
         _id: c._id,
         status: "draft",
         updatedAt: { $lt: cutoff },
@@ -30,12 +30,24 @@ export async function cleanupAbandonedDrafts(): Promise<{ deletedCount: number }
 
       if (!draft) continue;
 
+      // Crash-safety requirement: Delete storage objects in R2 first.
+      // If a crash occurs during storage deletion, the MongoDB draft document
+      // remains present and will be retried in the next cleanup cycle.
+      // If the document were deleted before storage, orphaned R2 objects would
+      // remain unreferenced and undeletable.
       for (const file of draft.files) {
         await deleteObject(file.r2Key, false).catch(() => {});
       }
       if (draft.coverKey) {
         await deleteObject(draft.coverKey, true).catch(() => {});
       }
+
+      // Atomically delete the draft document after storage cleanup
+      await TrackModel.findOneAndDelete({
+        _id: draft._id,
+        status: "draft",
+      });
+
       deletedCount++;
     }
 

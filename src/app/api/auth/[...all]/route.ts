@@ -17,7 +17,7 @@ export const POST = async (request: NextRequest) => {
     request.headers.get("x-real-ip") ||
     "127.0.0.1";
 
-  const rateLimit = checkRateLimit(`auth:${ip}`, {
+  const rateLimit = await checkRateLimit(`auth:${ip}`, {
     windowMs: 60 * 1000,
     maxRequests: 20,
   });

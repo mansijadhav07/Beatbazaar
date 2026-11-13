@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Music2, User, Menu, X } from "lucide-react";
+import { Music2, User, Menu, X, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/components/cart/CartContext";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currency, setCurrency] = useState<"INR" | "USD">("INR");
+  const { itemCount } = useCart();
 
   const toggleCurrency = () => {
     setCurrency((prev) => (prev === "INR" ? "USD" : "INR"));
@@ -64,6 +66,20 @@ export function Header() {
           >
             {currency === "INR" ? "INR (₹)" : "USD ($)"}
           </button>
+
+          {/* Cart Link with Badge */}
+          <Link
+            href="/cart"
+            aria-label="View shopping cart"
+            className="relative flex h-9 w-9 items-center justify-center rounded border border-border text-steel-dark hover:bg-surface-muted hover:text-ink transition-colors"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            {itemCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-brass px-1 text-[10px] font-bold text-ink-dark">
+                {itemCount}
+              </span>
+            )}
+          </Link>
 
           {/* User Account / Sign In */}
           <Link href="/login">

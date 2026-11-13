@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/footer";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { AudioPlayerProvider } from "@/components/player/AudioPlayerContext";
 import { PersistentPlayer } from "@/components/player/PersistentPlayer";
+import { CartProvider } from "@/components/cart/CartContext";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -41,11 +42,13 @@ export default function RootLayout({
     <html lang="en">
       <body className="flex min-h-screen min-h-[100dvh] flex-col bg-surface text-ink antialiased">
         <AudioPlayerProvider>
-          <Header />
-          <main className="flex-1 pb-24 md:pb-20">{children}</main>
-          <Footer />
-          <PersistentPlayer />
-          <MobileNav />
+          <CartProvider>
+            <Header />
+            <main className="flex-1 pb-24 md:pb-20">{children}</main>
+            <Footer />
+            <PersistentPlayer />
+            <MobileNav />
+          </CartProvider>
         </AudioPlayerProvider>
       </body>
     </html>
