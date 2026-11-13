@@ -20,7 +20,7 @@ export async function DELETE(
     const producerId = session.user.id;
 
     await connectMongoose();
-    const track = await TrackModel.findOne({ _id: trackId, producerId });
+    const track = await TrackModel.findOne({ _id: trackId, producerId: String(producerId) });
     if (!track) {
       return NextResponse.json({ error: "Beat not found." }, { status: 404 });
     }
@@ -55,7 +55,7 @@ export async function POST(
     const producerId = session.user.id;
 
     await connectMongoose();
-    const track = await TrackModel.findOne({ _id: trackId, producerId });
+    const track = await TrackModel.findOne({ _id: trackId, producerId: String(producerId) });
     if (!track) {
       return NextResponse.json({ error: "Beat not found." }, { status: 404 });
     }

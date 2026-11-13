@@ -79,9 +79,21 @@ export async function POST(
     }
 
     await connectMongoose();
-    const track = await TrackModel.findOne({ _id: trackId, producerId });
-    if (!track) {
+
+    // Check if the track exists and belongs to the signed in producer
+    const existingTrack = await TrackModel.findOne({ _id: trackId, producerId: String(producerId) });
+    if (!existingTrack) {
       return NextResponse.json({ error: "Draft beat not found." }, { status: 404 });
+    }
+
+    // Idempotency: if already confirmed/processing/ready, return current status without re-enqueueing
+    if (existingTrack.status === "pending" || existingTrack.status === "live") {
+      return NextResponse.json({
+        success: true,
+        trackId: existingTrack._id.toString(),
+        status: existingTrack.status,
+        processingStatus: existingTrack.processingStatus,
+      });
     }
 
     // Process multipart completions and verify uploaded objects via HEAD and magic byte sniffing
@@ -161,30 +173,59 @@ export async function POST(
       }
     }
 
-    // Update track with finalized metadata and queued status
-    track.title = parsed.data.title;
-    track.genre = parsed.data.genre;
-    track.bpm = parsed.data.bpm;
-    track.key = parsed.data.key;
-    track.moods = parsed.data.moods;
-    track.tags = parsed.data.tags;
-    track.language = parsed.data.language;
-    track.files = confirmedFiles;
-    track.licenses = parsed.data.licenses;
-    track.coverKey = coverKey;
-    track.rightsConfirmedAt = new Date();
-    track.status = "pending";
-    track.processingStatus = "queued";
-    await track.save();
+    // Fetch producer profile for denormalized producerName
+    const { ProducerProfileModel } = await import("@/server/db/models/ProducerProfile");
+    const producerProfile = await ProducerProfileModel.findOne({ userId: String(producerId) });
+    const producerName = producerProfile?.displayName || "";
+
+    // ATOMIC STATE TRANSITION: Only transition if still status="draft"
+    // Prevents concurrent requests from enqueuing duplicate transcoding jobs
+    const updatedTrack = await TrackModel.findOneAndUpdate(
+      {
+        _id: trackId,
+        producerId: String(producerId),
+        status: "draft",
+      },
+      {
+        $set: {
+          title: parsed.data.title,
+          genre: parsed.data.genre,
+          bpm: parsed.data.bpm,
+          key: parsed.data.key,
+          moods: parsed.data.moods,
+          tags: parsed.data.tags,
+          language: parsed.data.language,
+          files: confirmedFiles,
+          licenses: parsed.data.licenses,
+          coverKey,
+          producerName,
+          rightsConfirmedAt: new Date(),
+          status: "pending",
+          processingStatus: "queued",
+        },
+      },
+      { new: true }
+    );
+
+    // If updatedTrack is null, another concurrent request already claimed/transitioned this draft
+    if (!updatedTrack) {
+      const currentTrack = await TrackModel.findOne({ _id: trackId, producerId: String(producerId) });
+      return NextResponse.json({
+        success: true,
+        trackId: currentTrack?._id.toString() || trackId,
+        status: currentTrack?.status || "pending",
+        processingStatus: currentTrack?.processingStatus || "queued",
+      });
+    }
 
     // Enqueue transcoding job
-    await enqueueJob("process-track", { trackId: track._id.toString() });
+    await enqueueJob("process-track", { trackId: updatedTrack._id.toString() });
 
     return NextResponse.json({
       success: true,
-      trackId: track._id.toString(),
-      status: track.status,
-      processingStatus: track.processingStatus,
+      trackId: updatedTrack._id.toString(),
+      status: updatedTrack.status,
+      processingStatus: updatedTrack.processingStatus,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Confirmation failed.";

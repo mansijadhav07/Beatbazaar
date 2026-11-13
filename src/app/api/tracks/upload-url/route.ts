@@ -26,6 +26,7 @@ const RequestUploadSchema = z.object({
       fileName: z.string(),
       contentType: z.string(),
       size: z.number().int().positive(),
+      checksumSha256: z.string().optional(),
     })
   ).min(1),
 });
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     // Upsert or create draft track
     let track;
     if (parsed.data.trackId) {
-      track = await TrackModel.findOne({ _id: parsed.data.trackId, producerId });
+      track = await TrackModel.findOne({ _id: parsed.data.trackId, producerId: String(producerId) });
       if (!track) {
         return NextResponse.json({ error: "Draft beat not found." }, { status: 404 });
       }
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
       const title = parsed.data.title || "Untitled Beat";
       const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString(36)}`;
       track = await TrackModel.create({
-        producerId,
+        producerId: String(producerId),
         title,
         slug,
         genre: parsed.data.genre || "Trap",
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
           key: storageKey,
           contentType: f.contentType,
           contentLength: f.size,
+          checksumSha256: f.checksumSha256,
           isPublic,
         });
 

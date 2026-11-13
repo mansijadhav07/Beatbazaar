@@ -1,90 +1,167 @@
+import React from "react";
+import type { Metadata } from "next";
+import { findPublicTracks } from "@/server/catalog/repository";
+import { BeatCard, type BeatCardTrack } from "@/components/catalog/BeatCard";
+import { FilterSidebar } from "@/components/catalog/FilterSidebar";
+import { SearchBar } from "@/components/catalog/SearchBar";
+import { siteConfig } from "@/config/site";
 import Link from "next/link";
-import { Search, Music, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
-export default function TracksPage() {
+export const dynamic = "force-dynamic";
+
+interface BrowsePageProps {
+  searchParams: Promise<{
+    q?: string;
+    genre?: string;
+    language?: string;
+    minBpm?: string;
+    maxBpm?: string;
+    key?: string;
+    mood?: string;
+    freeOnly?: string;
+    sort?: "trending" | "newest" | "price_asc";
+    page?: string;
+  }>;
+}
+
+export async function generateMetadata({ searchParams }: BrowsePageProps): Promise<Metadata> {
+  const params = await searchParams;
+  const isDeepFilter =
+    Boolean(params.minBpm) ||
+    Boolean(params.maxBpm) ||
+    Boolean(params.key) ||
+    Boolean(params.mood) ||
+    Boolean(params.page && Number(params.page) > 1);
+
+  // CLAUDE.md section 8: Deep filter permutations use noindex, follow to preserve crawl equity
+  const robots = isDeepFilter
+    ? { index: false, follow: true }
+    : { index: true, follow: true };
+
+  const genreTitle = params.genre ? `${params.genre} Beats` : "Browse Beats and Instrumentals";
+
+  return {
+    title: `${genreTitle} | ${siteConfig.name}`,
+    description: `Browse licensed beats and instrumentals. Filter by genre, BPM, key, and mood on ${siteConfig.name}.`,
+    robots,
+    alternates: {
+      canonical: `${siteConfig.url}/tracks`,
+    },
+  };
+}
+
+export default async function BrowsePage({ searchParams }: BrowsePageProps) {
+  const params = await searchParams;
+
+  const catalogResult = await findPublicTracks({
+    q: params.q,
+    genre: params.genre,
+    language: params.language,
+    minBpm: params.minBpm ? Number(params.minBpm) : undefined,
+    maxBpm: params.maxBpm ? Number(params.maxBpm) : undefined,
+    key: params.key,
+    mood: params.mood,
+    freeOnly: params.freeOnly === "true",
+    sort: params.sort,
+    page: params.page ? Number(params.page) : 1,
+    limit: 20,
+  });
+
+  const tracks: BeatCardTrack[] = catalogResult.tracks.map((t) => {
+    const previewFile = t.files.find((f) => f.kind === "preview");
+    // Find lowest active license price
+    const enabledLicenses = t.licenses.filter((l) => l.enabled);
+    const lowestLicense = enabledLicenses.sort((a, b) => a.price.amount - b.price.amount)[0];
+
+    return {
+      id: t._id.toString(),
+      title: t.title,
+      slug: t.slug,
+      genre: t.genre,
+      bpm: t.bpm,
+      coverKey: t.coverKey,
+      producerName: t.producerName,
+      waveform: t.waveform,
+      previewKey: previewFile?.r2Key,
+      lowestPriceAmount: lowestLicense ? lowestLicense.price.amount : 0,
+      lowestPriceCurrency: lowestLicense ? lowestLicense.price.currency : "INR",
+      playCount: t.playCount,
+    };
+  });
+
   return (
-    <div className="mx-auto max-w-container px-4 py-8 sm:px-6 lg:px-8">
-      {/* Breadcrumb / Back Link */}
-      <div className="mb-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-xs text-steel-dark hover:text-ink font-medium transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Back to Home</span>
-        </Link>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Top Header & Search Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border mb-8">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-ink">
+            {params.genre ? `${params.genre} Beats` : "Explore Beats"}
+          </h1>
+          <p className="text-xs text-steel mt-1">
+            Royalty-free commercial licenses, high-resolution audio stems, and direct producer support.
+          </p>
+        </div>
+
+        <SearchBar />
       </div>
 
-      {/* Page Title & Search Bar */}
-      <div className="border-b border-border pb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">
-          Browse Beat Catalog
-        </h1>
-        <p className="mt-1 text-sm text-steel-dark">
-          Search beats by genre, BPM range, and mood tags. Every track includes free watermarked auditioning.
-        </p>
+      {/* Main Content Area */}
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <FilterSidebar totalResults={catalogResult.total} />
 
-        {/* Filter Toolbar */}
-        <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-steel-dark" />
-            <Input
-              type="text"
-              placeholder="Filter by title, producer, or keyword..."
-              className="pl-9"
-            />
-          </div>
-          <div className="flex gap-2">
-            <select
-              aria-label="Filter by genre"
-              className="h-11 sm:h-10 rounded border border-border bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-steel"
-              defaultValue="all"
-            >
-              <option value="all">All Genres</option>
-              <option value="hip-hop">Hip Hop</option>
-              <option value="trap">Trap</option>
-              <option value="boom-bap">Boom Bap</option>
-              <option value="drill">Drill</option>
-              <option value="rnb">R&B</option>
-              <option value="lo-fi">Lo-Fi</option>
-            </select>
-            <select
-              aria-label="Sort tracks"
-              className="h-11 sm:h-10 rounded border border-border bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-steel"
-              defaultValue="trending"
-            >
-              <option value="trending">Trending</option>
-              <option value="newest">Newest</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-            </select>
-          </div>
-        </div>
-      </div>
+        <div className="flex-1 w-full min-w-0">
+          {tracks.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border p-12 text-center bg-surface-muted/30">
+              <h3 className="text-sm font-semibold text-ink">No beats found</h3>
+              <p className="text-xs text-steel mt-1 max-w-sm mx-auto">
+                No published beats matched your current search filters. Try adjusting your BPM range, key, or genre.
+              </p>
+              <div className="mt-4">
+                <Link
+                  href="/tracks"
+                  className="inline-flex items-center justify-center rounded border border-border bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-muted transition-colors"
+                >
+                  Clear all filters
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Responsive Beat Grid: 2 cols mobile, 3 tablet, up to 5 desktop */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
+                {tracks.map((track) => (
+                  <BeatCard key={track.id} track={track} />
+                ))}
+              </div>
 
-      {/* Catalog Empty State */}
-      <div className="mt-12 rounded border border-dashed border-border bg-surface-muted p-12 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded bg-surface text-steel">
-          <Music className="h-6 w-6" />
-        </div>
-        <h2 className="mt-4 text-base font-semibold text-ink">
-          Catalog is empty
-        </h2>
-        <p className="mt-1 text-sm text-steel-dark max-w-md mx-auto">
-          No live tracks match your criteria. When producer tracks are uploaded and verified,
-          they will appear here with price tiers and waveform audio players.
-        </p>
-        <div className="mt-6">
-          <Link href="/login?intent=producer">
-            <Button size="sm">
-              Upload the First Beat
-            </Button>
-          </Link>
+              {/* Pagination */}
+              {catalogResult.totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-2 pt-6 border-t border-border">
+                  {Array.from({ length: catalogResult.totalPages }, (_, i) => i + 1).map((p) => {
+                    const isCurrent = p === catalogResult.page;
+                    const queryParams = new URLSearchParams(params as Record<string, string>);
+                    queryParams.set("page", String(p));
+
+                    return (
+                      <Link
+                        key={p}
+                        href={`/tracks?${queryParams.toString()}`}
+                        className={`flex h-8 w-8 items-center justify-center rounded text-xs font-medium transition-colors ${
+                          isCurrent
+                            ? "bg-ink text-surface"
+                            : "bg-surface border border-border text-steel hover:text-ink hover:bg-surface-muted"
+                        }`}
+                      >
+                        {p}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 }
-

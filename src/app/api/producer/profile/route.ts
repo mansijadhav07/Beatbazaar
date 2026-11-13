@@ -58,6 +58,13 @@ export async function POST(request: NextRequest) {
       { upsert: true, new: true }
     );
 
+    // Denormalize producerName onto all tracks owned by this producer
+    const { TrackModel } = await import("@/server/db/models/Track");
+    await TrackModel.updateMany(
+      { producerId: session.user.id },
+      { $set: { producerName: parsed.data.displayName } }
+    );
+
     return NextResponse.json({ success: true, profile });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to update profile";

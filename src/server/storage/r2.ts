@@ -48,6 +48,7 @@ export interface PresignedUploadOptions {
   key: string;
   contentType: string;
   contentLength?: number;
+  checksumSha256?: string;
   isPublic?: boolean;
   expiresInSeconds?: number;
 }
@@ -62,10 +63,14 @@ export async function createPresignedUploadUrl(
     Key: options.key,
     ContentType: options.contentType,
     ...(options.contentLength ? { ContentLength: options.contentLength } : {}),
+    ...(options.checksumSha256 ? { ChecksumSHA256: options.checksumSha256 } : {}),
   });
 
   const uploadUrl = await getSignedUrl(client, command, {
     expiresIn: options.expiresInSeconds || 900, // 15 minutes
+    signableHeaders: options.checksumSha256
+      ? new Set(["x-amz-checksum-sha256", "content-type"])
+      : new Set(["content-type"]),
   });
 
   return { uploadUrl, key: options.key };

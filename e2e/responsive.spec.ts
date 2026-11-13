@@ -24,7 +24,7 @@ test.describe("Beatbazaar Responsive Shell", () => {
 
   test("tracks browse page loads cleanly with filter inputs", async ({ page }) => {
     await page.goto("/tracks");
-    await expect(page.locator("h1")).toContainText("Browse Beat Catalog");
+    await expect(page.locator("h1")).toContainText("Explore Beats");
 
     const hasHorizontalOverflow = await page.evaluate(() => {
       return (

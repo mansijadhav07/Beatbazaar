@@ -90,3 +90,31 @@ export async function failJob(jobId: string, error: string): Promise<void> {
   });
 }
 
+/**
+ * Reclaim stale jobs that have been locked in "processing" beyond the timeout.
+ */
+export async function reclaimStaleJobs(staleTimeoutMs = 5 * 60 * 1000): Promise<{ reclaimedCount: number }> {
+  try {
+    await connectMongoose();
+    const staleThreshold = new Date(Date.now() - staleTimeoutMs);
+    const result = await JobModel.updateMany(
+      {
+        status: "processing",
+        lockedAt: { $lte: staleThreshold },
+      },
+      {
+        $set: {
+          status: "pending",
+          lockedAt: null,
+          lockedBy: null,
+        },
+      }
+    );
+    return { reclaimedCount: result.modifiedCount };
+  } catch (err: unknown) {
+    console.error("[Job Queue] Error reclaiming stale jobs:", err);
+    return { reclaimedCount: 0 };
+  }
+}
+
+

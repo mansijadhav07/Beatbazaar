@@ -4,11 +4,13 @@ dotenv.config();
 
 import { connectMongoose } from "../src/server/db/mongoose";
 import { TrackModel } from "../src/server/db/models/Track";
-import { claimNextJob, completeJob, failJob } from "../src/server/jobs/queue";
+import { claimNextJob, completeJob, failJob, reclaimStaleJobs } from "../src/server/jobs/queue";
 import { cleanupAbandonedDrafts } from "../src/server/jobs/cleanup-drafts";
-import { generateStorageKey, createPresignedDownloadUrl, createR2Client, publicBucketName } from "../src/server/storage/r2";
+import { flushBufferedPlays } from "../src/server/jobs/flush-plays";
+import { generateStorageKey, createPresignedDownloadUrl, createR2Client, publicBucketName, deleteObject } from "../src/server/storage/r2";
 import { extractWaveformPeaks, generatePreviewMp3 } from "../src/server/audio/transcoder";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
@@ -17,6 +19,31 @@ const WORKER_ID = `worker-${process.pid}-${Date.now().toString(36)}`;
 let isRunning = true;
 
 console.log(`[Beatbazaar Worker] Starting background worker runtime (${WORKER_ID})...`);
+
+// Stream object from R2 and compute whole-file SHA-256
+async function verifyObjectSha256(key: string, expectedHexSha256: string): Promise<boolean> {
+  const s3 = createR2Client();
+  const getCmd = new GetObjectCommand({
+    Bucket: process.env.CLOUDFLARE_R2_PRIVATE_BUCKET_NAME || "beatbazaar-private",
+    Key: key,
+  });
+
+  const res = await s3.send(getCmd);
+  if (!res.Body) return false;
+
+  const hash = crypto.createHash("sha256");
+  const stream = res.Body as NodeJS.ReadableStream;
+
+  return new Promise((resolve, reject) => {
+    stream.on("data", (chunk) => hash.update(chunk));
+    stream.on("end", () => {
+      const computed = hash.digest("hex");
+      const matches = computed.toLowerCase() === expectedHexSha256.toLowerCase();
+      resolve(matches);
+    });
+    stream.on("error", (err) => reject(err));
+  });
+}
 
 async function processTrackJob(trackId: string): Promise<void> {
   await connectMongoose();
@@ -51,6 +78,16 @@ async function processTrackJob(trackId: string): Promise<void> {
       throw new Error(`Failed to download source audio from R2: ${res.statusText}`);
     }
     const buffer = Buffer.from(await res.arrayBuffer());
+
+    // Verify SHA-256 integrity if client supplied checksum
+    if (sourceFile.checksum && sourceFile.checksum.length === 64) {
+      const computedSha256 = crypto.createHash("sha256").update(buffer).digest("hex");
+      if (computedSha256.toLowerCase() !== sourceFile.checksum.toLowerCase()) {
+        await deleteObject(sourceFile.r2Key, false).catch(() => {});
+        throw new Error(`Upload integrity verification failed: SHA-256 mismatch for ${sourceFile.kind}. Storage object deleted.`);
+      }
+    }
+
     await fs.writeFile(inputAudioPath, buffer);
 
     // 2. Extract 500 waveform peaks
@@ -108,6 +145,43 @@ async function processTrackJob(trackId: string): Promise<void> {
   }
 }
 
+// Scheduled timers with error boundary protection
+// 1. Reclaim stale jobs every 60 seconds
+setInterval(async () => {
+  try {
+    const res = await reclaimStaleJobs(5 * 60 * 1000);
+    if (res.reclaimedCount > 0) {
+      console.log(`[Beatbazaar Worker Timer] Reclaimed ${res.reclaimedCount} stale job(s).`);
+    }
+  } catch (err: unknown) {
+    console.error("[Beatbazaar Worker Timer] Error during stale job reclaim:", err);
+  }
+}, 60 * 1000);
+
+// 2. Cleanup abandoned drafts every 1 hour
+setInterval(async () => {
+  try {
+    const res = await cleanupAbandonedDrafts();
+    if (res.deletedCount > 0) {
+      console.log(`[Beatbazaar Worker Timer] Cleaned up ${res.deletedCount} abandoned draft(s).`);
+    }
+  } catch (err: unknown) {
+    console.error("[Beatbazaar Worker Timer] Error during draft cleanup:", err);
+  }
+}, 60 * 60 * 1000);
+
+// 3. Flush buffered play event counters every 30 seconds
+setInterval(async () => {
+  try {
+    const res = await flushBufferedPlays();
+    if (res.flushedTracks > 0) {
+      console.log(`[Beatbazaar Worker Timer] Flushed play counts for ${res.flushedTracks} track(s).`);
+    }
+  } catch (err: unknown) {
+    console.error("[Beatbazaar Worker Timer] Error during play flush:", err);
+  }
+}, 30 * 1000);
+
 async function loop() {
   while (isRunning) {
     try {
@@ -125,8 +199,6 @@ async function loop() {
           await failJob(job._id.toString(), errorMsg);
         }
       } else {
-        // Run drafts cleanup occasionally when idle
-        await cleanupAbandonedDrafts().catch(() => {});
         await new Promise((r) => setTimeout(r, 3000));
       }
     } catch (err: unknown) {

@@ -3,6 +3,8 @@ import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { AudioPlayerProvider } from "@/components/player/AudioPlayerContext";
+import { PersistentPlayer } from "@/components/player/PersistentPlayer";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -38,10 +40,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="flex min-h-screen min-h-[100dvh] flex-col bg-surface text-ink antialiased">
-        <Header />
-        <main className="flex-1 pb-16 md:pb-0">{children}</main>
-        <Footer />
-        <MobileNav />
+        <AudioPlayerProvider>
+          <Header />
+          <main className="flex-1 pb-24 md:pb-20">{children}</main>
+          <Footer />
+          <PersistentPlayer />
+          <MobileNav />
+        </AudioPlayerProvider>
       </body>
     </html>
   );

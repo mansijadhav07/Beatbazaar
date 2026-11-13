@@ -21,7 +21,8 @@ export interface ILicenseOption {
 }
 
 export interface ITrack extends Document {
-  producerId: mongoose.Types.ObjectId;
+  producerId: string;
+  producerName?: string;
   title: string;
   slug: string;
   genre: string;
@@ -91,11 +92,11 @@ const LicenseOptionSchema = new Schema<ILicenseOption>(
 const TrackSchema = new Schema<ITrack>(
   {
     producerId: {
-      type: Schema.Types.ObjectId,
-      ref: "ProducerProfile",
+      type: String,
       required: true,
       index: true,
     },
+    producerName: { type: String, default: "" },
     title: { type: String, required: true, trim: true },
     slug: { type: String, required: true, trim: true, index: true },
     genre: { type: String, required: true, index: true },
@@ -137,14 +138,22 @@ const TrackSchema = new Schema<ITrack>(
 );
 
 // Compound index for browsing queries
-TrackSchema.index({ status: 1, genre: 1, bpm: 1, createdAt: -1 });
+TrackSchema.index({ status: 1, processingStatus: 1, genre: 1, bpm: 1, createdAt: -1 });
 
-// Text index for search
-TrackSchema.index({
-  title: "text",
-  tags: "text",
-  moods: "text",
-});
+// Text index for search with default_language "none" to cover titles, tags, genre, moods, producerName
+TrackSchema.index(
+  {
+    title: "text",
+    tags: "text",
+    genre: "text",
+    moods: "text",
+    producerName: "text",
+  },
+  {
+    default_language: "none",
+    name: "TrackTextSearchIndex",
+  }
+);
 
 export const TrackModel: Model<ITrack> =
   mongoose.models.Track || mongoose.model<ITrack>("Track", TrackSchema);

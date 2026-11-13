@@ -100,8 +100,12 @@ test.describe("Producer Upload Flow (iPhone 14)", () => {
     // Confirm rights
     await page.locator('input[type="checkbox"]').check();
 
-    // Submit
-    await page.locator("button:has-text('Publish Beat to Queue')").click();
+    // Step 3 to Step 4 (Review)
+    await page.locator("button:has-text('Continue to Review')").click();
+    await expect(page.getByText("Beat Summary")).toBeVisible();
+
+    // Submit for review from Step 4
+    await page.locator("button:has-text('Submit for review')").click();
 
     // Check redirect to /dashboard/beats
     await expect(page).toHaveURL(/\/dashboard\/beats/);

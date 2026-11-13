@@ -9,7 +9,7 @@ import { AlertCircle, Upload, Music, DollarSign, ShieldCheck } from "lucide-reac
 
 export default function UploadBeatWizard() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
   // Track Metadata
   const [title, setTitle] = useState("");
@@ -52,6 +52,16 @@ export default function UploadBeatWizard() {
     }
     setErrorMsg(null);
     setStep(3);
+  };
+
+  const handleNextFromStep3 = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rightsConfirmed) {
+      setErrorMsg("You must confirm you hold 100% rights to this beat.");
+      return;
+    }
+    setErrorMsg(null);
+    setStep(4);
   };
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
@@ -261,7 +271,7 @@ export default function UploadBeatWizard() {
             </span>
             <span className="text-xs font-medium text-ink">Details</span>
           </div>
-          <div className="h-px w-8 bg-border" />
+          <div className="h-px w-6 bg-border" />
           <div className="flex items-center gap-2">
             <span
               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
@@ -270,9 +280,9 @@ export default function UploadBeatWizard() {
             >
               2
             </span>
-            <span className="text-xs font-medium text-ink">Audio Files</span>
+            <span className="text-xs font-medium text-ink">Audio</span>
           </div>
-          <div className="h-px w-8 bg-border" />
+          <div className="h-px w-6 bg-border" />
           <div className="flex items-center gap-2">
             <span
               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
@@ -282,6 +292,17 @@ export default function UploadBeatWizard() {
               3
             </span>
             <span className="text-xs font-medium text-ink">Licenses</span>
+          </div>
+          <div className="h-px w-6 bg-border" />
+          <div className="flex items-center gap-2">
+            <span
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                step === 4 ? "bg-ink text-surface" : "bg-surface-muted text-steel"
+              }`}
+            >
+              4
+            </span>
+            <span className="text-xs font-medium text-ink">Review</span>
           </div>
         </div>
 
@@ -448,9 +469,9 @@ export default function UploadBeatWizard() {
           </form>
         )}
 
-        {/* Step 3: Licenses & Submit */}
+        {/* Step 3: Licenses */}
         {step === 3 && (
-          <form onSubmit={handleFinalSubmit} className="space-y-4">
+          <form onSubmit={handleNextFromStep3} className="space-y-4">
             <div className="space-y-3">
               <div className="rounded border border-border p-3">
                 <div className="flex items-center justify-between mb-2">
@@ -513,7 +534,81 @@ export default function UploadBeatWizard() {
                 Back
               </Button>
               <Button type="submit" disabled={loading} className="flex-1 text-xs">
-                {loading ? "Processing..." : "Publish Beat to Queue"}
+                Continue to Review
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* Step 4: Review and Submit */}
+        {step === 4 && (
+          <form onSubmit={handleFinalSubmit} className="space-y-4">
+            <div className="space-y-3">
+              <div className="rounded border border-border p-3 bg-surface-muted">
+                <h4 className="text-xs font-bold text-ink uppercase tracking-wider mb-2">Beat Summary</h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-steel">Title:</span> <span className="font-medium text-ink">{title}</span>
+                  </div>
+                  <div>
+                    <span className="text-steel">Genre:</span> <span className="font-medium text-ink">{genre}</span>
+                  </div>
+                  <div>
+                    <span className="text-steel">Tempo:</span> <span className="font-medium text-ink">{bpm} BPM</span>
+                  </div>
+                  <div>
+                    <span className="text-steel">Key:</span> <span className="font-medium text-ink">{key}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded border border-border p-3 bg-surface-muted">
+                <h4 className="text-xs font-bold text-ink uppercase tracking-wider mb-2">Attached Files</h4>
+                <div className="space-y-1 text-xs text-ink">
+                  <div>
+                    <span className="text-steel">MP3 Master:</span> {mp3File?.name} ({(mp3File?.size ? mp3File.size / (1024 * 1024) : 0).toFixed(1)} MB)
+                  </div>
+                  {wavFile && (
+                    <div>
+                      <span className="text-steel">WAV Master:</span> {wavFile.name} ({(wavFile.size / (1024 * 1024)).toFixed(1)} MB)
+                    </div>
+                  )}
+                  {stemsFile && (
+                    <div>
+                      <span className="text-steel">Track Stems:</span> {stemsFile.name} ({(stemsFile.size / (1024 * 1024)).toFixed(1)} MB)
+                    </div>
+                  )}
+                  {coverFile && (
+                    <div>
+                      <span className="text-steel">Artwork:</span> {coverFile.name}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded border border-border p-3 bg-surface-muted">
+                <h4 className="text-xs font-bold text-ink uppercase tracking-wider mb-2">License Pricing</h4>
+                <div className="space-y-1 text-xs text-ink">
+                  <div>
+                    <span className="text-steel">Non-Exclusive License:</span> ₹{nonExclusivePrice.toLocaleString("en-IN")}
+                  </div>
+                  <div>
+                    <span className="text-steel">Exclusive Buyout:</span> ₹{exclusivePrice.toLocaleString("en-IN")}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-xs text-steel leading-relaxed">
+                Submitting places your beat into the processing queue. After audio watermarking and waveform extraction, it will be marked as pending review by our curation team before going live.
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" disabled={loading} onClick={() => setStep(3)} className="flex-1 text-xs">
+                Back
+              </Button>
+              <Button type="submit" disabled={loading} className="flex-1 text-xs">
+                {loading ? "Processing..." : "Submit for review"}
               </Button>
             </div>
           </form>
