@@ -81,6 +81,13 @@ export async function createPresignedDownloadUrl(
   client: S3Client = createR2Client()
 ): Promise<string> {
   const cleanFilename = encodeURIComponent(options.downloadFilename);
+  if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.PLAYWRIGHT_TEST_AUTH_ENABLED === "true" &&
+    process.env.PLAYWRIGHT_TEST_MOCK_STORAGE === "true"
+  ) {
+    return `https://playwright-storage.invalid/${encodeURIComponent(options.key)}?filename=${cleanFilename}`;
+  }
   const command = new GetObjectCommand({
     Bucket: privateBucketName,
     Key: options.key,

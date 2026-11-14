@@ -16,7 +16,8 @@
     "db:migrate": "migrate-mongo up",
     "db:migrate:down": "migrate-mongo down",
     "db:seed": "tsx src/server/db/seed.ts",
-    "db:create-admin": "tsx scripts/create-admin.ts"
+    "db:create-admin": "tsx scripts/create-admin.ts",
+    "smoke:local": "tsx scripts/smoke-local.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.750.0",

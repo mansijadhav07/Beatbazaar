@@ -30,7 +30,7 @@ const explicitTestFiles = testArgs.filter((arg) =>
 const usesAdminTestIdentity =
   explicitTestFiles.length === 0 ||
   explicitTestFiles.some((arg) =>
-    /(?:phase6-admin|accessibility|account-menu|link-audit)\.spec\./.test(arg)
+    /(?:phase2-journey|phase6-admin|accessibility|account-menu|link-audit)\.spec\./.test(arg)
   );
 const result = spawnSync(
   process.execPath,
@@ -41,6 +41,12 @@ const result = spawnSync(
       ...process.env,
       PLAYWRIGHT_TEST_AUTH_ENABLED: "true",
       PLAYWRIGHT_TEST_AUTH_SECRET: randomBytes(32).toString("base64url"),
+      PLAYWRIGHT_TEST_MOCK_PAYMENTS: "true",
+      PLAYWRIGHT_TEST_MOCK_STORAGE: "true",
+      RAZORPAY_KEY_ID: "rzp_test_mock",
+      RAZORPAY_KEY_SECRET: "playwright_test_secret",
+      RAZORPAY_WEBHOOK_SECRET: randomBytes(32).toString("hex"),
+      PLATFORM_FEE_PERCENT: "0",
       PLAYWRIGHT_TEST_BASE_URL: testBaseUrl,
       NEXT_PUBLIC_APP_URL: testBaseUrl,
       BETTER_AUTH_URL: testBaseUrl,

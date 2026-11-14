@@ -11,6 +11,7 @@ import { connectMongoose } from "@/server/db/mongoose";
 export const dynamic = "force-dynamic";
 const bodySchema = z.object({
   trackId: z.string().regex(/^[a-f\d]{24}$/i),
+  contactEmail: z.string().trim().email().max(254),
   category: z.enum(["copyright", "audio_quality", "misleading_metadata", "other"]),
   details: z.string().trim().min(10).max(3000),
 });
@@ -20,10 +21,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Request origin was not accepted." }, { status: 403 });
   }
   const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Sign in to submit a report." }, { status: 401 });
-  }
-  const rateLimit = await checkRateLimit(`track-report:${user.id}`, {
+  const clientIp =
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-real-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "unknown";
+  const rateLimit = await checkRateLimit(`track-report:${clientIp}`, {
     windowMs: 60_000,
     maxRequests: 5,
   });
@@ -47,8 +50,8 @@ export async function POST(request: NextRequest) {
   await ReportModel.create({
     trackId: track._id,
     trackTitle: track.title,
-    reporterId: user.id,
-    reporterEmail: user.email,
+    ...(user ? { reporterId: user.id } : {}),
+    reporterEmail: parsed.data.contactEmail,
     category: parsed.data.category,
     details: parsed.data.details,
     status: "open",

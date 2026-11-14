@@ -75,6 +75,26 @@ device checks are kept separate from automated evidence.
   sending only to the account owner's address until a domain is verified.
   Provider error bodies are no longer included in server exceptions. The
   resend screen now explains the domain setup needed for delivery.
+- Added a database-backed producer-to-refund Playwright journey. It registers
+  and verifies a producer, creates a profile, uploads generated audio through
+  the wizard, processes it with the real worker processor and in-memory test
+  storage, approves it as an admin, finds it through catalog search as a
+  buyer, completes a mocked INR checkout and signed webhook, downloads it,
+  refunds it as an admin, then verifies the existing app download token is
+  revoked. The test removes its database records and temporary audio.
+- Added browser coverage for multipart ETags, fake audio rejection, oversized
+  audio rejection, and anonymous beat reporting with a contact email. Added
+  server upload-URL tests proving oversized and mismatched media types are
+  rejected before draft creation or storage URL generation.
+- Kept the "Report this beat" flow public, required a contact email, and
+  verified rate limiting and that raw IP addresses are not stored.
+- Added `npm run smoke:local` for private R2 upload, worker processing, and a
+  Razorpay test order that is not captured. The production refusal guard was
+  verified. The external smoke was not run: configured R2 bucket names do not
+  identify test buckets, so the script will block the R2 and worker checks.
+- Updated the outdated admin report test to check the required contact-email
+  validation for anonymous reports. Removed two unused imports exposed by the
+  zero-warning lint run.
 
 ## Test identity and integration evidence
 
@@ -106,8 +126,23 @@ device checks are kept separate from automated evidence.
 
 Final local verification:
 
-- `npm test`: 47 test files passed, 186 tests passed, zero failed.
+- `npm test`: 50 test files passed, 196 tests passed, zero failed. This includes
+  the MongoDB rate limiter integration test against the isolated test database.
 - `npm run lint`: zero ESLint warnings/errors and TypeScript check passed.
+- `npm run build:test`: production build passed against the isolated test
+  database. Build output reported 103 kB shared first-load JavaScript, 116 kB
+  for home, 129 kB for `/tracks`, and 143 kB for track detail.
+- Targeted E2E matrix for `phase2-journey.spec.ts`,
+  `upload-edge-cases.spec.ts`, and `public-report.spec.ts`: 5 passed, 20
+  skipped, 0 failed across Desktop Chrome, Desktop Safari, iPhone 14, iPhone
+  SE, and iPad Pro 11. All five cases are explicitly limited to Desktop
+  Chrome to avoid redundant device runs, duplicate database writes, and
+  repeated large sparse-file setup. Thus each test is run once, with four
+  device-profile skips per test.
+- The full lifecycle test passed in a separate Desktop Chrome run after
+  changing the buyer path to discover the new listing via `/tracks` search.
+- The production safety check for `npm run smoke:local` refused to run when
+  `NODE_ENV=production`; no R2 or Razorpay requests were made.
 - Focused auth Playwright matrix: 29 passed, 6 skipped, 0 failed across
   Desktop Chrome, Desktop Safari, iPhone 14, iPhone SE, iPad Pro 11 portrait
   and landscape, and Pixel 7. The database-backed auth journey runs only in
@@ -125,13 +160,11 @@ Final local verification:
 - Secret scan: `node scripts/scan-secrets.mjs` reported no recognized
   credentials in repository files or Git history.
 - Em-dash scan over `src`, `e2e`, `worker`, `scripts`, and `docs`: no matches.
-- `npm run build:test`: production build passed using the validated isolated
-  test database. Build output reported 103 kB shared first-load JavaScript,
-  116 kB for home, 129 kB for `/tracks`, and 143 kB for track detail.
 - Five-project Playwright matrix: 156 passed, 24 skipped, 0 failed, 180 total.
-  Skips are limited to iPhone 14-specific upload, admin-sheet, and support-page
-  checks, plus axe checks scoped to Desktop Chrome and iPhone 14. Details are
-  in [link-report.md](./link-report.md).
+  This is the earlier full-matrix run, not a rerun in this repair pass.
+  Skips were limited to iPhone 14-specific upload, admin-sheet, and
+  support-page checks, plus axe checks scoped to Desktop Chrome and iPhone 14.
+  Details are in [link-report.md](./link-report.md).
 - The link-audit spec passed across the five selected projects. It checks
   routes, sitemap destinations, redirects, canonical origins and paths,
   external-link relations, role access, and desktop/mobile navigation.
@@ -152,10 +185,10 @@ These are synthetic local lab measurements. A before baseline was not captured
 in this verification, and no production field INP or real-device measurement
 is claimed.
 
-The full producer signup, verified email, profile, upload, worker processing,
-admin approval, buyer checkout, download, and admin refund journey remains
-missing as one Playwright test. Its constituent UI and service tests do not
-prove that complete lifecycle.
+The new lifecycle journey uses mocked upload URLs/storage and a mocked
+Razorpay checkout/webhook payload, while running the worker audio processor
+against in-memory test storage. It proves app-level refund revocation but does
+not prove live R2, Razorpay, or a physical-device flow.
 
 All current results and exact final counts must be refreshed after the
 remaining checks. See [compliance-audit.md](./compliance-audit.md),
@@ -172,6 +205,13 @@ remaining checks. See [compliance-audit.md](./compliance-audit.md),
   confirmation.
 - Real Razorpay webhooks/payments, Cloudflare R2, Google OAuth, and production
   email are not validated by these local tests.
+- `npm run smoke:local` needs a separate `MONGODB_TEST_URI` whose database
+  name contains `test`, R2 credentials, public and private R2 bucket names
+  containing `test`, local `ffmpeg`, and `RAZORPAY_KEY_ID` beginning with
+  `rzp_test_` plus `RAZORPAY_KEY_SECRET`. `NEXT_PUBLIC_APP_URL`, if set, must
+  use a localhost hostname. The current R2 bucket configuration does not pass
+  the test-bucket guard, so live R2/worker smoke checks were not run. The
+  Razorpay external test-order call was also not run.
 - Google OAuth linking was not exercised against Google's external callback.
   Local credentials are present, but their validity and the configured
   redirect URI still require an owner-side sign-in test.
@@ -200,6 +240,7 @@ npm test
 npm run build:test
 npm run measure:perf:test
 npm run e2e
+npm run smoke:local
 node scripts/scan-secrets.mjs
 ```
 

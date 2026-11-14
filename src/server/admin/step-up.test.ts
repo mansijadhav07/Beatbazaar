@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { siteConfig } from "@/config/site";
 
 const createTokenRecord = vi.fn();
 const findOneAndUpdate = vi.fn();
@@ -107,13 +108,13 @@ describe("administrator step-up tokens", () => {
   });
 
   it("requires a same-origin browser request", () => {
-    const valid = new NextRequest("https://example.test/api/admin/step-up", {
-      headers: { origin: "https://example.test" },
+    const valid = new NextRequest(`${siteConfig.url}/api/admin/step-up`, {
+      headers: { origin: siteConfig.url },
     });
-    const invalid = new NextRequest("https://example.test/api/admin/step-up", {
+    const invalid = new NextRequest(`${siteConfig.url}/api/admin/step-up`, {
       headers: { origin: "https://attacker.test" },
     });
-    const missing = new NextRequest("https://example.test/api/admin/step-up");
+    const missing = new NextRequest(`${siteConfig.url}/api/admin/step-up`);
 
     expect(isSameOriginRequest(valid)).toBe(true);
     expect(isSameOriginRequest(invalid)).toBe(false);

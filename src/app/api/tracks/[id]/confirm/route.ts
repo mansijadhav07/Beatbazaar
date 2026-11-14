@@ -11,6 +11,11 @@ import {
 import { sniffFileType, scanFile } from "@/server/storage/sniffer";
 import { enqueueJob } from "@/server/jobs/queue";
 import { z } from "zod";
+import {
+  isUploadFileTypeCompatible,
+  MAX_UPLOAD_BYTES,
+  type UploadFileKind,
+} from "@/lib/upload-files";
 
 export const dynamic = "force-dynamic";
 
@@ -142,6 +147,13 @@ export async function POST(
           { status: 400 }
         );
       }
+      if (head.size > MAX_UPLOAD_BYTES[f.kind as UploadFileKind]) {
+        await deleteObject(f.key, false).catch(() => {});
+        return NextResponse.json(
+          { error: `Upload verification failed for ${f.kind}: file exceeds the maximum size.` },
+          { status: 413 }
+        );
+      }
 
       // First-bytes file type sniffing
       const headerBytes = await getFirstBytes(f.key, 32, false);
@@ -154,7 +166,7 @@ export async function POST(
       }
 
       const sniffed = sniffFileType(headerBytes);
-      if (!sniffed) {
+      if (!sniffed || !isUploadFileTypeCompatible(f.kind, sniffed.mimeType)) {
         await deleteObject(f.key, false).catch(() => {});
         return NextResponse.json(
           { error: `File type verification failed: ${f.kind} does not match expected audio/archive binary signatures.` },
@@ -185,7 +197,7 @@ export async function POST(
     let coverKey: string | null = null;
     if (parsed.data.cover) {
       const coverHead = await headObject(parsed.data.cover.key, true);
-      if (coverHead) {
+      if (coverHead && coverHead.size <= MAX_UPLOAD_BYTES.cover) {
         const coverBytes = await getFirstBytes(parsed.data.cover.key, 32, true);
         const coverSniffed = coverBytes ? sniffFileType(coverBytes) : null;
         if (coverSniffed && coverSniffed.mimeType.startsWith("image/")) {
@@ -193,6 +205,8 @@ export async function POST(
         } else {
           await deleteObject(parsed.data.cover.key, true).catch(() => {});
         }
+      } else if (coverHead) {
+        await deleteObject(parsed.data.cover.key, true).catch(() => {});
       }
     }
 

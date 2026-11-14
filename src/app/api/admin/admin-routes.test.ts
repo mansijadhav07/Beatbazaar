@@ -212,7 +212,7 @@ describe("admin endpoint validation", () => {
     expect(requireRole).toHaveBeenCalledWith(["admin"]);
   });
 
-  it("requires sign-in to submit a user report", async () => {
+  it("requires a contact email for an anonymous report", async () => {
     const response = await submitReport(
       request("/api/reports", "POST", {
         trackId: "507f1f77bcf86cd799439011",
@@ -220,6 +220,6 @@ describe("admin endpoint validation", () => {
         details: "This is a test rights report.",
       })
     );
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(400);
   });
 });

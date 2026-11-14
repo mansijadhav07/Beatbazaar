@@ -8,6 +8,11 @@ import {
   startMultipartUpload,
   getPresignedPartUrl,
 } from "@/server/storage/r2";
+import {
+  isUploadMimeTypeAllowed,
+  MAX_UPLOAD_BYTES,
+  type UploadFileKind,
+} from "@/lib/upload-files";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +47,21 @@ export async function POST(request: NextRequest) {
     const parsed = RequestUploadSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    }
+    for (const file of parsed.data.files) {
+      const kind = file.kind as UploadFileKind;
+      if (file.size > MAX_UPLOAD_BYTES[kind]) {
+        return NextResponse.json(
+          { error: `${file.kind} exceeds the maximum upload size.` },
+          { status: 413 }
+        );
+      }
+      if (!isUploadMimeTypeAllowed(kind, file.contentType)) {
+        return NextResponse.json(
+          { error: `Unsupported content type for ${file.kind}.` },
+          { status: 400 }
+        );
+      }
     }
 
     await connectMongoose();
@@ -135,4 +155,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

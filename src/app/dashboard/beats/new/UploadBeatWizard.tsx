@@ -6,8 +6,112 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Upload, Music, DollarSign, ShieldCheck } from "lucide-react";
+import { sniffFileType } from "@/server/storage/sniffer";
+import {
+  isUploadMimeTypeAllowed,
+  MAX_UPLOAD_BYTES,
+  type UploadFileKind,
+} from "@/lib/upload-files";
 
 type LicenseFile = "mp3" | "wav" | "stems";
+type UploadedKind = UploadFileKind;
+type UploadDestination =
+  | { mode: "single"; key: string; uploadUrl: string }
+  | {
+      mode: "multipart";
+      key: string;
+      uploadId: string;
+      parts: Array<{ partNumber: number; url: string }>;
+    };
+type ConfirmedUpload = {
+  kind: Exclude<UploadFileKind, "cover">;
+  key: string;
+  size: number;
+  contentType: string;
+  mode: "single" | "multipart";
+  uploadId?: string;
+  parts?: Array<{ PartNumber: number; ETag: string }>;
+};
+
+const MULTIPART_PART_SIZE = 10 * 1024 * 1024;
+
+function isUploadDestination(value: unknown): value is UploadDestination {
+  if (!value || typeof value !== "object") return false;
+  const destination = value as Record<string, unknown>;
+  if (typeof destination.key !== "string") return false;
+  if (destination.mode === "single") return typeof destination.uploadUrl === "string";
+  return (
+    destination.mode === "multipart" &&
+    typeof destination.uploadId === "string" &&
+    Array.isArray(destination.parts) &&
+    destination.parts.every(
+      (part) =>
+        typeof part === "object" &&
+        part !== null &&
+        typeof (part as Record<string, unknown>).partNumber === "number" &&
+        typeof (part as Record<string, unknown>).url === "string"
+    )
+  );
+}
+
+async function validateSelectedFile(
+  file: File,
+  kind: UploadFileKind,
+  fallbackType: string
+): Promise<string> {
+  const contentType = file.type || fallbackType;
+  if (file.size > MAX_UPLOAD_BYTES[kind]) {
+    throw new Error(`${kind} exceeds the maximum upload size.`);
+  }
+  if (!isUploadMimeTypeAllowed(kind, contentType)) {
+    throw new Error(`Unsupported file type for ${kind}.`);
+  }
+  const header = new Uint8Array(await file.slice(0, 32).arrayBuffer());
+  const detected = sniffFileType(header);
+  const matches = kind === "cover"
+    ? detected?.mimeType.startsWith("image/") === true
+    : detected?.mimeType ===
+      (kind === "mp3"
+        ? "audio/mpeg"
+        : kind === "wav"
+          ? "audio/wav"
+          : "application/zip");
+  if (!matches) {
+    throw new Error(`File contents do not match the selected ${kind} file type.`);
+  }
+  return contentType;
+}
+
+async function uploadSelectedFile(
+  file: File,
+  destination: UploadDestination,
+  contentType: string
+): Promise<Array<{ PartNumber: number; ETag: string }> | undefined> {
+  if (destination.mode === "single") {
+    const response = await fetch(destination.uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": contentType },
+      body: file,
+    });
+    if (!response.ok) throw new Error(`Storage upload failed (${response.status}).`);
+    return undefined;
+  }
+
+  const parts: Array<{ PartNumber: number; ETag: string }> = [];
+  for (const part of destination.parts) {
+    const start = (part.partNumber - 1) * MULTIPART_PART_SIZE;
+    const end = Math.min(start + MULTIPART_PART_SIZE, file.size);
+    const response = await fetch(part.url, {
+      method: "PUT",
+      body: file.slice(start, end),
+    });
+    if (!response.ok) throw new Error(`Storage part upload failed (${response.status}).`);
+    const etag = response.headers.get("etag");
+    if (!etag) throw new Error("Storage did not return an upload part identifier.");
+    parts.push({ PartNumber: part.partNumber, ETag: etag });
+  }
+  return parts;
+}
 
 function parseRupeesToPaise(value: string): number | null {
   const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(value.trim());
@@ -154,47 +258,38 @@ export default function UploadBeatWizard() {
     setProgressText("Requesting secure storage upload slots...");
 
     try {
-      // 1. Prepare files list for upload-url endpoint
+      const selectedFiles: Array<{
+        kind: UploadedKind;
+        file: File;
+        fallbackType: string;
+      }> = [
+        ...(mp3File ? [{ kind: "mp3" as const, file: mp3File, fallbackType: "audio/mpeg" }] : []),
+        ...(wavFile ? [{ kind: "wav" as const, file: wavFile, fallbackType: "audio/wav" }] : []),
+        ...(stemsFile ? [{ kind: "stems" as const, file: stemsFile, fallbackType: "application/zip" }] : []),
+        ...(coverFile ? [{ kind: "cover" as const, file: coverFile, fallbackType: "image/jpeg" }] : []),
+      ];
+      const validatedFiles = await Promise.all(
+        selectedFiles.map(async (selected) => ({
+          ...selected,
+          contentType: await validateSelectedFile(
+            selected.file,
+            selected.kind,
+            selected.fallbackType
+          ),
+        }))
+      );
+
       const uploadFilesPayload: Array<{
-        kind: "mp3" | "wav" | "stems" | "cover";
+        kind: UploadedKind;
         fileName: string;
         contentType: string;
         size: number;
-      }> = [
-        {
-          kind: "mp3",
-          fileName: mp3File!.name,
-          contentType: mp3File!.type || "audio/mpeg",
-          size: mp3File!.size,
-        },
-      ];
-
-      if (wavFile) {
-        uploadFilesPayload.push({
-          kind: "wav",
-          fileName: wavFile.name,
-          contentType: wavFile.type || "audio/wav",
-          size: wavFile.size,
-        });
-      }
-
-      if (stemsFile) {
-        uploadFilesPayload.push({
-          kind: "stems",
-          fileName: stemsFile.name,
-          contentType: stemsFile.type || "application/zip",
-          size: stemsFile.size,
-        });
-      }
-
-      if (coverFile) {
-        uploadFilesPayload.push({
-          kind: "cover",
-          fileName: coverFile.name,
-          contentType: coverFile.type || "image/jpeg",
-          size: coverFile.size,
-        });
-      }
+      }> = validatedFiles.map(({ kind, file, contentType }) => ({
+        kind,
+        fileName: file.name,
+        contentType,
+        size: file.size,
+      }));
 
       const res = await fetch("/api/tracks/upload-url", {
         method: "POST",
@@ -208,84 +303,62 @@ export default function UploadBeatWizard() {
         }),
       });
 
-      const resData = await res.json();
+      const resData = (await res.json()) as {
+        error?: string;
+        trackId?: string;
+        uploadUrls?: Record<string, unknown>;
+      };
       if (!res.ok) {
         throw new Error(resData.error || "Failed to initialize upload.");
       }
 
-      const { trackId, uploadUrls } = resData;
-
-      // 2. Upload files directly to R2
-      const confirmedFilesPayload: any[] = [];
-
-      // Upload MP3
-      setProgressText("Uploading MP3 master...");
-      await fetch(uploadUrls.mp3.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": mp3File!.type || "audio/mpeg" },
-        body: mp3File,
-      });
-      confirmedFilesPayload.push({
-        kind: "mp3",
-        key: uploadUrls.mp3.key,
-        size: mp3File!.size,
-        contentType: mp3File!.type || "audio/mpeg",
-        mode: "single",
-      });
-
-      // Upload WAV if provided
-      if (wavFile && uploadUrls.wav) {
-        setProgressText("Uploading WAV master...");
-        await fetch(uploadUrls.wav.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": wavFile.type || "audio/wav" },
-          body: wavFile,
-        });
-        confirmedFilesPayload.push({
-          kind: "wav",
-          key: uploadUrls.wav.key,
-          size: wavFile.size,
-          contentType: wavFile.type || "audio/wav",
-          mode: "single",
-        });
+      if (!resData.trackId || !resData.uploadUrls) {
+        throw new Error("Upload service returned an invalid response.");
       }
 
-      // Upload Stems if provided
-      if (stemsFile && uploadUrls.stems) {
-        setProgressText("Uploading Stems archive...");
-        await fetch(uploadUrls.stems.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": stemsFile.type || "application/zip" },
-          body: stemsFile,
-        });
-        confirmedFilesPayload.push({
-          kind: "stems",
-          key: uploadUrls.stems.key,
-          size: stemsFile.size,
-          contentType: stemsFile.type || "application/zip",
-          mode: "single",
-        });
-      }
+      const confirmedFilesPayload: ConfirmedUpload[] = [];
+      let coverPayload:
+        | { key: string; size: number; contentType: string }
+        | undefined;
 
-      // Upload Cover if provided
-      let coverPayload: any = undefined;
-      if (coverFile && uploadUrls.cover) {
-        setProgressText("Uploading cover artwork...");
-        await fetch(uploadUrls.cover.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": coverFile.type || "image/jpeg" },
-          body: coverFile,
+      for (const selected of validatedFiles) {
+        const destinationValue = resData.uploadUrls[selected.kind];
+        if (!isUploadDestination(destinationValue)) {
+          throw new Error(`Upload service did not provide a valid slot for ${selected.kind}.`);
+        }
+        setProgressText(
+          selected.kind === "cover"
+            ? "Uploading cover artwork..."
+            : `Uploading ${selected.kind.toUpperCase()} master...`
+        );
+        const parts = await uploadSelectedFile(
+          selected.file,
+          destinationValue,
+          selected.contentType
+        );
+        if (selected.kind === "cover") {
+          coverPayload = {
+            key: destinationValue.key,
+            size: selected.file.size,
+            contentType: selected.contentType,
+          };
+          continue;
+        }
+        confirmedFilesPayload.push({
+          kind: selected.kind,
+          key: destinationValue.key,
+          size: selected.file.size,
+          contentType: selected.contentType,
+          mode: destinationValue.mode,
+          ...(destinationValue.mode === "multipart"
+            ? { uploadId: destinationValue.uploadId, parts }
+            : {}),
         });
-        coverPayload = {
-          key: uploadUrls.cover.key,
-          size: coverFile.size,
-          contentType: coverFile.type || "image/jpeg",
-        };
       }
 
       // 3. Confirm upload & queue background transcoding
       setProgressText("Verifying storage objects and queueing background worker...");
-      const confirmRes = await fetch(`/api/tracks/${trackId}/confirm`, {
+      const confirmRes = await fetch(`/api/tracks/${resData.trackId}/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

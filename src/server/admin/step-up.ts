@@ -6,6 +6,7 @@ import { connectMongoose } from "@/server/db/mongoose";
 import { AdminStepUpTokenModel, type AdminStepUpAction } from "@/server/db/models/AdminStepUpToken";
 import type { SessionContext } from "@/server/auth/guards";
 import { verifyTestIdentity } from "@/server/auth/test-identity";
+import { siteConfig } from "@/config/site";
 
 export const ADMIN_STEP_UP_COOKIE = "bb_admin_step_up";
 const STEP_UP_TTL_MS = 5 * 60 * 1000;
@@ -15,7 +16,7 @@ export function isSameOriginRequest(request: NextRequest): boolean {
   if (!origin) return false;
 
   try {
-    return new URL(origin).origin === request.nextUrl.origin;
+    return new URL(origin).origin === new URL(siteConfig.url).origin;
   } catch {
     return false;
   }

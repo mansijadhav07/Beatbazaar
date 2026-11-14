@@ -9,6 +9,7 @@ interface ReportableTrack {
 
 export function CopyrightReportForm({ tracks }: { tracks: ReportableTrack[] }) {
   const [trackId, setTrackId] = useState(tracks[0]?.id || "");
+  const [contactEmail, setContactEmail] = useState("");
   const [category, setCategory] = useState("copyright");
   const [details, setDetails] = useState("");
   const [message, setMessage] = useState("");
@@ -22,7 +23,7 @@ export function CopyrightReportForm({ tracks }: { tracks: ReportableTrack[] }) {
       const response = await fetch("/api/reports", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ trackId, category, details }),
+        body: JSON.stringify({ trackId, contactEmail, category, details }),
       });
       const body = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(body.error || "Report submission failed.");
@@ -57,6 +58,18 @@ export function CopyrightReportForm({ tracks }: { tracks: ReportableTrack[] }) {
             <option key={track.id} value={track.id}>{track.title}</option>
           ))}
         </select>
+      </label>
+      <label className="flex flex-col gap-2 text-base font-medium text-ink">
+        Contact email
+        <input
+          required
+          type="email"
+          autoComplete="email"
+          maxLength={254}
+          value={contactEmail}
+          onChange={(event) => setContactEmail(event.target.value)}
+          className="min-h-11 border border-border-strong bg-surface px-3 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+        />
       </label>
       <label className="flex flex-col gap-2 text-base font-medium text-ink">
         Reason

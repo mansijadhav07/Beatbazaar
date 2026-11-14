@@ -17,7 +17,7 @@ export default async function ReportPage() {
   return (
     <SupportArticle
       title="Report a beat"
-      intro="Describe a specific concern about a published listing. Sign in is required to submit."
+      intro="Describe a specific concern about a published listing. Include an email address so the review team can follow up."
     >
       <CopyrightReportForm
         tracks={tracks.map((track) => ({

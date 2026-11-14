@@ -5,7 +5,7 @@ export type ReportStatus = "open" | "in_review" | "resolved" | "dismissed";
 export interface IReport extends Document {
   trackId: mongoose.Types.ObjectId;
   trackTitle: string;
-  reporterId: string;
+  reporterId?: string;
   reporterEmail: string;
   category: "copyright" | "audio_quality" | "misleading_metadata" | "other";
   details: string;
@@ -21,7 +21,7 @@ const ReportSchema = new Schema<IReport>(
   {
     trackId: { type: Schema.Types.ObjectId, required: true, index: true },
     trackTitle: { type: String, required: true },
-    reporterId: { type: String, required: true, index: true },
+    reporterId: { type: String, index: true },
     reporterEmail: { type: String, required: true },
     category: {
       type: String,

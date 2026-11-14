@@ -7,7 +7,6 @@ import { OrderModel } from "@/server/db/models/Order";
 import { TrackModel } from "@/server/db/models/Track";
 import { DownloadRecordModel, DownloadTokenModel } from "@/server/db/models/Download";
 import { checkRateLimit } from "@/server/auth/rate-limit";
-import { createPresignedDownloadUrl } from "@/server/storage/r2";
 import { siteConfig } from "@/config/site";
 
 export const dynamic = "force-dynamic";
@@ -104,45 +103,26 @@ export async function GET(
     const cleanTitle = item.title.replace(/[^a-zA-Z0-9_-]/g, "_");
     const downloadFilename = `${cleanTitle}-${item.licenseTier}.${ext}`;
 
-    const downloadUrl = await createPresignedDownloadUrl({
-      key: targetFile.r2Key,
-      downloadFilename,
-      expiresInSeconds: siteConfig.downloadLinkExpirySeconds,
-    });
-
-    // Update download records and log token
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-      "127.0.0.1";
-    const ipHash = crypto.createHash("sha256").update(ip).digest("hex");
-
-    await DownloadRecordModel.updateOne(
-      { orderId: order._id, orderItemIdx: itemIdx },
-      {
-        $inc: { downloadCount: 1 },
-        $set: { lastDownloadedAt: new Date() },
-      }
-    );
-
+    const rawToken = crypto.randomBytes(24).toString("hex");
     await DownloadTokenModel.create({
       orderId: order._id,
       itemId: `${itemIdx}`,
-      token: crypto.randomBytes(24).toString("hex"),
+      token: crypto.createHash("sha256").update(rawToken).digest("hex"),
       expiresAt: new Date(Date.now() + siteConfig.downloadLinkExpirySeconds * 1000),
-      ipHash,
-      downloadCount: 1,
+      ipHash: "",
+      downloadCount: 0,
     });
 
+    const downloadUrl = `/api/downloads/${rawToken}`;
     // Check if client expects JSON or redirect
     const acceptHeader = request.headers.get("accept") || "";
     if (acceptHeader.includes("application/json")) {
       return NextResponse.json({ downloadUrl, filename: downloadFilename });
     }
 
-    return NextResponse.redirect(downloadUrl, { status: 302 });
+    return NextResponse.redirect(new URL(downloadUrl, request.nextUrl.origin), { status: 302 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to process download";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
