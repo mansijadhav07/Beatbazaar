@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTrackById } from "@/server/catalog/repository";
 import { siteConfig } from "@/config/site";
 import { buildTrackOpenGraphData } from "@/lib/track-open-graph";
+import { getPublicAssetUrl } from "@/lib/public-asset-url";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,8 +22,11 @@ export default async function OpenGraphImage({
     notFound();
   }
 
-  const coverUrl = track.coverKey
-    ? `${siteConfig.publicR2Domain}/${track.coverKey.replace(/^\/+/, "")}`
+  const coverPath = track.coverKey ? getPublicAssetUrl(track.coverKey) : null;
+  const coverUrl = coverPath
+    ? coverPath.startsWith("/")
+      ? new URL(coverPath, siteConfig.url).toString()
+      : coverPath
     : null;
   let coverSource: string | null = null;
   if (coverUrl) {

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 export default async function BuyerOrdersPage() {
-  const session = await requireRole(["buyer", "producer", "admin"]);
+  const session = await requireRole(["buyer"]);
 
   await connectMongoose();
   const orders = await OrderModel.find({ buyerId: session.user.id })

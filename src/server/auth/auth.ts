@@ -4,6 +4,8 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import clientPromise from "@/server/db/mongodb";
 import { sendEmail } from "@/server/email";
+import { getAuthBaseUrl } from "./auth-url";
+import { accountLinkingConfig } from "./account-linking";
 
 type AuthInstance = ReturnType<typeof betterAuth>;
 
@@ -17,7 +19,7 @@ async function buildAuth(): Promise<AuthInstance> {
 
   return betterAuth({
     appName: "Beatbazaar",
-    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    baseURL: getAuthBaseUrl(),
     secret:
       process.env.BETTER_AUTH_SECRET ||
       "development_secret_must_be_overridden_in_production_32_bytes",
@@ -36,7 +38,7 @@ async function buildAuth(): Promise<AuthInstance> {
               <p>Hello ${user.name || "there"},</p>
               <p>We received a request to reset your password for your Beatbazaar account. Click the button below to choose a new password:</p>
               <p style="margin: 24px 0;">
-                <a href="${url}" style="background-color: #2C3947; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
+                <a href="${url}" rel="noopener noreferrer" style="background-color: #2C3947; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
               </p>
               <p>This link expires in 1 hour. If you did not make this request, you can safely ignore this email.</p>
               <hr style="border: none; border-top: 1px solid #E8EDF2; margin: 24px 0;" />
@@ -61,7 +63,7 @@ async function buildAuth(): Promise<AuthInstance> {
               <p>Welcome to Beatbazaar, ${user.name || "there"}!</p>
               <p>Please confirm your email address by clicking the link below:</p>
               <p style="margin: 24px 0;">
-                <a href="${url}" style="background-color: #C2A56D; color: #2C3947; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verify Email Address</a>
+                <a href="${url}" rel="noopener noreferrer" style="background-color: #C2A56D; color: #2C3947; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verify Email Address</a>
               </p>
               <p>This verification link is valid for 24 hours.</p>
               <hr style="border: none; border-top: 1px solid #E8EDF2; margin: 24px 0;" />
@@ -79,13 +81,16 @@ async function buildAuth(): Promise<AuthInstance> {
         enabled: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
       },
     },
+    account: {
+      accountLinking: accountLinkingConfig,
+    },
     user: {
       additionalFields: {
         role: {
           type: "string",
           required: false,
           defaultValue: "buyer",
-          input: false, // Security: role cannot be set or modified via client inputs
+          input: true,
         },
       },
     },

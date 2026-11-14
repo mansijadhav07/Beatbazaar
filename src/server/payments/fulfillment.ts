@@ -12,6 +12,7 @@ import { siteConfig } from "@/config/site";
 import { getPaymentProvider } from "./index";
 import { getPlatformFeePercent } from "./fees";
 import { revalidatePublicTrack } from "@/server/catalog/revalidation";
+import { getAppUrl } from "@/lib/app-url";
 
 class ExclusivePurchaseConflict extends Error {
   constructor(readonly trackId: string) {
@@ -188,7 +189,7 @@ export async function fulfillOrder(orderId: string): Promise<void> {
     revalidatePublicTrack(trackId);
   }
 
-  const orderUrl = `${siteConfig.url}/orders/${orderId}`;
+  const orderUrl = getAppUrl(`/orders/${orderId}`);
   const itemsHtml = fulfilledOrder.items
     .map(
       (item) =>
@@ -204,7 +205,7 @@ export async function fulfillOrder(orderId: string): Promise<void> {
         <h2>Thank you for your order!</h2>
         <p>Your license terms and download links are ready:</p>
         <ul>${itemsHtml}</ul>
-        <p><a href="${orderUrl}">View your order and downloads</a></p>
+        <p><a href="${orderUrl}" rel="noopener noreferrer">View your order and downloads</a></p>
       `,
       text: `Your files and license terms are ready at ${orderUrl}`,
     });

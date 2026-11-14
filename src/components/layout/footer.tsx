@@ -36,7 +36,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#genres" className="hover:text-ink transition-colors">
+                <Link href="/tracks" className="hover:text-ink transition-colors">
                   Browse by Genre
                 </Link>
               </li>

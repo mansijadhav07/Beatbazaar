@@ -51,7 +51,7 @@ describe("requireRole server guard", () => {
     expect(redirectMock).toHaveBeenCalledWith("/login");
   });
 
-  it("redirects to /?error=unauthorized if role does not match", async () => {
+  it("redirects to a clear access message if role does not match", async () => {
     getSessionMock.mockResolvedValueOnce({
       user: {
         id: "user_123",
@@ -68,8 +68,50 @@ describe("requireRole server guard", () => {
       },
     });
 
+    await expect(requireRole(["producer"])).rejects.toThrow();
+    expect(redirectMock).toHaveBeenCalledWith("/unauthorized?required=producer");
+  });
+
+  it("reports the required buyer role for a producer opening buyer pages", async () => {
+    getSessionMock.mockResolvedValueOnce({
+      user: {
+        id: "producer_123",
+        email: "producer@example.com",
+        name: "Producer",
+        role: "producer",
+        emailVerified: true,
+      },
+      session: {
+        id: "session_123",
+        userId: "producer_123",
+        token: "token_123",
+        expiresAt: new Date(Date.now() + 600000),
+      },
+    });
+
+    await expect(requireRole(["buyer"])).rejects.toThrow();
+    expect(redirectMock).toHaveBeenCalledWith("/unauthorized?required=buyer");
+  });
+
+  it("returns not-found for a non-admin opening admin-only pages", async () => {
+    getSessionMock.mockResolvedValueOnce({
+      user: {
+        id: "buyer-1",
+        email: "buyer@example.com",
+        name: "Buyer",
+        role: "buyer",
+        emailVerified: true,
+      },
+      session: {
+        id: "session-1",
+        userId: "buyer-1",
+        token: "token",
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    });
+
     await expect(requireRole(["admin"])).rejects.toThrow();
-    expect(redirectMock).toHaveBeenCalledWith("/?error=unauthorized");
+    expect(notFoundMock).toHaveBeenCalled();
   });
 
   it("returns user session context when role matches", async () => {
@@ -164,6 +206,7 @@ describe("requireRole server guard", () => {
 describe("getCurrentUser helper", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    headersMock.mockResolvedValue(new Headers());
   });
 
   it("returns null if no session exists", async () => {

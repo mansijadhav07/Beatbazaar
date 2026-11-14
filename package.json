@@ -4,16 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "tsx scripts/dev-test.ts",
     "build": "next build",
+    "build:test": "tsx scripts/build-test.ts",
+    "measure:perf:test": "node scripts/measure-lab-vitals.mjs",
     "start": "next start",
     "worker": "NODE_OPTIONS=\"--conditions=react-server\" tsx worker/index.ts",
-    "lint": "next lint && tsc --noEmit",
+    "lint": "eslint . --max-warnings=0 && tsc --noEmit",
     "test": "vitest run",
     "e2e": "node scripts/run-playwright.mjs",
     "db:migrate": "migrate-mongo up",
     "db:migrate:down": "migrate-mongo down",
-    "db:seed": "tsx src/server/db/seed.ts"
+    "db:seed": "tsx src/server/db/seed.ts",
+    "db:create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.750.0",

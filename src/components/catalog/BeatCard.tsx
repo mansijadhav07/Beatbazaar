@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Play, Pause } from "lucide-react";
 import { useAudioPlayer, type PlayerTrack } from "@/components/player/AudioPlayerContext";
 import { siteConfig } from "@/config/site";
+import { getPublicAssetUrl } from "@/lib/public-asset-url";
 
 export interface BeatCardTrack {
   id: string;
@@ -35,13 +36,9 @@ export function BeatCard({
   const isCurrent = currentTrack?.id === track.id;
   const isThisPlaying = isCurrent && isPlaying;
 
-  const coverUrl = track.coverKey
-    ? `${siteConfig.publicR2Domain}/${track.coverKey.replace(/^\//, "")}`
-    : null;
+  const coverUrl = track.coverKey ? getPublicAssetUrl(track.coverKey) : null;
 
-  const previewUrl = track.previewKey
-    ? `${siteConfig.publicR2Domain}/${track.previewKey.replace(/^\//, "")}`
-    : "";
+  const previewUrl = track.previewKey ? getPublicAssetUrl(track.previewKey) : "";
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.preventDefault();

@@ -75,6 +75,21 @@ describe("Auth Endpoint Role Security Integration", () => {
     expect(mockUpdateUser).not.toHaveBeenCalled();
   });
 
+  it("rejects update-user attempts changing an account to producer", async () => {
+    const request = new NextRequest("http://localhost:3000/api/auth/update-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Normal User",
+        role: "producer",
+      }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(403);
+    expect(mockUpdateUser).not.toHaveBeenCalled();
+  });
+
   it("passes legitimate sign-up through to auth handler", async () => {
     const request = new NextRequest("http://localhost:3000/api/auth/sign-up/email", {
       method: "POST",
@@ -89,5 +104,43 @@ describe("Auth Endpoint Role Security Integration", () => {
     const response = await POST(request);
     expect(response.status).toBe(200);
     expect(mockSignUpEmail).toHaveBeenCalled();
+    expect(mockSignUpEmail.mock.calls[0][0].json).toBeDefined();
+  });
+
+  it("passes a producer role through so the selected account type is persisted", async () => {
+    const request = new NextRequest("http://localhost:3000/api/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "producer@example.com",
+        password: "password123",
+        name: "Beat Maker",
+        role: "producer",
+      }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+    const forwardedRequest = mockSignUpEmail.mock.calls[0][0] as Request;
+    await expect(forwardedRequest.json()).resolves.toMatchObject({
+      role: "producer",
+    });
+  });
+
+  it("rejects roles outside the buyer and producer account types", async () => {
+    const request = new NextRequest("http://localhost:3000/api/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "attacker@example.com",
+        password: "password123",
+        name: "Attacker",
+        role: "moderator",
+      }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+    expect(mockSignUpEmail).not.toHaveBeenCalled();
   });
 });

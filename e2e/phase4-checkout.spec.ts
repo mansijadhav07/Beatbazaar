@@ -1,4 +1,3 @@
-import { devices } from "@playwright/test";
 import { test, expect } from "./fixtures";
 
 test.describe("Phase 4: Cart and Checkout Flows", () => {

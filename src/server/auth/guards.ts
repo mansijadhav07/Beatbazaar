@@ -25,6 +25,16 @@ export interface SessionContext {
   };
 }
 
+function getRequiredAccountRole(allowedRoles: UserRole[]): string {
+  if (allowedRoles.includes("producer") && !allowedRoles.includes("buyer")) {
+    return "producer";
+  }
+  if (allowedRoles.includes("buyer") && !allowedRoles.includes("producer")) {
+    return "buyer";
+  }
+  return "account";
+}
+
 /**
  * Server-side guard used in Server Components, layouts, and Server Actions.
  * Validates the session and asserts the user holds one of the required roles.
@@ -48,7 +58,10 @@ export async function requireRole(
       notFound();
     }
     if (!allowedRoles.includes(identity.role)) {
-      redirect("/?error=unauthorized");
+      if (allowedRoles.length === 1 && allowedRoles[0] === "admin") {
+        notFound();
+      }
+      redirect(`/unauthorized?required=${getRequiredAccountRole(allowedRoles)}`);
     }
     return {
       user: {
@@ -81,7 +94,10 @@ export async function requireRole(
   const userRole = ((session.user as Record<string, unknown>).role as UserRole) || "buyer";
 
   if (!allowedRoles.includes(userRole)) {
-    redirect("/?error=unauthorized");
+    if (allowedRoles.length === 1 && allowedRoles[0] === "admin") {
+      notFound();
+    }
+    redirect(`/unauthorized?required=${getRequiredAccountRole(allowedRoles)}`);
   }
 
   if (options?.requireVerifiedEmail && !session.user.emailVerified) {
@@ -113,6 +129,22 @@ export async function requireRole(
 export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
   try {
     const requestHeaders = await headers();
+    if (hasTestIdentityAttempt(requestHeaders)) {
+      const identity = await verifyTestIdentity(
+        requestHeaders,
+        requestHeaders.get("x-playwright-test-role")
+      );
+      if (!identity) return null;
+      return {
+        id: "playwright_test_user",
+        email: "test@beatbazaar.com",
+        name: "Test User",
+        role: identity.role,
+        emailVerified: true,
+        image: null,
+      };
+    }
+
     const authInstance = await getAuthInstance();
     const session = await authInstance.api.getSession({
       headers: requestHeaders,

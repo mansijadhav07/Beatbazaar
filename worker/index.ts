@@ -15,7 +15,7 @@ import {
 import { reconcileRouteTransfers } from "../src/server/payouts/reconciliation";
 import { generateStorageKey, createPresignedDownloadUrl, createR2Client, publicBucketName, deleteObject } from "../src/server/storage/r2";
 import { extractWaveformPeaks, generatePreviewMp3 } from "../src/server/audio/transcoder";
-import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -25,31 +25,6 @@ const WORKER_ID = `worker-${process.pid}-${Date.now().toString(36)}`;
 let isRunning = true;
 
 console.log(`[Beatbazaar Worker] Starting background worker runtime (${WORKER_ID})...`);
-
-// Stream object from R2 and compute whole-file SHA-256
-async function verifyObjectSha256(key: string, expectedHexSha256: string): Promise<boolean> {
-  const s3 = createR2Client();
-  const getCmd = new GetObjectCommand({
-    Bucket: process.env.CLOUDFLARE_R2_PRIVATE_BUCKET_NAME || "beatbazaar-private",
-    Key: key,
-  });
-
-  const res = await s3.send(getCmd);
-  if (!res.Body) return false;
-
-  const hash = crypto.createHash("sha256");
-  const stream = res.Body as NodeJS.ReadableStream;
-
-  return new Promise((resolve, reject) => {
-    stream.on("data", (chunk) => hash.update(chunk));
-    stream.on("end", () => {
-      const computed = hash.digest("hex");
-      const matches = computed.toLowerCase() === expectedHexSha256.toLowerCase();
-      resolve(matches);
-    });
-    stream.on("error", (err) => reject(err));
-  });
-}
 
 async function processTrackJob(trackId: string): Promise<void> {
   await connectMongoose();

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart, type LicenseTier } from "@/components/cart/CartContext";
 import { siteConfig } from "@/config/site";
+import { getPublicAssetUrl } from "@/lib/public-asset-url";
 import { Trash2, ShieldCheck, ArrowRight, Music2, ShoppingBag, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -172,7 +173,7 @@ export function CartClient() {
           ) : (
             summary.map((item) => {
               const coverUrl = item.coverKey
-                ? `${siteConfig.publicR2Domain}/${item.coverKey.replace(/^\//, "")}`
+                ? getPublicAssetUrl(item.coverKey)
                 : null;
 
               return (

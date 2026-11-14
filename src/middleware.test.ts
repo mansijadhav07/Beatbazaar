@@ -97,4 +97,38 @@ describe("protected-route test identity", () => {
 
     expect((await middleware(request)).status).toBe(200);
   });
+
+  it("preserves the protected path and query in the login return parameter", async () => {
+    const request = new NextRequest(
+      "http://127.0.0.1:3000/dashboard/orders?sort=newest&page=2"
+    );
+
+    const response = await middleware(request);
+    const destination = new URL(response.headers.get("location") || "");
+    expect(destination.pathname).toBe("/login");
+    expect(destination.searchParams.get("redirect")).toBe(
+      "/dashboard/orders?sort=newest&page=2"
+    );
+  });
+
+  it("preserves an admin return path for sign-in", async () => {
+    const request = new NextRequest("https://app.example/admin/reports?status=open");
+    const response = await middleware(request);
+    const destination = new URL(response.headers.get("location") || "");
+    expect(destination.pathname).toBe("/login");
+    expect(destination.searchParams.get("redirect")).toBe(
+      "/admin/reports?status=open"
+    );
+  });
+
+  it.each(["/checkout", "/orders/123"])(
+    "redirects unauthenticated visits to %s through sign-in",
+    async (path) => {
+      const request = new NextRequest(`https://app.example${path}`);
+      const response = await middleware(request);
+      const destination = new URL(response.headers.get("location") || "");
+      expect(destination.pathname).toBe("/login");
+      expect(destination.searchParams.get("redirect")).toBe(path);
+    }
+  );
 });

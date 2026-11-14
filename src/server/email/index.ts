@@ -47,7 +47,10 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Email provider error (${response.status}): ${errorText}`);
+    const message =
+      response.status === 403
+        ? "Email provider rejected delivery (HTTP 403). Check Resend domain verification and testing-mode recipient restrictions."
+        : `Email provider rejected delivery (HTTP ${response.status}).`;
+    throw new Error(message);
   }
 }

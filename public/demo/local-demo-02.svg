@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+  <rect width="640" height="640" fill="#E8EDF2"/>
+  <circle cx="320" cy="320" r="226" fill="#547A95"/>
+  <circle cx="320" cy="320" r="172" fill="#2C3947"/>
+  <circle cx="320" cy="320" r="118" fill="#C2A56D"/>
+  <circle cx="320" cy="320" r="52" fill="#E8EDF2"/>
+  <path d="M44 120h176M420 520h176" stroke="#2C3947" stroke-width="12"/>
+  <text x="64" y="82" fill="#2C3947" font-family="Arial,sans-serif" font-size="26" font-weight="700">LOCAL DEMO 02</text>
+</svg>

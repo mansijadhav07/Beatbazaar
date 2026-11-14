@@ -11,7 +11,10 @@ export async function middleware(request: NextRequest) {
 
   // Protect /dashboard and /admin routes
   const isProtectedPath =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
+    pathname === "/checkout" ||
+    pathname.startsWith("/orders");
 
   if (isProtectedPath) {
     // A request that carries test identity headers is a test-identity
@@ -41,7 +44,10 @@ export async function middleware(request: NextRequest) {
 
     if (!hasSessionCookie) {
       const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
+      loginUrl.searchParams.set(
+        "redirect",
+        `${pathname}${request.nextUrl.search}`
+      );
       return NextResponse.redirect(loginUrl);
     }
   }
@@ -50,5 +56,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/checkout",
+    "/orders/:path*",
+  ],
 };

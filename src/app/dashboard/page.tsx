@@ -1,68 +1,76 @@
 import Link from "next/link";
-import { UploadCloud, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Music, ShoppingBag, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireRole } from "@/server/auth/guards";
 
-export default function DashboardPage() {
-  return (
-    <div className="space-y-6">
-      {/* Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <span className="text-xs font-medium text-steel-dark">Active Uploads</span>
-            <CardTitle className="text-2xl font-bold">0</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-steel-dark">Tracks live in catalog</p>
-          </CardContent>
-        </Card>
+export default async function DashboardPage() {
+  const { user } = await requireRole(["producer", "buyer", "admin"]);
 
+  if (user.role === "producer") {
+    return (
+      <div className="space-y-5">
+        <h2 className="text-xl font-semibold text-ink">Producer workspace</h2>
         <Card>
-          <CardHeader className="pb-2">
-            <span className="text-xs font-medium text-steel-dark">License Orders</span>
-            <CardTitle className="text-2xl font-bold">0</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Manage your catalog</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-xs text-steel-dark">Purchases and downloads</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <span className="text-xs font-medium text-steel-dark">Gross Earnings</span>
-            <CardTitle className="text-2xl font-bold">₹0</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-steel-dark">Ready for monthly payout</p>
+          <CardContent className="flex flex-wrap gap-3">
+            <Link href="/dashboard/beats/new">
+              <Button className="gap-2">
+                <UploadCloud aria-hidden="true" className="h-4 w-4" />
+                Upload a beat
+              </Button>
+            </Link>
+            <Link href="/dashboard/beats">
+              <Button variant="outline" className="gap-2">
+                <Music aria-hidden="true" className="h-4 w-4" />
+                Your beats
+              </Button>
+            </Link>
+            <Link href="/dashboard/payouts">
+              <Button variant="outline">Earnings and payouts</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
+    );
+  }
 
-      {/* Primary Action Card */}
+  if (user.role === "admin") {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-ink">Administration</h2>
+        <p className="text-base text-ink">
+          Review moderation, reports, orders, payouts, and account settings.
+        </p>
+        <Link href="/admin">
+          <Button className="gap-2">
+            Open admin workspace
+            <ArrowUpRight aria-hidden="true" className="h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <h2 className="text-xl font-semibold text-ink">Your music account</h2>
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">
-            Producer Workflow
-          </CardTitle>
+          <CardTitle className="text-base font-semibold">Purchased licenses</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-xs sm:text-sm text-steel-dark leading-relaxed">
-            The Phase 2 audio pipeline will enable direct browser-to-R2 audio uploads with
-            automated background preview generation, audio watermarking, and waveform peak extraction.
-          </p>
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Button size="sm" className="gap-2" disabled>
-              <UploadCloud className="h-4 w-4" />
-              <span>Upload New Beat (Phase 2)</span>
+        <CardContent className="flex flex-wrap gap-3">
+          <Link href="/dashboard/orders">
+            <Button className="gap-2">
+              <ShoppingBag aria-hidden="true" className="h-4 w-4" />
+              View your orders
             </Button>
-            <Link href="/tracks">
-              <Button size="sm" variant="outline" className="gap-1.5">
-                <span>Browse Storefront</span>
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
-          </div>
+          </Link>
+          <Link href="/tracks">
+            <Button variant="outline">Browse beats</Button>
+          </Link>
         </CardContent>
       </Card>
     </div>

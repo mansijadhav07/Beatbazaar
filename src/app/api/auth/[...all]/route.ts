@@ -2,6 +2,7 @@ import { toNextJsHandler } from "better-auth/next-js";
 import { getAuthInstance } from "@/server/auth/auth";
 import { checkRateLimit } from "@/server/auth/rate-limit";
 import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -45,9 +46,29 @@ export const POST = async (request: NextRequest) => {
     try {
       const cloned = request.clone();
       const body = await cloned.json();
-      if (body && body.role && body.role.toLowerCase() === "admin") {
+      if (path.includes("/sign-up/email")) {
+        const role = body?.role ?? "buyer";
+        const parsedRole = z.enum(["buyer", "producer"]).safeParse(role);
+        if (!parsedRole.success && role === "admin") {
+          return NextResponse.json(
+            { error: "Admin role cannot be self-assigned or updated via client request." },
+            { status: 403 }
+          );
+        }
+        if (!parsedRole.success) {
+          return NextResponse.json(
+            { error: "Role must be buyer or producer." },
+            { status: 400 }
+          );
+        }
+      } else if (body && Object.hasOwn(body, "role")) {
         return NextResponse.json(
-          { error: "Admin role cannot be self-assigned or updated via client request." },
+          {
+            error:
+              body.role === "admin"
+                ? "Admin role cannot be self-assigned or updated via client request."
+                : "Role cannot be changed through the profile update endpoint.",
+          },
           { status: 403 }
         );
       }

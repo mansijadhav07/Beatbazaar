@@ -7,7 +7,13 @@ import { Music2, Lock, Mail, User as UserIcon, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { signIn, signUp } from "@/server/auth/auth-client";
+import {
+  EMAIL_DELIVERY_HELP_MESSAGE,
+  resendVerificationEmail,
+  signIn,
+  signUp,
+} from "@/server/auth/auth-client";
+import { getSafeReturnPath } from "@/lib/safe-return-path";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -26,31 +32,48 @@ export default function LoginForm() {
   );
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [noticeMsg, setNoticeMsg] = useState<string | null>(null);
+  const [verificationPending, setVerificationPending] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const socialAuthError = searchParams.get("error");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
+    setNoticeMsg(null);
 
     try {
+      const redirectUrl = getSafeReturnPath(searchParams.get("redirect"));
       if (mode === "signin") {
         const res = await signIn.email({ email, password });
 
         if (res.error) {
+          if (res.error.code === "EMAIL_NOT_VERIFIED") {
+            setVerificationPending(true);
+            setNoticeMsg("Verify your email address before signing in. You can request a new link below.");
+            setLoading(false);
+            return;
+          }
+          setVerificationPending(false);
           setErrorMsg(res.error.message || "Failed to sign in. Please verify your credentials.");
           setLoading(false);
           return;
         }
 
-        const redirectUrl = searchParams.get("redirect") || "/dashboard";
         router.push(redirectUrl);
+        return;
       } else {
-        const res = await signUp.email({
+        const signupPayload: Parameters<typeof signUp.email>[0] & {
+          role: "buyer" | "producer";
+        } = {
           email,
           password,
           name,
           role,
-        } as any);
+          callbackURL: redirectUrl,
+        };
+        const res = await signUp.email(signupPayload);
 
         if (res.error) {
           setErrorMsg(
@@ -60,13 +83,39 @@ export default function LoginForm() {
           return;
         }
 
-        const redirectUrl = searchParams.get("redirect") || "/dashboard";
-        router.push(redirectUrl);
+        setNoticeMsg(
+          "Your account was created. Verify your email before signing in. If the message does not arrive, request a new link below."
+        );
+        setVerificationPending(true);
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || "An unexpected authentication error occurred.");
+    } catch (error: unknown) {
+      setErrorMsg(
+        error instanceof Error
+          ? error.message
+          : "An unexpected authentication error occurred."
+      );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResendingVerification(true);
+    setErrorMsg(null);
+    setNoticeMsg(null);
+
+    try {
+      await resendVerificationEmail(email);
+      setVerificationPending(true);
+      setNoticeMsg(
+        "If an unverified account exists for this address, a new verification link has been sent."
+      );
+    } catch (error: unknown) {
+      setErrorMsg(
+        error instanceof Error ? error.message : EMAIL_DELIVERY_HELP_MESSAGE
+      );
+    } finally {
+      setResendingVerification(false);
     }
   };
 
@@ -75,6 +124,7 @@ export default function LoginForm() {
       await signIn.social({
         provider: "google",
         callbackURL: "/dashboard",
+        errorCallbackURL: "/login?error=account_not_linked",
       });
     } catch {
       setErrorMsg("Google authentication is currently being configured.");
@@ -141,6 +191,43 @@ export default function LoginForm() {
             <div className="mb-4 flex items-start gap-2 rounded border border-status-danger/30 bg-status-danger-bg p-3 text-xs text-status-danger">
               <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
+            </div>
+          )}
+          {socialAuthError === "account_not_linked" && (
+            <div
+              role="alert"
+              className="mb-4 flex items-start gap-2 rounded border border-status-danger/30 bg-status-danger-bg p-3 text-xs text-status-danger"
+            >
+              <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <span>
+                This email already has an account. Sign in with that account and
+                verify its email before connecting Google.{" "}
+                <Link
+                  href="/verify-email"
+                  className="font-semibold underline underline-offset-2"
+                >
+                  Request a verification link
+                </Link>
+                .
+              </span>
+            </div>
+          )}
+          {noticeMsg && (
+            <div className="mb-4 space-y-3">
+              <p role="status" className="text-sm text-ink">
+                {noticeMsg}
+              </p>
+              {verificationPending && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleResendVerification}
+                  disabled={resendingVerification || !email.trim()}
+                >
+                  {resendingVerification ? "Sending..." : "Resend verification email"}
+                </Button>
+              )}
             </div>
           )}
 

@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
 import dotenv from "dotenv";
+import { resolvePlaywrightBaseUrl } from "./playwright-env.mjs";
 
 dotenv.config({ path: ".env.local", quiet: true });
 
@@ -16,18 +17,20 @@ const testDatabaseName = decodeURIComponent(
 if (!/(^|[_-])test($|[_-])/i.test(testDatabaseName)) {
   throw new Error("MONGODB_TEST_URI must use a database name containing test.");
 }
+process.env.MONGODB_APPLICATION_URI = process.env.MONGODB_URI;
 process.env.MONGODB_URI = testUri;
 
 const require = createRequire(import.meta.url);
 const playwrightCli = require.resolve("@playwright/test/cli");
 const testArgs = process.argv.slice(2);
+const testBaseUrl = resolvePlaywrightBaseUrl(process.env.PLAYWRIGHT_TEST_BASE_URL);
 const explicitTestFiles = testArgs.filter((arg) =>
   /\.(?:spec|test)\.[cm]?[jt]sx?$/.test(arg)
 );
 const usesAdminTestIdentity =
   explicitTestFiles.length === 0 ||
   explicitTestFiles.some((arg) =>
-    /(?:phase6-admin|accessibility)\.spec\./.test(arg)
+    /(?:phase6-admin|accessibility|account-menu|link-audit)\.spec\./.test(arg)
   );
 const result = spawnSync(
   process.execPath,
@@ -38,6 +41,11 @@ const result = spawnSync(
       ...process.env,
       PLAYWRIGHT_TEST_AUTH_ENABLED: "true",
       PLAYWRIGHT_TEST_AUTH_SECRET: randomBytes(32).toString("base64url"),
+      PLAYWRIGHT_TEST_BASE_URL: testBaseUrl,
+      NEXT_PUBLIC_APP_URL: testBaseUrl,
+      BETTER_AUTH_URL: testBaseUrl,
+      EMAIL_SERVER_API_KEY: "mock",
+      EMAIL_FROM: "test@beatbazaar.test",
       ...(usesAdminTestIdentity ? { PLAYWRIGHT_TEST_ALLOW_ADMIN: "true" } : {}),
     },
   }

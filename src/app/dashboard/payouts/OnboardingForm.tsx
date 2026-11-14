@@ -134,7 +134,7 @@ export default function OnboardingForm() {
           <a
             href="https://razorpay.com/terms/"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="font-medium text-steel underline underline-offset-2"
           >
             Razorpay terms

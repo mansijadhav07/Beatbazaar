@@ -15,6 +15,7 @@ import { ReportBeatDialog } from "@/components/catalog/ReportBeatDialog";
 import { siteConfig } from "@/config/site";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { buildTrackStructuredData } from "@/lib/structured-data";
+import { getPublicAssetUrl } from "@/lib/public-asset-url";
 import { FileAudio, Lock } from "lucide-react";
 import type { ILicenseOption } from "@/server/db/models/Track";
 
@@ -169,11 +170,9 @@ export default async function TrackPage({ params }: TrackPageProps) {
 
   const isSoldExclusive = track.status === "sold_exclusive";
   const previewFile = track.files.find((f) => f.kind === "preview");
-  const coverUrl = track.coverKey
-    ? `${siteConfig.publicR2Domain}/${track.coverKey.replace(/^\//, "")}`
-    : null;
+  const coverUrl = track.coverKey ? getPublicAssetUrl(track.coverKey) : null;
   const previewUrl = previewFile
-    ? `${siteConfig.publicR2Domain}/${previewFile.r2Key.replace(/^\//, "")}`
+    ? getPublicAssetUrl(previewFile.r2Key)
     : "";
 
   const relatedTracks = await getRelatedTracks(

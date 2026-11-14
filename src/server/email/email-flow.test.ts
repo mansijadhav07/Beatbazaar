@@ -1,10 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterEach, describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
 describe("Email Verification and Reset Token Flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("EMAIL_SERVER_API_KEY", "mock");
+    vi.stubEnv("EMAIL_FROM", "test@beatbazaar.test");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
   });
 
   it("sendEmail logs to console in development when no API key is provided", async () => {
@@ -19,6 +26,33 @@ describe("Email Verification and Reset Token Flow", () => {
 
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[DEV EMAIL LOG]"));
     consoleSpy.mockRestore();
+  });
+
+  it("reports Resend testing-mode rejection without exposing provider response details", async () => {
+    vi.stubEnv("EMAIL_SERVER_API_KEY", "re_test_provider_key");
+    const providerResponse =
+      '{"message":"Only send to account-owner@example.com","name":"validation_error"}';
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(providerResponse, {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+    );
+    const { sendEmail } = await import("@/server/email");
+
+    await expect(
+      sendEmail({
+        to: "other@example.com",
+        subject: "Verify Email",
+        html: "<p>Verification link</p>",
+      })
+    ).rejects.toMatchObject({
+      message:
+        "Email provider rejected delivery (HTTP 403). Check Resend domain verification and testing-mode recipient restrictions.",
+    });
   });
 
   it("password reset response does not reveal whether the email exists", async () => {

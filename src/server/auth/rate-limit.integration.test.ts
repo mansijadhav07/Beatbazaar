@@ -18,7 +18,7 @@ describe.skipIf(!runDatabaseTests)("MongoRateLimiter MongoDB integration", () =>
     if (!testUri) {
       throw new Error("MONGODB_TEST_URI is required for this integration test.");
     }
-    if (testUri === process.env.MONGODB_URI) {
+    if (testUri === process.env.MONGODB_APPLICATION_URI) {
       throw new Error("MONGODB_TEST_URI must not match MONGODB_URI.");
     }
     let databaseName: string;

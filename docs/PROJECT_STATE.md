@@ -1,225 +1,208 @@
 # Project state
 
-This is the verified implementation snapshot for the Beatbazaar repository.
-It distinguishes automated local checks from behavior that still requires
-provider approval, legal or accounting decisions, a deployed environment, or
-a physical device.
+This snapshot records the local verification and repair pass only. A feature is
+not treated as complete merely because implementation code exists. External
+credentials, legal/accounting decisions, production behavior, and physical
+device checks are kept separate from automated evidence.
 
-## Current status
+## Summary
 
-- The application builds with Next.js 15 and TypeScript.
-- The database seed command connects using the configured application
-  database. It reports existing track and producer counts and does not insert
-  demo records.
-- Authentication, buyer checkout, producer upload and dashboard, admin
-  foundation, and Razorpay test-mode payment and payout integrations are
-  implemented.
-- Payout code covers linked-account onboarding, ledger entries, transfer
-  holds, KYC activation, disputes, refunds, and reconciliation reporting.
-  Provider operations have not been tested with live credentials.
-- International payments remain disabled. The payout mode configuration is a
-  seam for possible later USD payouts, not an implemented manual USD process.
-- Phase 7 public pages include producer profiles, data-backed genre,
-  language, and location landings, legal-review policy drafts, data-dependent
-  home sections, sitemaps, canonical and noindex rules, structured data,
-  generated track Open Graph images, and cache revalidation.
-- Pages below a configured landing-page content threshold return successfully
-  with `noindex` and are excluded from the relevant sitemap. Content and
-  currency do not vary by visitor IP.
-- Legal and license language remains draft content. The draft pages show a
-  legal-review notice outside production and are tracked in the legal marker
-  registry.
-- The seed and test fixtures used for verification are not product content.
-  There is no claim of real catalog data where the database is empty.
+- The project is a Next.js 15 marketplace for beats and licenses.
+- The application has real-data public catalog routes, role-specific account
+  areas, producer upload and payout screens, admin routes, policy drafts, SEO
+  metadata, and Razorpay test-mode payment/payout code.
+- The launch setting is INR only. International payments are disabled.
+- `payoutsEnabled` defaults to false. The feature flag has a unit test.
+- MongoDB is used for the job queue rather than adding a Redis service. This is
+  an intentional infrastructure choice, not a feature claim about Redis.
+- Policy and license pages remain drafts. Legal, tax, platform fee, refund
+  window, and Razorpay Route eligibility decisions remain owner-blocked.
+- The seed command is development-only and requires a distinct test-named
+  database. It provisions local buyer, producer, and admin accounts plus
+  local test catalog records and prints generated passwords once per run.
+- `npm run dev` now targets that same validated test database, so local
+  authentication uses the seeded account records rather than `MONGODB_URI`.
+- Seeded Better Auth credential records store the account `userId` as a BSON
+  ObjectId, matching the MongoDB adapter's user reference. Legacy string
+  references are normalized when the local account is provisioned.
+- Local seed assets are committed under `public/demo/`. They are test fixtures,
+  not commercial catalog content.
+- There is no admin signup. Use the local-only bootstrap instructions in
+  [feature-url-map.md](./feature-url-map.md).
 
-## Step 0g verification
+## Repairs made in this verification pass
 
-- Test identity is centralized in
-  [`test-identity.ts`](../src/server/auth/test-identity.ts). Production
-  startup refuses the test identity mode. Secret comparison is constant-time,
-  Host headers are not used as a security control, failed identity attempts
-  return 404, and admin identity requires a separate explicit opt-in.
-- Test coverage: 17 test-identity helper cases, 7 middleware cases, and 9
-  authorization guard cases, 33 total.
-- The MongoDB-backed rate limiter integration test passed separately against
-  the isolated `test_database`: 1 passed. The normal Vitest run leaves this
-  opt-in integration test skipped unless its database URI is configured.
-- Admin route tests cover origin validation, step-up credentials and
-  sensitive-field exclusion, test-mode step-up opt-in, moderation and
-  featured-track validation, report and refund validation, export
-  authorization, and sign-in requirements for reports.
-- Payouts are disabled by default. A config test verifies the default is
-  false and explicit enablement works.
-- The legal registry test fails when `LEGAL REVIEW REQUIRED` appears outside
-  the registry and checks the registered markers.
-- `node scripts/scan-secrets.mjs` found no recognized credentials in tracked
-  repository files or Git history.
+- Added role-aware account links and a role-specific dashboard entry point.
+- Preserved protected paths and query strings in unauthenticated login
+  redirects and constrained return paths to safe relative URLs.
+- Restricted signup to buyer and producer roles and rejected admin self
+  assignment.
+- Made browser tests and auth links use the actual Playwright server origin.
+- Set Playwright email delivery to `mock`, preventing tests from sending mail
+  to a configured external provider.
+- Resolved producer usernames for track cards on `/tracks`, so producer names
+  link to their public profiles.
+- Fixed an external Razorpay terms link to use both `noopener` and
+  `noreferrer`.
+- Replaced the deprecated/unsupported `next lint` command with zero-warning
+  ESLint plus TypeScript checks. Generated Next output is excluded from lint.
+- Restricted buyer order history to buyer accounts and corrected wrong-role
+  messages to name the required account type.
+- Updated the email test to use a mock provider rather than inherited
+  credentials.
+- Added a role-based link crawl and route URL map, audit, and feature test
+  matrix.
+- Fixed seeded admin sign-in: the seed wrote `account.userId` as a string while
+  the Better Auth MongoDB adapter queried it as an ObjectId. A real login
+  returned HTTP 401 before the fix. After normalizing the reference, browser
+  sign-in returned HTTP 200 and opened the admin route.
+- Added a resend verification action after successful registration and when
+  sign-in is blocked for an unverified email. The verification page can also
+  request a link and now sends token links through Better Auth instead of
+  treating the presence of a token as proof of verification.
+- Preserved the application MongoDB URI for Playwright's safety check while
+  keeping the app process pointed only at the isolated test database. This
+  fixed Playwright's dev-server startup rejection when its test launcher sets
+  `MONGODB_URI` to `MONGODB_TEST_URI`.
+- Google account linking requires both the existing local account and Google
+  to verify the exact same email. Different email addresses and unverified
+  Google claims remain blocked. Added a policy test.
+- Changed the development webpack cache from filesystem packs to in-memory
+  caching after observing Next.js fail on a missing `.pack.gz` cache file.
+  Added a regression test for the configured cache mode.
+- Confirmed the verification email failure is Resend testing-mode policy:
+  the configured sender domain is `resend.dev`, and the provider allows
+  sending only to the account owner's address until a domain is verified.
+  Provider error bodies are no longer included in server exceptions. The
+  resend screen now explains the domain setup needed for delivery.
 
-## Phase 7 implementation
+## Test identity and integration evidence
 
-- Producer profile pages are server rendered and show the available profile
-  details and live beats. Empty profiles are noindex and are excluded from
-  the producer sitemap. Producer links are used where producer names appear
-  in the catalog, track page, and player.
-- Producer usernames colliding with reserved routes are rejected. City
-  landing slugs that collide with state slugs receive a disambiguating
-  `-city` suffix.
-- Genre, language, state, and city landing pages derive their content from
-  real database records. Indexable pages include data-derived counts, common
-  genres and languages, top beats, `ItemList`, and breadcrumbs.
-- Home sections for trending, newest, admin-featured tracks, and genres are
-  hidden when their real data is empty. Empty and populated states are
-  covered by tests.
-- License overview, producer guidelines, and copyright and takedown pages
-  were added. The takedown page links to the report form. These are drafts,
-  not final legal advice.
-- Metadata and structured data coverage includes `Organization`,
-  `WebSite` with `SearchAction`, `MusicRecording`, `Product` with `Offer`,
-  `BreadcrumbList`, `ProfilePage`, `ItemList`, and `FAQPage` only on a page
-  that visibly contains the FAQ.
-- Revalidation is wired for beat approval, rejection, removal, exclusive
-  sale, and producer profile changes. Tests cover the revalidation triggers.
-- Track Open Graph generation returns a PNG with the expected dimensions and
-  caching headers when storage is mocked, and has a missing-cover fallback.
-- Waveform code is lazy loaded and only renders waveform data that exists.
-  Leading catalog and profile images have explicit sizing and priority where
-  appropriate.
-- The Playwright server uses a separate `.next-playwright` build directory to
-  avoid sharing Next.js development output. Generated `.next-perf` output is
-  ignored and is not source content.
+- Test identity implementation is in
+  [test-identity.ts](../src/server/auth/test-identity.ts). Its tests cover
+  production startup rejection, constant-time secret comparison behavior,
+  allowed roles, admin opt-in, failed identity behavior, and absence of Host
+  header trust.
+- `src/server/auth/test-identity.test.ts`: 17 tests.
+- `src/middleware.test.ts`: 11 tests in the current repository.
+- `src/server/auth/guards.test.ts`: 11 tests.
+- Together these cover 39 test-identity and authorization cases.
+- The opt-in MongoDB rate limiter integration test passed in the full Vitest
+  run against the isolated test database. It is not skipped in this
+  environment.
+- Admin API tests are in
+  [admin-routes.test.ts](../src/app/api/admin/admin-routes.test.ts). They
+  cover foreign-origin rejection, scoped step-up tokens and sensitive-field
+  exclusion, missing password credentials, the separate test-admin opt-in,
+  moderation and featured-state validation, report decisions, refund reasons,
+  export authorization, and unauthenticated public report submission. They do
+  not execute every admin state change against persistent data. See the
+  [feature test matrix](./feature-test-matrix.md) for coverage limits.
+- `src/config/site.test.ts` checks that payouts default to false and require
+  explicit enablement.
+- `src/server/legal/legal-registry.test.ts` checks the legal marker registry.
 
-## Verification completed
+## Latest verified commands
 
-Latest verification for this snapshot:
+Final local verification:
 
-- `npm run build` with `NODE_ENV=production` and the isolated test database:
-  passed. The build reported 103 kB shared first-load JavaScript, 116 kB for
-  home and producer pages, 129 kB for `/tracks`, and 143 kB for a track page.
-- `npm run e2e -- --project="Desktop Chrome" --project="Desktop Safari" --project="Mobile Safari (iPhone 14)" --project="Mobile Safari (iPhone SE)" --project="Tablet Safari (iPad Pro 11)" --workers=1`:
-  91 passed, 24 skipped, 0 failed, 115 total. Skips are intentional project
-  scope: accessibility checks target Desktop Chrome and iPhone 14; the admin
-  and public-support device checks and the upload flow target iPhone 14.
-- Focused axe checks passed on Desktop Chrome and iPhone 14 for home,
-  `/tracks`, track detail, producer profile, cart, checkout, login, producer
-  dashboard, and admin settings. Keyboard focus, reduced-motion behavior,
-  labels, and player and waveform control names were also checked. No
-  physical iPhone test has been completed.
-- Latest complete Vitest run before the final build: 153 passed, 1 skipped.
-  The skipped test is the opt-in MongoDB rate-limiter integration test. It
-  passed separately against `test_database`.
-- `npm run lint` passed with no ESLint warnings or errors and TypeScript
-  passed. Next.js reports that `next lint` is deprecated.
-- Empty-catalog production output returned 200 and omitted featured,
-  trending, newest, and genre sections. Populated home section behavior was
-  verified in E2E with test-only fixtures.
-- `git diff --check` passed after the final documentation and config updates.
+- `npm test`: 47 test files passed, 186 tests passed, zero failed.
+- `npm run lint`: zero ESLint warnings/errors and TypeScript check passed.
+- Focused auth Playwright matrix: 29 passed, 6 skipped, 0 failed across
+  Desktop Chrome, Desktop Safari, iPhone 14, iPhone SE, iPad Pro 11 portrait
+  and landscape, and Pixel 7. The database-backed auth journey runs only in
+  Desktop Chrome to avoid duplicate writes; the UI resend checks ran in all
+  seven profiles.
+- OAuth account-linking policy test confirms both local and provider email
+  verification are required and different addresses are forbidden.
+- Development webpack cache test confirms local dev uses memory caching.
+  The auth Playwright run started its Next.js dev server without the missing
+  `.pack.gz` cache error.
+- The ngrok `ngrok-free.dev` origin pattern was checked against the exact
+  reported hostname. Login now returns from an unlinked Google callback to a
+  clear verification recovery message instead of Better Auth's generic error
+  route.
+- Secret scan: `node scripts/scan-secrets.mjs` reported no recognized
+  credentials in repository files or Git history.
+- Em-dash scan over `src`, `e2e`, `worker`, `scripts`, and `docs`: no matches.
+- `npm run build:test`: production build passed using the validated isolated
+  test database. Build output reported 103 kB shared first-load JavaScript,
+  116 kB for home, 129 kB for `/tracks`, and 143 kB for track detail.
+- Five-project Playwright matrix: 156 passed, 24 skipped, 0 failed, 180 total.
+  Skips are limited to iPhone 14-specific upload, admin-sheet, and support-page
+  checks, plus axe checks scoped to Desktop Chrome and iPhone 14. Details are
+  in [link-report.md](./link-report.md).
+- The link-audit spec passed across the five selected projects. It checks
+  routes, sitemap destinations, redirects, canonical origins and paths,
+  external-link relations, role access, and desktop/mobile navigation.
+- Role-aware account navigation on Desktop Chrome and iPhone 14: 6 passed.
+- `npm run measure:perf:test`: production build, emulated iPhone 14, 4x CPU
+  throttling, 150 ms network latency, 1.6 Mbps download, 0.75 Mbps upload.
+  The interaction number is a single-interaction Event Timing proxy, not
+  field INP.
 
-### Mobile-throttled lab measurements
+| Page | LCP | Interaction proxy | CLS |
+|---|---:|---:|---:|
+| Home | 508 ms | 48 ms | 0 |
+| `/tracks` | 340 ms | 16 ms | 0 |
+| Track detail | 324 ms | 16 ms | 0 |
+| Producer profile | 336 ms | 16 ms | 0 |
 
-The same production mobile emulation profile was used before and after the
-image-loading and waveform work: Chromium emulating iPhone 14, 4x CPU
-throttling, 150 ms latency, 1.6 Mbps download, and 0.75 Mbps upload.
-Interaction latency is a lab estimate, not field INP. These are synthetic
-measurements, not production Core Web Vitals.
+These are synthetic local lab measurements. A before baseline was not captured
+in this verification, and no production field INP or real-device measurement
+is claimed.
 
-| Page | LCP before | LCP after | Interaction latency before | Interaction latency after | CLS before | CLS after |
-|---|---:|---:|---:|---:|---:|---:|
-| Home | 648 ms | 636 ms | 56 ms | 56 ms | 0 | 0 |
-| `/tracks` | 924 ms | 780 ms | 40 ms | 40 ms | 0 | 0 |
-| Track page | 548 ms | 528 ms | 40 ms | 40 ms | 0 | 0 |
-| Producer page | 544 ms | 524 ms | 40 ms | 40 ms | 0 | 0 |
+The full producer signup, verified email, profile, upload, worker processing,
+admin approval, buyer checkout, download, and admin refund journey remains
+missing as one Playwright test. Its constituent UI and service tests do not
+prove that complete lifecycle.
 
-These runs used temporary records in the isolated test database. The records
-were removed after measurement. No real catalog cover art was available for
-the fixture, so the results do not validate production image delivery.
+All current results and exact final counts must be refreshed after the
+remaining checks. See [compliance-audit.md](./compliance-audit.md),
+[link-report.md](./link-report.md), and
+[feature-test-matrix.md](./feature-test-matrix.md).
 
-## Manual checks still required
+## Owner and external-service blockers
 
-On a physical iPhone, verify:
+- Legal counsel must approve terms, privacy, refund, delivery, producer
+  guidelines, copyright/takedown, and license wording.
+- A chartered accountant and owner must decide GST, TDS, invoicing, platform
+  fees, and the refund window. No values are inferred.
+- Razorpay Route eligibility and production account onboarding need owner
+  confirmation.
+- Real Razorpay webhooks/payments, Cloudflare R2, Google OAuth, and production
+  email are not validated by these local tests.
+- Google OAuth linking was not exercised against Google's external callback.
+  Local credentials are present, but their validity and the configured
+  redirect URI still require an owner-side sign-in test.
+- No local S3-compatible emulator has been added. Ask before adding an
+  emulator or new dependency.
+- A before/after performance comparison, production field metrics, and a
+  manual physical iPhone run are not available in this local test pass.
+- Implement and run the complete producer-to-refund Playwright journey. Real
+  R2-backed processing and real provider operations still need credentials or
+  approved test doubles.
 
-- Header and bottom player respect safe areas in portrait and landscape.
-- Search, filters, play, pause, seek, volume, queue, and buy actions work by
-  touch and do not start audio before a user gesture.
-- The keyboard does not cover focused fields or fixed bottom controls during
-  login, profile editing, report submission, cart, and checkout.
-- Reduced-motion settings keep content visible, and VoiceOver announces
-  links, form labels, player controls, and waveform seeking meaningfully.
-- The producer dashboard, sales export, and payout status remain readable at
-  phone widths.
+## Manual verification
 
-## Remaining work before launch
+Use the [feature URL map](./feature-url-map.md) for route access and seeded
+account setup. For actual local test credentials, run `npm run db:seed` against
+the isolated test database and use the randomly generated passwords printed
+once by that command. Running it again rotates those passwords.
 
-- Complete the physical iPhone checks above and validate Core Web Vitals on a
-  representative deployed environment.
-- Obtain legal review of terms, privacy, refund, delivery, producer
-  guidelines, copyright and takedown, and license language.
-- Ask a chartered accountant to decide who supplies each sale, GST and
-  invoice treatment, any TDS obligations, payment-fee accounting, and refund
-  and settlement records. No rates or tax treatment are assumed here.
-- Confirm Razorpay Route eligibility and producer entity onboarding
-  requirements. Exercise onboarding, captured-payment transfer holds,
-  release, refund, dispute, reversal, and settlement reconciliation in an
-  approved provider test account before any live launch.
-- Confirm production domain, support contact, storage, authentication,
-  payment, and email configuration. Keep international payments disabled
-  until separately approved and implemented.
-- Apply migrations only to a database explicitly confirmed as the intended
-  environment. Do not direct local tests or seed operations at the primary
-  database unintentionally.
-- The seed command does not create demo data. The current catalog remains
-  whatever real approved records exist in the configured database.
-
-Accounting and Route decisions are recorded in
-[`payouts-legal-review.md`](./payouts-legal-review.md). R2 bucket CORS
-guidance is in [`r2-cors.md`](./r2-cors.md).
-
-## Local commands
+Suggested commands:
 
 ```sh
 npm run dev
 npm run worker
-npm test
 npm run lint
-npm run build
+npm test
+npm run build:test
+npm run measure:perf:test
 npm run e2e
 node scripts/scan-secrets.mjs
 ```
 
-Run the five-project browser matrix with:
-
-```sh
-npm run e2e -- --project="Desktop Chrome" --project="Desktop Safari" --project="Mobile Safari (iPhone 14)" --project="Mobile Safari (iPhone SE)" --project="Tablet Safari (iPad Pro 11)" --workers=1
-```
-
-Database commands operate on the URI configured in the environment. Review
-the target before running them:
-
-```sh
-npm run db:migrate
-npm run db:seed
-```
-
-## Environment configuration
-
-Use `.env.example` as the key list. Keep real values in an ignored local
-environment file or a deployment secret manager. Required values depend on
-which integration is exercised:
-
-- Local app and database: `NEXT_PUBLIC_APP_URL`, `MONGODB_URI`,
-  `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL`.
-- MongoDB integration test only: `MONGODB_TEST_URI`, pointing to the
-  separate test database.
-- Google sign-in: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
-- R2 uploads and downloads: `CLOUDFLARE_R2_ACCOUNT_ID`,
-  `CLOUDFLARE_R2_ACCESS_KEY_ID`, `CLOUDFLARE_R2_SECRET_ACCESS_KEY`,
-  `CLOUDFLARE_R2_PUBLIC_BUCKET_NAME`, `CLOUDFLARE_R2_PRIVATE_BUCKET_NAME`,
-  and `NEXT_PUBLIC_R2_PUBLIC_DOMAIN`.
-- Razorpay test integration: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and
-  `RAZORPAY_WEBHOOK_SECRET`. Use test credentials for local validation.
-- Business configuration: explicitly review `PLATFORM_FEE_PERCENT`,
-  `REFUND_WINDOW_DAYS`, and `PAYOUT_MODE`. The example refund window is a
-  placeholder, not an approved customer policy.
-- Transactional email: `EMAIL_SERVER_API_KEY` and `EMAIL_FROM`.
-- Support contact: `NEXT_PUBLIC_SUPPORT_EMAIL`.
-
-Never commit `.env` files, API keys, webhook secrets, or personal KYC data.
+The worker requires MongoDB, ffmpeg, and configured storage to process real
+uploads. Do not start it against the application database while verifying
+local changes.

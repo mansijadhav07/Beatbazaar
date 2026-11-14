@@ -9,6 +9,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { AudioPlayerProvider } from "@/components/player/AudioPlayerContext";
 import { PersistentPlayer } from "@/components/player/PersistentPlayer";
 import { CartProvider } from "@/components/cart/CartContext";
+import { getCurrentUser } from "@/server/auth/guards";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -38,11 +39,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getCurrentUser();
+
   return (
     <html lang="en-IN">
       <body className="flex min-h-[100dvh] flex-col bg-surface text-ink antialiased">
@@ -60,11 +63,11 @@ export default function RootLayout({
                 ),
               }}
             />
-            <Header />
+            <Header role={user?.role ?? null} />
             <main className="flex-1 pb-24 md:pb-20">{children}</main>
             <Footer />
             <PersistentPlayer />
-            <MobileNav />
+            <MobileNav role={user?.role ?? null} />
           </CartProvider>
         </AudioPlayerProvider>
       </body>

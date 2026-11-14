@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import path from "path";
+import { getDevelopmentWebpackCache } from "./src/lib/next-webpack-cache";
 
 const cspHeader = `
     default-src 'self';
@@ -45,6 +46,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   outputFileTracingRoot: path.join(__dirname),
+  allowedDevOrigins: ["*.ngrok-free.dev"],
+  webpack(config, { dev }) {
+    if (dev) {
+      config.cache = getDevelopmentWebpackCache();
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       {

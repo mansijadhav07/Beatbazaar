@@ -1,10 +1,10 @@
 export const up = async (db) => {
   try {
     await db.collection("tracks").dropIndex("idx_tracks_catalog_text_search");
-  } catch (_e) {}
+  } catch {}
   try {
     await db.collection("tracks").dropIndex("TrackTextSearchIndex");
-  } catch (_e) {}
+  } catch {}
 
   await db.collection("tracks").createIndex(
     {
@@ -25,7 +25,7 @@ export const up = async (db) => {
 export const down = async (db) => {
   try {
     await db.collection("tracks").dropIndex("idx_tracks_catalog_text_search");
-  } catch (_e) {}
+  } catch {}
 
   await db.collection("tracks").createIndex(
     {

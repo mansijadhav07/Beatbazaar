@@ -4,15 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Music2, Search, UploadCloud, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/lib/validations/user";
 
-export function MobileNav() {
+export function MobileNav({ role }: { role: UserRole | null }) {
   const pathname = usePathname();
 
   const navItems = [
     { label: "Home", href: "/", icon: Music2 },
     { label: "Tracks", href: "/tracks", icon: Search },
-    { label: "Upload", href: "/login?intent=producer", icon: UploadCloud },
-    { label: "Account", href: "/login", icon: User },
+    {
+      label: role === "producer" ? "Upload" : "Sell",
+      href: role === "producer" ? "/dashboard/beats/new" : "/login?intent=producer",
+      icon: UploadCloud,
+    },
+    { label: "Account", href: role ? "/dashboard" : "/login", icon: User },
   ];
 
   return (

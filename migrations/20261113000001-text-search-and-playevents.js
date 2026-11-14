@@ -2,15 +2,15 @@ export const up = async (db) => {
   // Drop previous text index if present
   try {
     await db.collection("tracks").dropIndex("idx_tracks_search_text");
-  } catch (_e) {
+  } catch {
     // Index might not exist or might have default name
   }
   try {
     await db.collection("tracks").dropIndex("TrackTextSearchIndex");
-  } catch (_e) {}
+  } catch {}
   try {
     await db.collection("tracks").dropIndex("idx_tracks_catalog_text_search");
-  } catch (_e) {}
+  } catch {}
 
   await db.collection("tracks").createIndex(
     {
@@ -29,10 +29,10 @@ export const up = async (db) => {
 
   try {
     await db.collection("playevents").dropIndex("trackId_1_hourBucket_1");
-  } catch (_e) {}
+  } catch {}
   try {
     await db.collection("playevents").dropIndex("idx_playevents_hourly_unique");
-  } catch (_e) {}
+  } catch {}
   await db.collection("playevents").createIndex(
     { trackId: 1, hourBucket: 1 },
     { unique: true, name: "idx_playevents_hourly_unique" }
@@ -42,8 +42,8 @@ export const up = async (db) => {
 export const down = async (db) => {
   try {
     await db.collection("tracks").dropIndex("idx_tracks_catalog_text_search");
-  } catch (_e) {}
+  } catch {}
   try {
     await db.collection("playevents").dropIndex("idx_playevents_hourly_unique");
-  } catch (_e) {}
+  } catch {}
 };

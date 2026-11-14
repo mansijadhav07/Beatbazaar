@@ -1,6 +1,9 @@
 import React from "react";
 import type { Metadata } from "next";
-import { findPublicTracks } from "@/server/catalog/repository";
+import {
+  findPublicTracks,
+  getProducerDirectoryEntries,
+} from "@/server/catalog/repository";
 import { BeatCard, type BeatCardTrack } from "@/components/catalog/BeatCard";
 import { FilterSidebar } from "@/components/catalog/FilterSidebar";
 import { SearchBar } from "@/components/catalog/SearchBar";
@@ -60,9 +63,13 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     page: params.page ? Number(params.page) : 1,
     limit: 20,
   });
+  const producerDirectory = await getProducerDirectoryEntries(
+    [...new Set(catalogResult.tracks.map((track) => track.producerId))]
+  );
 
   const tracks: BeatCardTrack[] = catalogResult.tracks.map((t) => {
     const previewFile = t.files.find((f) => f.kind === "preview");
+    const producer = producerDirectory.get(t.producerId);
     // Find lowest active license price
     const availableLicenses = t.licenses.filter(
       (license) =>
@@ -84,7 +91,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       genre: t.genre,
       bpm: t.bpm,
       coverKey: t.coverKey,
-      producerName: t.producerName,
+      producerName: producer?.displayName || t.producerName,
+      producerUsername: producer?.username,
       waveform: t.waveform,
       previewKey: previewFile?.r2Key,
       lowestPriceAmount: lowestLicense?.price.amount ?? null,

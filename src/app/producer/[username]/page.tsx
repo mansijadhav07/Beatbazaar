@@ -11,6 +11,7 @@ import {
   isProducerProfileIndexable,
 } from "@/lib/public-catalog";
 import { getPublicProducerPage } from "@/server/catalog/repository";
+import { getPublicAssetUrl } from "@/lib/public-asset-url";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,7 @@ export async function generateMetadata({
       ...(data.profile.avatarKey
         ? {
             images: [
-              `${siteConfig.publicR2Domain}/${data.profile.avatarKey.replace(/^\/+/, "")}`,
+                getPublicAssetUrl(data.profile.avatarKey),
             ],
           }
         : {}),
@@ -68,9 +69,7 @@ export default async function ProducerPage({ params }: ProducerPageProps) {
   const { username } = await params;
   const data = await loadProducer(username);
   const { profile, tracks } = data;
-  const avatarUrl = profile.avatarKey
-    ? `${siteConfig.publicR2Domain}/${profile.avatarKey.replace(/^\/+/, "")}`
-    : null;
+  const avatarUrl = profile.avatarKey ? getPublicAssetUrl(profile.avatarKey) : null;
   const cards: BeatCardTrack[] = tracks.map((track) => {
     const lowestLicense = track.licenses
       .filter(

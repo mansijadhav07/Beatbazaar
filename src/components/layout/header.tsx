@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { Music2, User, Menu, X, ShoppingCart } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
+import { signOut } from "@/server/auth/auth-client";
+import type { UserRole } from "@/lib/validations/user";
 
-export function Header() {
+export function Header({ role }: { role: UserRole | null }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { itemCount } = useCart();
 
@@ -35,13 +37,13 @@ export function Header() {
               Tracks
             </Link>
             <Link
-              href="/#genres"
+              href="/tracks"
               className="transition-colors hover:text-ink"
             >
               Genres
             </Link>
             <Link
-              href="/#licenses"
+              href="/license-overview"
               className="transition-colors hover:text-ink"
             >
               Licenses
@@ -65,14 +67,43 @@ export function Header() {
             )}
           </Link>
 
-          {/* User Account / Sign In */}
-          <Link
-            href="/login"
-            className="hidden h-10 items-center gap-1.5 rounded border border-border px-3 text-sm font-medium text-ink hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel sm:inline-flex"
-          >
-            <User aria-hidden="true" className="h-4 w-4" />
-            <span>Sign In</span>
-          </Link>
+          {role ? (
+            <div className="hidden items-center gap-2 sm:flex">
+              <Link
+                href="/dashboard"
+                className="inline-flex h-10 items-center gap-1.5 rounded border border-border px-3 text-sm font-medium text-ink hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+              >
+                <User aria-hidden="true" className="h-4 w-4" />
+                <span>Dashboard</span>
+              </Link>
+              {role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="inline-flex h-10 items-center rounded border border-border px-3 text-sm font-medium text-ink hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+                >
+                  Admin
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOut();
+                  window.location.assign("/");
+                }}
+                className="inline-flex h-10 items-center px-2 text-sm font-medium text-steel-dark hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden h-10 items-center gap-1.5 rounded border border-border px-3 text-sm font-medium text-ink hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel sm:inline-flex"
+            >
+              <User aria-hidden="true" className="h-4 w-4" />
+              <span>Sign In</span>
+            </Link>
+          )}
 
           {/* Sell Beats CTA */}
           <Link
@@ -105,27 +136,58 @@ export function Header() {
             Browse Tracks
           </Link>
           <Link
-            href="/#genres"
+            href="/tracks"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-sm font-medium text-ink hover:text-brass-dark"
           >
             Music Genres
           </Link>
           <Link
-            href="/#licenses"
+            href="/license-overview"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-sm font-medium text-ink hover:text-brass-dark"
           >
             License Tiers
           </Link>
           <div className="pt-2 border-t border-border flex justify-end">
-            <Link
-              href="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-sm font-semibold text-ink"
-            >
-              Account
-            </Link>
+            {role ? (
+              <div className="flex flex-col gap-2">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-sm font-semibold text-ink"
+                >
+                  Dashboard
+                </Link>
+                {role === "admin" && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm font-semibold text-ink"
+                  >
+                    Admin
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await signOut();
+                    window.location.assign("/");
+                  }}
+                  className="self-end py-2 text-sm font-semibold text-ink"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-sm font-semibold text-ink"
+              >
+                Account
+              </Link>
+            )}
           </div>
         </div>
       )}
