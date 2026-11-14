@@ -9,20 +9,25 @@ export interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions): Promise<void> {
   const apiKey = process.env.EMAIL_SERVER_API_KEY;
-  const fromEmail = process.env.EMAIL_FROM || "Beatbazaar <noreply@beatbazaar.com>";
+  const fromEmail = process.env.EMAIL_FROM;
 
-  if (!apiKey || apiKey.startsWith("re_your") || apiKey === "mock") {
+  if (
+    !apiKey ||
+    apiKey.startsWith("re_your") ||
+    apiKey === "mock" ||
+    !fromEmail
+  ) {
     if (process.env.NODE_ENV !== "production") {
       console.log("==================== [DEV EMAIL LOG] ====================");
       console.log(`To: ${to}`);
-      console.log(`From: ${fromEmail}`);
+      console.log(`From: ${fromEmail || "EMAIL_FROM not configured"}`);
       console.log(`Subject: ${subject}`);
       console.log("----------------------- Content -----------------------");
       console.log(text || html);
       console.log("=========================================================");
       return;
     }
-    throw new Error("EMAIL_SERVER_API_KEY is not configured in production.");
+    throw new Error("EMAIL_SERVER_API_KEY and EMAIL_FROM must be configured in production.");
   }
 
   // Resend API (default transactional provider)
@@ -46,4 +51,3 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
     throw new Error(`Email provider error (${response.status}): ${errorText}`);
   }
 }
-

@@ -26,8 +26,7 @@ Applied to `beatbazaar-private`:
 [
   {
     "AllowedOrigins": [
-      "https://beatbazaar.com",
-      "https://www.beatbazaar.com",
+      "https://your-confirmed-domain.example",
       "http://localhost:3000"
     ],
     "AllowedMethods": [
@@ -67,8 +66,7 @@ Applied to `beatbazaar-public`:
 [
   {
     "AllowedOrigins": [
-      "https://beatbazaar.com",
-      "https://www.beatbazaar.com",
+      "https://your-confirmed-domain.example",
       "http://localhost:3000"
     ],
     "AllowedMethods": [
@@ -106,4 +104,3 @@ wrangler r2 bucket cors set beatbazaar-private --file ./docs/cors-private.json
 # Apply to public bucket
 wrangler r2 bucket cors set beatbazaar-public --file ./docs/cors-public.json
 ```
-

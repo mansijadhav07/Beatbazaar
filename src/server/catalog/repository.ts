@@ -53,7 +53,7 @@ export class MongoTextSearchProvider implements SearchProvider {
         .limit(limit);
 
       return results.map((r) => r._id.toString());
-    } catch (_err) {
+    } catch {
       // Fallback regex query if text index is being created or not yet active in test environment
       const cleanRegex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
       const results = await TrackModel.find(
@@ -218,4 +218,22 @@ export async function getRelatedTracks(
   })
     .sort({ createdAt: -1 })
     .limit(limit);
+}
+
+export async function getPublicTrackSitemapEntries(): Promise<
+  Array<{ id: string; slug: string; updatedAt: Date }>
+> {
+  await connectMongoose();
+  const tracks = await TrackModel.find(
+    { status: "live", processingStatus: "ready" },
+    { _id: 1, slug: 1, updatedAt: 1 }
+  )
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  return tracks.map((track) => ({
+    id: track._id.toString(),
+    slug: track.slug,
+    updatedAt: track.updatedAt,
+  }));
 }

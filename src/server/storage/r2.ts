@@ -21,7 +21,7 @@ export const publicBucketName =
 export const privateBucketName =
   process.env.CLOUDFLARE_R2_PRIVATE_BUCKET_NAME || "beatbazaar-private";
 export const publicDomain =
-  process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || "https://cdn.beatbazaar.com";
+  process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || "https://cdn.example.invalid";
 
 export function createR2Client(): S3Client {
   return new S3Client({

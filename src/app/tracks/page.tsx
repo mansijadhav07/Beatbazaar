@@ -26,22 +26,16 @@ interface BrowsePageProps {
 
 export async function generateMetadata({ searchParams }: BrowsePageProps): Promise<Metadata> {
   const params = await searchParams;
-  const isDeepFilter =
-    Boolean(params.minBpm) ||
-    Boolean(params.maxBpm) ||
-    Boolean(params.key) ||
-    Boolean(params.mood) ||
-    Boolean(params.page && Number(params.page) > 1);
+  const hasFilters = Object.values(params).some((value) => Boolean(value));
 
-  // CLAUDE.md section 8: Deep filter permutations use noindex, follow to preserve crawl equity
-  const robots = isDeepFilter
+  const robots = hasFilters
     ? { index: false, follow: true }
     : { index: true, follow: true };
 
   const genreTitle = params.genre ? `${params.genre} Beats` : "Browse Beats and Instrumentals";
 
   return {
-    title: `${genreTitle} | ${siteConfig.name}`,
+    title: genreTitle,
     description: `Browse licensed beats and instrumentals. Filter by genre, BPM, key, and mood on ${siteConfig.name}.`,
     robots,
     alternates: {

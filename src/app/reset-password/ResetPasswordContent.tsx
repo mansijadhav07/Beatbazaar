@@ -81,7 +81,7 @@ export default function ResetPasswordContent() {
   };
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-14rem)] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
+    <div className="mx-auto flex min-h-[calc(100dvh_-_14rem)] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">
@@ -179,4 +179,3 @@ export default function ResetPasswordContent() {
     </div>
   );
 }
-

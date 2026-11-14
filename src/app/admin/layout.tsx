@@ -1,5 +1,10 @@
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Admin",
+  robots: { index: false, follow: false },
+};
 
+import type { Metadata } from "next";
 import { requireRole } from "@/server/auth/guards";
 import Link from "next/link";
 import { Shield, ArrowLeft } from "lucide-react";

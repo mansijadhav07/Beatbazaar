@@ -1,12 +1,14 @@
 import React from "react";
+import Image from "next/image";
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getTrackById, getRelatedTracks } from "@/server/catalog/repository";
 import { BeatCard, type BeatCardTrack } from "@/components/catalog/BeatCard";
 import { TrackAudioPlayer } from "@/components/catalog/TrackAudioPlayer";
 import { TrackBuyButton } from "@/components/catalog/TrackBuyButton";
 import { ReportBeatDialog } from "@/components/catalog/ReportBeatDialog";
 import { siteConfig } from "@/config/site";
+import { serializeJsonLd } from "@/lib/json-ld";
 import { FileAudio, Lock } from "lucide-react";
 import type { ILicenseOption } from "@/server/db/models/Track";
 
@@ -47,12 +49,15 @@ export async function generateMetadata({ params }: TrackPageProps): Promise<Meta
   const track = await getTrackById(id);
 
   if (!track || ["draft", "pending", "rejected"].includes(track.status)) {
-    return { title: `Track Not Found | ${siteConfig.name}` };
+    return {
+      title: "Track Not Found",
+      robots: { index: false, follow: false },
+    };
   }
 
   if (track.status === "removed") {
     return {
-      title: `Beat Removed | ${siteConfig.name}`,
+      title: "Beat Removed",
       robots: { index: false, follow: false },
     };
   }
@@ -61,12 +66,10 @@ export async function generateMetadata({ params }: TrackPageProps): Promise<Meta
   const title = `${track.title} by ${track.producerName || "Beatbazaar Producer"} (${track.bpm} BPM ${track.genre} Beat)`;
   const description = `Listen to ${track.title}, a ${track.genre} beat in ${track.key} at ${track.bpm} BPM. Review the producer's license options on ${siteConfig.name}.`;
 
-  const coverUrl = track.coverKey
-    ? `${siteConfig.publicR2Domain}/${track.coverKey.replace(/^\//, "")}`
-    : undefined;
+  const openGraphImageUrl = `${siteConfig.url}/track/${track._id.toString()}/${track.slug}/opengraph-image`;
 
   return {
-    title: `${title} | ${siteConfig.name}`,
+    title,
     description,
     robots: isSoldExclusive ? { index: false, follow: true } : { index: true, follow: true },
     alternates: {
@@ -76,7 +79,21 @@ export async function generateMetadata({ params }: TrackPageProps): Promise<Meta
       title,
       description,
       type: "music.song",
-      images: coverUrl ? [{ url: coverUrl }] : [],
+      images: [
+        {
+          url: openGraphImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${title} by ${track.producerName || "producer"}`,
+        },
+      ],
+      url: `${siteConfig.url}/track/${track._id.toString()}/${track.slug}`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [openGraphImageUrl],
     },
   };
 }
@@ -88,6 +105,12 @@ export default async function TrackPage({ params }: TrackPageProps) {
   // 1. Unknown ID, Draft, Pending, or Rejected return 404
   if (!track || ["draft", "pending", "rejected"].includes(track.status)) {
     notFound();
+  }
+
+  if (id !== track._id.toString() || slug !== track.slug) {
+    permanentRedirect(
+      `/track/${track._id.toString()}/${track.slug}`
+    );
   }
 
   // 2. Removed track returns 410 with similar beats
@@ -132,11 +155,6 @@ export default async function TrackPage({ params }: TrackPageProps) {
         </div>
       </div>
     );
-  }
-
-  // 3. Canonical 301 redirect if slug does not match
-  if (track.slug !== slug) {
-    redirect(`/track/${track._id.toString()}/${track.slug}`);
   }
 
   const isSoldExclusive = track.status === "sold_exclusive";
@@ -185,7 +203,9 @@ export default async function TrackPage({ params }: TrackPageProps) {
           name: l.name,
           price: (l.price.amount / 100).toFixed(2),
           priceCurrency: l.price.currency,
-          availability: "https://schema.org/InStock",
+          availability: isSoldExclusive
+            ? "https://schema.org/SoldOut"
+            : "https://schema.org/InStock",
           url: `${siteConfig.url}/track/${track._id.toString()}/${track.slug}`,
         }));
 
@@ -241,7 +261,7 @@ export default async function TrackPage({ params }: TrackPageProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -260,7 +280,14 @@ export default async function TrackPage({ params }: TrackPageProps) {
           {/* Cover Art */}
           <div className="h-44 w-44 sm:h-52 sm:w-52 rounded-lg bg-surface-muted border border-border overflow-hidden flex-shrink-0 shadow-sm relative">
             {coverUrl ? (
-              <img src={coverUrl} alt={track.title} className="h-full w-full object-cover" />
+              <Image
+                src={coverUrl}
+                alt={track.title}
+                width={208}
+                height={208}
+                className="h-full w-full object-cover"
+                priority
+              />
             ) : (
               <div className="h-full w-full flex items-center justify-center font-mono text-sm font-bold text-steel">
                 BEAT

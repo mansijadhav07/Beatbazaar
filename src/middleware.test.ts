@@ -7,18 +7,71 @@ describe("protected-route test identity", () => {
     vi.unstubAllEnvs();
   });
 
-  it("does not bypass authentication for a role header alone", () => {
+  it("does not bypass authentication for a role header alone", async () => {
     vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
     vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
     const request = new NextRequest("http://127.0.0.1:3000/admin", {
       headers: { "x-playwright-test-role": "admin" },
     });
 
-    const response = middleware(request);
-    expect(response.headers.get("location")).toContain("/login");
+    const response = await middleware(request);
+    // A failed test-identity attempt is answered with 404, never a redirect.
+    expect(response.status).toBe(404);
   });
 
-  it("allows the test identity only with the opt-in secret on loopback", () => {
+  it("allows the test identity only with the opt-in secret", async () => {
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
+    const request = new NextRequest("http://127.0.0.1:3000/admin", {
+      headers: {
+        "x-playwright-test-role": "buyer",
+        "x-playwright-test-secret": "test-secret",
+      },
+    });
+
+    expect((await middleware(request)).status).toBe(200);
+  });
+
+  it("does not gate test identity on the Host header", async () => {
+    // The Host header is NOT a security control: a tunnel can make remote
+    // requests look local, so we must not rely on it. A request that carries
+    // the valid secret succeeds regardless of hostname.
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
+    const request = new NextRequest("https://beatbazaar.example/admin", {
+      headers: {
+        "x-playwright-test-role": "buyer",
+        "x-playwright-test-secret": "test-secret",
+      },
+    });
+
+    expect((await middleware(request)).status).toBe(200);
+  });
+
+  it("rejects a wrong secret with 404 rather than a redirect", async () => {
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
+    const request = new NextRequest("http://127.0.0.1:3000/admin", {
+      headers: {
+        "x-playwright-test-role": "buyer",
+        "x-playwright-test-secret": "wrong-secret",
+      },
+    });
+
+    expect((await middleware(request)).status).toBe(404);
+  });
+
+  it("rejects a missing secret with 404", async () => {
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
+    const request = new NextRequest("http://127.0.0.1:3000/admin", {
+      headers: { "x-playwright-test-role": "buyer" },
+    });
+
+    expect((await middleware(request)).status).toBe(404);
+  });
+
+  it("does not allow admin impersonation without the separate opt-in", async () => {
     vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
     vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
     const request = new NextRequest("http://127.0.0.1:3000/admin", {
@@ -28,19 +81,20 @@ describe("protected-route test identity", () => {
       },
     });
 
-    expect(middleware(request).headers.get("location")).toBeNull();
+    expect((await middleware(request)).status).toBe(404);
   });
 
-  it("does not permit test identity on a non-loopback host", () => {
+  it("allows admin impersonation only when the separate opt-in is set", async () => {
     vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
     vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
-    const request = new NextRequest("https://beatbazaar.example/admin", {
+    vi.stubEnv("PLAYWRIGHT_TEST_ALLOW_ADMIN", "true");
+    const request = new NextRequest("http://127.0.0.1:3000/admin", {
       headers: {
         "x-playwright-test-role": "admin",
         "x-playwright-test-secret": "test-secret",
       },
     });
 
-    expect(middleware(request).headers.get("location")).toContain("/login");
+    expect((await middleware(request)).status).toBe(200);
   });
 });

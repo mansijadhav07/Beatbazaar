@@ -8,9 +8,8 @@ export const metadata = {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-[calc(100vh-14rem)] items-center justify-center text-xs text-steel">Loading verification...</div>}>
+    <Suspense fallback={<div className="flex min-h-[calc(100dvh_-_14rem)] items-center justify-center text-xs text-steel">Loading verification...</div>}>
       <VerifyEmailContent />
     </Suspense>
   );
 }
-

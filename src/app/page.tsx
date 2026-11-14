@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Search,
@@ -9,6 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { siteConfig } from "@/config/site";
+
+export const metadata: Metadata = {
+  title: "Licensed beats from independent producers",
+  description: siteConfig.description,
+  alternates: { canonical: "/" },
+};
 
 export default function HomePage() {
   const genres = [

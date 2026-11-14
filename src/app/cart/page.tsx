@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { siteConfig } from "@/config/site";
 import { CartClient } from "./CartClient";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: `Shopping Cart | ${siteConfig.name}`,
+  title: "Shopping cart",
   description: "Review selected beats, producer-provided license terms, and included files.",
   robots: {
     index: false,

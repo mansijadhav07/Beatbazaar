@@ -82,7 +82,7 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-14rem)] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
+    <div className="mx-auto flex min-h-[calc(100dvh_-_14rem)] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
       <div className="text-center mb-6">
         <Link href="/" className="inline-flex items-center gap-2 font-bold text-lg text-ink">
           <span className="flex h-8 w-8 items-center justify-center rounded bg-ink text-brass">
@@ -257,4 +257,3 @@ export default function LoginForm() {
     </div>
   );
 }
-

@@ -12,7 +12,7 @@ export default function VerifyEmailContent() {
   const error = searchParams.get("error");
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-14rem)] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
+    <div className="mx-auto flex min-h-[calc(100dvh_-_14rem)] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
       <Card>
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface-muted border border-border">
@@ -55,4 +55,3 @@ export default function VerifyEmailContent() {
     </div>
   );
 }
-

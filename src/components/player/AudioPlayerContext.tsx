@@ -45,6 +45,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playedSessionsRef = useRef<Set<string>>(new Set());
   const listenTimeRef = useRef<number>(0);
+  const currentTrackRef = useRef<PlayerTrack | null>(null);
+  const repeatRef = useRef(repeat);
+  const nextTrackRef = useRef<() => void>(() => {});
+  currentTrackRef.current = currentTrack;
+  repeatRef.current = repeat;
 
   // Initialize audio element once
   useEffect(() => {
@@ -59,12 +64,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       listenTimeRef.current = audio.currentTime;
 
       // Track play counting logic: 30 seconds threshold or full track duration if shorter
-      if (currentTrack && !playedSessionsRef.current.has(currentTrack.id)) {
+      const activeTrack = currentTrackRef.current;
+      if (activeTrack && !playedSessionsRef.current.has(activeTrack.id)) {
         const threshold = audio.duration ? Math.min(30, audio.duration - 1) : 30;
         if (audio.currentTime >= threshold && threshold > 0) {
-          playedSessionsRef.current.add(currentTrack.id);
+          playedSessionsRef.current.add(activeTrack.id);
           // Send buffered play increment
-          fetch(`/api/tracks/${currentTrack.id}/play`, { method: "POST" }).catch(() => {});
+          fetch(`/api/tracks/${activeTrack.id}/play`, { method: "POST" }).catch(() => {});
         }
       }
     };
@@ -74,18 +80,18 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     };
 
     const handleEnded = () => {
-      if (repeat) {
+      if (repeatRef.current) {
         audio.currentTime = 0;
         audio.play().catch(() => {});
       } else {
-        nextTrack();
+        nextTrackRef.current();
       }
     };
 
     const handleError = () => {
       console.warn("Audio playback error encountered. Advancing to next track.");
       setIsPlaying(false);
-      nextTrack();
+      nextTrackRef.current();
     };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
@@ -101,58 +107,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       audio.pause();
       audio.src = "";
     };
-  }, [currentTrack, repeat]);
-
-  // Update Media Session API
-  useEffect(() => {
-    if (typeof window === "undefined" || !("mediaSession" in navigator) || !currentTrack) return;
-
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: currentTrack.title,
-      artist: currentTrack.producerName || siteConfig.name,
-      album: `${currentTrack.genre} (${currentTrack.bpm} BPM)`,
-      artwork: currentTrack.coverUrl
-        ? [{ src: currentTrack.coverUrl, sizes: "512x512", type: "image/jpeg" }]
-        : [],
-    });
-
-    navigator.mediaSession.setActionHandler("play", () => togglePlay());
-    navigator.mediaSession.setActionHandler("pause", () => togglePlay());
-    navigator.mediaSession.setActionHandler("previoustrack", () => prevTrack());
-    navigator.mediaSession.setActionHandler("nexttrack", () => nextTrack());
-    navigator.mediaSession.setActionHandler("seekto", (details) => {
-      if (details.seekTime !== undefined) seek(details.seekTime);
-    });
-  }, [currentTrack]);
-
-  // Keyboard shortcut listener (Space toggles, Left/Right seek)
-  // Disabled when user is typing in input, textarea, or select elements
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const activeTag = document.activeElement?.tagName?.toLowerCase();
-      const isEditable =
-        activeTag === "input" ||
-        activeTag === "textarea" ||
-        activeTag === "select" ||
-        (document.activeElement as HTMLElement)?.isContentEditable;
-
-      if (isEditable) return;
-
-      if (e.code === "Space") {
-        e.preventDefault();
-        togglePlay();
-      } else if (e.code === "ArrowLeft") {
-        e.preventDefault();
-        seek(Math.max(0, currentTime - 5));
-      } else if (e.code === "ArrowRight") {
-        e.preventDefault();
-        seek(Math.min(duration, currentTime + 5));
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentTime, duration]);
+  }, []);
 
   const playTrack = useCallback((track: PlayerTrack) => {
     if (!audioRef.current) return;
@@ -219,6 +174,58 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     setRepeat((prev) => !prev);
   }, []);
 
+  useEffect(() => {
+    nextTrackRef.current = nextTrack;
+  }, [nextTrack]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("mediaSession" in navigator) || !currentTrack) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentTrack.title,
+      artist: currentTrack.producerName || siteConfig.name,
+      album: `${currentTrack.genre} (${currentTrack.bpm} BPM)`,
+      artwork: currentTrack.coverUrl
+        ? [{ src: currentTrack.coverUrl, sizes: "512x512", type: "image/jpeg" }]
+        : [],
+    });
+
+    navigator.mediaSession.setActionHandler("play", () => togglePlay());
+    navigator.mediaSession.setActionHandler("pause", () => togglePlay());
+    navigator.mediaSession.setActionHandler("previoustrack", () => prevTrack());
+    navigator.mediaSession.setActionHandler("nexttrack", () => nextTrack());
+    navigator.mediaSession.setActionHandler("seekto", (details) => {
+      if (details.seekTime !== undefined) seek(details.seekTime);
+    });
+  }, [currentTrack, togglePlay, prevTrack, nextTrack, seek]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      const isEditable =
+        activeTag === "input" ||
+        activeTag === "textarea" ||
+        activeTag === "select" ||
+        (document.activeElement as HTMLElement)?.isContentEditable;
+
+      if (isEditable) return;
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.code === "ArrowLeft") {
+        e.preventDefault();
+        seek(Math.max(0, currentTime - 5));
+      } else if (e.code === "ArrowRight") {
+        e.preventDefault();
+        seek(Math.min(duration, currentTime + 5));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentTime, duration, togglePlay, seek]);
+
   return (
     <AudioPlayerContext.Provider
       value={{
@@ -249,4 +256,3 @@ export function useAudioPlayer() {
   }
   return context;
 }
-

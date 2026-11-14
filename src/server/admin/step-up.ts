@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 import { connectMongoose } from "@/server/db/mongoose";
 import { AdminStepUpTokenModel, type AdminStepUpAction } from "@/server/db/models/AdminStepUpToken";
 import type { SessionContext } from "@/server/auth/guards";
+import { verifyTestIdentity } from "@/server/auth/test-identity";
 
 export const ADMIN_STEP_UP_COOKIE = "bb_admin_step_up";
 const STEP_UP_TTL_MS = 5 * 60 * 1000;
@@ -20,14 +21,16 @@ export function isSameOriginRequest(request: NextRequest): boolean {
   }
 }
 
-export function isPlaywrightTestRequest(request: NextRequest): boolean {
-  const expectedSecret = process.env.PLAYWRIGHT_TEST_AUTH_SECRET;
-  return Boolean(
-    process.env.PLAYWRIGHT_TEST_AUTH_ENABLED === "true" &&
-      expectedSecret &&
-      ["localhost", "127.0.0.1", "::1"].includes(request.nextUrl.hostname) &&
-      request.headers.get("x-playwright-test-secret") === expectedSecret
-  );
+/**
+ * Returns true when the request carries a valid Playwright test identity.
+ * The Host header is NOT consulted: a tunnel can spoof it. The only control
+ * is the shared secret injected by the Playwright runner.
+ */
+export async function isPlaywrightTestRequest(request: NextRequest): Promise<boolean> {
+  return (await verifyTestIdentity(
+    request.headers,
+    request.headers.get("x-playwright-test-role")
+  )) !== null;
 }
 
 function hashToken(token: string): string {

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart, type LicenseTier } from "@/components/cart/CartContext";
 import { siteConfig } from "@/config/site";
@@ -187,9 +188,11 @@ export function CartClient() {
                     {/* Cover art preview */}
                     <div className="h-16 w-16 shrink-0 rounded bg-mist-dark overflow-hidden flex items-center justify-center border border-border">
                       {coverUrl ? (
-                        <img
+                        <Image
                           src={coverUrl}
                           alt={item.title}
+                          width={64}
+                          height={64}
                           className="h-full w-full object-cover"
                         />
                       ) : (

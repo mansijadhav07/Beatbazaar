@@ -1,16 +1,5 @@
-/**
- * Rate limiter interface and in-memory implementation.
- *
- * NOTE: The in-memory store (InMemoryRateLimiter) works for single-process dev
- * and low-traffic single-instance deployments. It does NOT work correctly when
- * multiple worker instances run behind a load balancer because each instance
- * maintains its own independent counter.
- *
- * To scale horizontally, replace this with a shared-store implementation
- * (e.g. RedisRateLimiter using ioredis, or a MongoDB-backed sliding window).
- * Swap by calling setRateLimiter(new RedisRateLimiter(...)) at startup.
- * All callers use checkRateLimit() and never depend on the concrete class.
- */
+import { createHash } from "node:crypto";
+import { connectToDatabase } from "@/server/db/mongoose";
 
 export interface RateLimitOptions {
   windowMs: number;
@@ -21,78 +10,134 @@ export interface RateLimitResult {
   success: boolean;
   limit: number;
   remaining: number;
-  reset: number; // Unix ms timestamp when the window resets
+  reset: number;
 }
 
-/** Plug in any backing store that satisfies this interface. */
 export interface RateLimiter {
-  check(identifier: string, options: RateLimitOptions): RateLimitResult | Promise<RateLimitResult>;
+  check(identifier: string, options: RateLimitOptions): Promise<RateLimitResult>;
 }
 
-// ---------------------------------------------------------------------------
-// Default implementation: in-memory, single-process only
-// ---------------------------------------------------------------------------
-
-interface RateLimitRecord {
+export interface RateLimitDocument {
+  _id: string;
   count: number;
-  resetAt: number;
+  expiresAt: Date;
 }
 
-export class InMemoryRateLimiter implements RateLimiter {
-  private readonly store = new Map<string, RateLimitRecord>();
+export interface RateLimitCollection {
+  findOneAndUpdate(
+    filter: { _id: string },
+    update: {
+      $inc: { count: number };
+      $setOnInsert: { expiresAt: Date };
+    },
+    options: {
+      upsert: boolean;
+      returnDocument: "after";
+      includeResultMetadata: false;
+    }
+  ): Promise<RateLimitDocument | null>;
+}
 
-  constructor() {
-    // Periodic GC to prevent unbounded memory growth in long-running processes
-    setInterval(() => {
-      const now = Date.now();
-      for (const [key, record] of this.store.entries()) {
-        if (now > record.resetAt) this.store.delete(key);
-      }
-    }, 60_000).unref();
+const RETENTION_MS = 24 * 60 * 60 * 1000;
+
+async function getRateLimitCollection(): Promise<RateLimitCollection> {
+  const mongoose = await connectToDatabase();
+  const db = mongoose.connection.db;
+  if (!db) {
+    throw new Error("MongoDB is not available for rate limiting.");
   }
+  const collection = db.collection<RateLimitDocument>("rate_limits");
+  return {
+    findOneAndUpdate: (filter, update, options) =>
+      collection.findOneAndUpdate(filter, update, options),
+  };
+}
 
-  check(identifier: string, options: RateLimitOptions): RateLimitResult {
-    const now = Date.now();
-    const existing = this.store.get(identifier);
+function isDuplicateKeyError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === 11000
+  );
+}
 
-    if (!existing || now > existing.resetAt) {
-      const record: RateLimitRecord = { count: 1, resetAt: now + options.windowMs };
-      this.store.set(identifier, record);
-      return { success: true, limit: options.maxRequests, remaining: options.maxRequests - 1, reset: record.resetAt };
+export class MongoRateLimiter implements RateLimiter {
+  constructor(
+    private readonly getCollection: () => Promise<RateLimitCollection> =
+      getRateLimitCollection,
+    private readonly now: () => number = Date.now
+  ) {}
+
+  async check(
+    identifier: string,
+    options: RateLimitOptions
+  ): Promise<RateLimitResult> {
+    if (
+      !identifier ||
+      !Number.isSafeInteger(options.windowMs) ||
+      options.windowMs <= 0 ||
+      !Number.isSafeInteger(options.maxRequests) ||
+      options.maxRequests <= 0
+    ) {
+      throw new Error("Invalid rate limit configuration.");
     }
 
-    existing.count += 1;
+    const now = this.now();
+    const windowStart = Math.floor(now / options.windowMs) * options.windowMs;
+    const reset = windowStart + options.windowMs;
+    const identifierHash = createHash("sha256")
+      .update(identifier)
+      .digest("hex");
+    const key = `${identifierHash}:${options.windowMs}:${windowStart}`;
+    const collection = await this.getCollection();
+    const update = {
+      $inc: { count: 1 },
+      $setOnInsert: { expiresAt: new Date(reset + RETENTION_MS) },
+    };
+    const updateOptions = {
+      upsert: true,
+      returnDocument: "after" as const,
+      includeResultMetadata: false as const,
+    };
 
-    if (existing.count > options.maxRequests) {
-      return { success: false, limit: options.maxRequests, remaining: 0, reset: existing.resetAt };
+    let record: RateLimitDocument | null;
+    try {
+      record = await collection.findOneAndUpdate(
+        { _id: key },
+        update,
+        updateOptions
+      );
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+
+      record = await collection.findOneAndUpdate(
+        { _id: key },
+        update,
+        { ...updateOptions, upsert: false }
+      );
+    }
+
+    if (!record) {
+      throw new Error("MongoDB did not return the updated rate limit record.");
     }
 
     return {
-      success: true,
+      success: record.count <= options.maxRequests,
       limit: options.maxRequests,
-      remaining: options.maxRequests - existing.count,
-      reset: existing.resetAt,
+      remaining: Math.max(0, options.maxRequests - record.count),
+      reset,
     };
   }
 }
 
-// ---------------------------------------------------------------------------
-// Module-level singleton (swap via setRateLimiter for tests or multi-instance)
-// ---------------------------------------------------------------------------
+const limiter = new MongoRateLimiter();
 
-let _limiter: RateLimiter = new InMemoryRateLimiter();
-
-export function setRateLimiter(limiter: RateLimiter): void {
-  _limiter = limiter;
-}
-
-/**
- * Check a rate limit for an identifier (e.g. IP address, user id, endpoint key).
- * Uses whichever RateLimiter is currently active (default: in-memory).
- */
 export async function checkRateLimit(
   identifier: string,
   options: RateLimitOptions = { windowMs: 60_000, maxRequests: 20 }
 ): Promise<RateLimitResult> {
-  return _limiter.check(identifier, options);
+  return limiter.check(identifier, options);
 }

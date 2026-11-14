@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAudioPlayer } from "./AudioPlayerContext";
 import { WaveformScrubber } from "./WaveformScrubber";
 import {
@@ -60,10 +61,12 @@ export function PersistentPlayer() {
         <div className="flex items-center gap-3 w-full sm:w-64 min-w-0">
           <div className="h-10 w-10 sm:h-12 sm:w-12 rounded bg-surface-muted border border-border flex-shrink-0 overflow-hidden relative">
             {currentTrack.coverUrl ? (
-              <img
+              <Image
                 src={currentTrack.coverUrl}
                 alt={currentTrack.title}
-                className="h-full w-full object-cover"
+                fill
+                sizes="48px"
+                className="object-cover"
               />
             ) : (
               <div className="h-full w-full flex items-center justify-center text-steel font-mono text-xs">
@@ -157,4 +160,3 @@ export function PersistentPlayer() {
     </div>
   );
 }
-

@@ -11,6 +11,10 @@ import {
   issueAdminStepUpToken,
   stepUpCookieOptions,
 } from "@/server/admin/step-up";
+import {
+  constantTimeEquals,
+  testAuthAllowsAdmin,
+} from "@/server/auth/test-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -42,13 +46,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Test identity may substitute for the real password ONLY when the separate
+  // admin opt-in is set. The comparison is constant time and the expected
+  // value is read from the env at call time.
   let validPassword = false;
-  if (
-    isPlaywrightTestRequest(request) &&
-    parsed.data.password === process.env.PLAYWRIGHT_TEST_AUTH_SECRET
-  ) {
-    validPassword = true;
-  } else {
+  if ((await isPlaywrightTestRequest(request)) && testAuthAllowsAdmin()) {
+    const expected = process.env.PLAYWRIGHT_TEST_AUTH_SECRET;
+    if (expected && (await constantTimeEquals(parsed.data.password, expected))) {
+      validPassword = true;
+    }
+  }
+
+  if (!validPassword) {
     const auth = await getAuthInstance();
     const authContext = await auth.$context;
     const credential = await authContext.internalAdapter.findCredentialAccount(session.user.id);
@@ -65,7 +74,8 @@ export async function POST(request: NextRequest) {
   }
 
   if (!validPassword) {
-    return NextResponse.json({ error: "The password could not be verified." }, { status: 403 });
+    // 404, not 403: do not leak whether test auth is active to a caller.
+    return new NextResponse(null, { status: 404 });
   }
 
   const token = randomBytes(32).toString("base64url");

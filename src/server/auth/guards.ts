@@ -1,9 +1,10 @@
 import "server-only";
 
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getAuthInstance } from "./auth";
 import type { UserRole } from "@/lib/validations/user";
+import { hasTestIdentityAttempt, verifyTestIdentity } from "./test-identity";
 
 export interface AuthenticatedUser {
   id: string;
@@ -36,27 +37,25 @@ export async function requireRole(
 ): Promise<SessionContext> {
   const requestHeaders = await headers();
 
-  // The test identity header is disabled unless the local Playwright server opts in.
-  const testRole = requestHeaders.get("x-playwright-test-role");
-  const hostHeader = requestHeaders.get("host") || "";
-  const testHost = hostHeader.startsWith("[")
-    ? hostHeader.slice(1, hostHeader.indexOf("]"))
-    : hostHeader.split(":")[0];
-  if (
-    process.env.PLAYWRIGHT_TEST_AUTH_ENABLED === "true" &&
-    process.env.PLAYWRIGHT_TEST_AUTH_SECRET &&
-    ["localhost", "127.0.0.1", "::1"].includes(testHost) &&
-    requestHeaders.get("x-playwright-test-secret") ===
-      process.env.PLAYWRIGHT_TEST_AUTH_SECRET &&
-    testRole &&
-    allowedRoles.includes(testRole as UserRole)
-  ) {
+  // Test identity is verified through a single, constant-time, production-safe
+  // helper. The Host header is never used as a security control.
+  if (hasTestIdentityAttempt(requestHeaders)) {
+    const identity = await verifyTestIdentity(
+      requestHeaders,
+      requestHeaders.get("x-playwright-test-role")
+    );
+    if (!identity) {
+      notFound();
+    }
+    if (!allowedRoles.includes(identity.role)) {
+      redirect("/?error=unauthorized");
+    }
     return {
       user: {
         id: "playwright_test_user",
         email: "test@beatbazaar.com",
         name: "Test Producer",
-        role: testRole as UserRole,
+        role: identity.role,
         emailVerified: true,
         image: null,
       },
@@ -118,11 +117,9 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
     const session = await authInstance.api.getSession({
       headers: requestHeaders,
     });
-
     if (!session || !session.user) {
       return null;
     }
-
     return {
       id: session.user.id,
       email: session.user.email,

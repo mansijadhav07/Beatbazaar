@@ -25,6 +25,15 @@ vi.mock("@/server/auth/auth", () => ({
   getAuthInstance: vi.fn().mockResolvedValue({}),
 }));
 
+vi.mock("@/server/auth/rate-limit", () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({
+    success: true,
+    limit: 20,
+    remaining: 19,
+    reset: Date.now() + 60_000,
+  }),
+}));
+
 describe("Auth Endpoint Role Security Integration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -82,4 +91,3 @@ describe("Auth Endpoint Role Security Integration", () => {
     expect(mockSignUpEmail).toHaveBeenCalled();
   });
 });
-

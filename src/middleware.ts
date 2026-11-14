@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {
+  hasTestIdentityAttempt,
+  TEST_IDENTITY_HEADER_ROLE,
+  verifyTestIdentity,
+} from "@/server/auth/test-identity";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect /dashboard and /admin routes
@@ -9,19 +14,20 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
 
   if (isProtectedPath) {
-    const testRole = request.headers.get("x-playwright-test-role");
-    const testSecret = process.env.PLAYWRIGHT_TEST_AUTH_SECRET;
-    const isLoopbackHost = ["localhost", "127.0.0.1", "::1"].includes(
-      request.nextUrl.hostname
-    );
-    if (
-      process.env.PLAYWRIGHT_TEST_AUTH_ENABLED === "true" &&
-      testSecret &&
-      isLoopbackHost &&
-      request.headers.get("x-playwright-test-secret") === testSecret &&
-      ["buyer", "producer", "admin"].includes(testRole || "")
-    ) {
-      return NextResponse.next();
+    // A request that carries test identity headers is a test-identity
+    // attempt. Any failure to authenticate through that mechanism is answered
+    // with HTTP 404 (nothing here), never a redirect. This prevents an
+    // attacker from distinguishing "test auth is off" from "test auth is on
+    // but your secret was wrong".
+    if (hasTestIdentityAttempt(request.headers)) {
+      const identity = await verifyTestIdentity(
+        request.headers,
+        request.headers.get(TEST_IDENTITY_HEADER_ROLE)
+      );
+      if (identity) {
+        return NextResponse.next();
+      }
+      return new NextResponse(null, { status: 404 });
     }
 
     const cookies = request.cookies;

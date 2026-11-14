@@ -6,6 +6,7 @@ import {
   parseOnboardingInput,
   safePayoutErrorName,
 } from "./onboarding";
+import { ProducerProfileModel } from "@/server/db/models/ProducerProfile";
 import {
   allocateGatewayFee,
   calculateHoldReleaseAt,
@@ -121,13 +122,20 @@ describe("producer payout calculations", () => {
 });
 
 describe("KYC data minimization", () => {
-  it("keeps only linked-account status fields and excludes sensitive onboarding values", () => {
-    const secrets = {
-      pan: "ABCDE1234F",
-      aadhaar: "123412341234",
-      accountNumber: "1234567890123456",
-      ifsc: "ABCD0123456",
-    };
+  const secrets = {
+    pan: "ABCDE1234F",
+    aadhaar: "123412341234",
+    accountNumber: "1234567890123456",
+    ifsc: "ABCD0123456",
+  };
+
+  it("keeps sensitive identity and bank fields out of the producer schema", () => {
+    for (const field of Object.keys(secrets)) {
+      expect(ProducerProfileModel.schema.path(field)).toBeUndefined();
+    }
+  });
+
+  it("keeps only linked-account status fields in the saved status", () => {
     const safeStatus = buildSafePayoutStatus(
       {
         id: "acc_test",
@@ -152,9 +160,19 @@ describe("KYC data minimization", () => {
     for (const secret of Object.values(secrets)) {
       expect(serialized).not.toContain(secret);
     }
-    expect(safePayoutErrorName(new Error(Object.values(secrets).join(" ")))).toBe(
-      "Error"
+  });
+
+  it("returns only an error type for safe logging", () => {
+    const formattedError = safePayoutErrorName(
+      new Error(Object.values(secrets).join(" "))
     );
+    expect(formattedError).toBe("Error");
+    for (const secret of Object.values(secrets)) {
+      expect(formattedError).not.toContain(secret);
+    }
+  });
+
+  it("does not accept an Aadhaar field in onboarding input", () => {
     expect(parseOnboardingInput({
       legalBusinessName: "Example Producer",
       phone: "+919876543210",

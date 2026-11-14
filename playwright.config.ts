@@ -40,14 +40,26 @@ export default defineConfig<TestOptions>({
       name: "Tablet Safari (iPad Pro 11)",
       use: { ...devices["iPad Pro 11"] },
     },
+    {
+      name: "Tablet Safari (iPad Pro 11 landscape)",
+      use: {
+        ...devices["iPad Pro 11"],
+        viewport: { width: 1194, height: 834 },
+      },
+    },
+    {
+      name: "Mobile Chrome (Pixel 7)",
+      use: { ...devices["Pixel 7"] },
+    },
   ],
   webServer: {
-    command: "npx next start -H 127.0.0.1 -p 3456",
+    command: "npm run dev -- --hostname 127.0.0.1 --port 3456",
     url: "http://127.0.0.1:3456",
     env: {
       ...process.env,
       PLAYWRIGHT_TEST_AUTH_ENABLED: "true",
       PLAYWRIGHT_TEST_AUTH_SECRET: playwrightTestSecret,
+      NODE_ENV: "development",
     },
     reuseExistingServer: false,
     timeout: 120 * 1000,

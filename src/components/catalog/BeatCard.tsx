@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Play, Pause } from "lucide-react";
 import { useAudioPlayer, type PlayerTrack } from "@/components/player/AudioPlayerContext";
 import { siteConfig } from "@/config/site";
@@ -65,10 +66,12 @@ export function BeatCard({ track }: { track: BeatCardTrack }) {
       {/* Cover Artwork & Instant Play Button */}
       <div className="relative aspect-square w-full overflow-hidden rounded-md bg-surface-muted border border-border/50">
         {coverUrl ? (
-          <img
+          <Image
             src={coverUrl}
             alt={track.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center font-mono text-xs font-bold text-steel">

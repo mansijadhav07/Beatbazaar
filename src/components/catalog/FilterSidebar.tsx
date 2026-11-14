@@ -19,7 +19,6 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const currentGenre = searchParams.get("genre") || "All Genres";
   const currentKey = searchParams.get("key") || "All Keys";
   const currentSort = searchParams.get("sort") || "trending";
   const currentMinBpm = searchParams.get("minBpm") || "";
@@ -190,7 +189,7 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-xs">
           <div
-            className="w-full rounded-t-xl bg-surface border-t border-border p-5 max-h-[85vh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1.5rem)] animate-in slide-in-from-bottom"
+            className="w-full rounded-t-xl bg-surface border-t border-border p-5 max-h-[85dvh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1.5rem)] animate-in slide-in-from-bottom"
             role="dialog"
             aria-modal="true"
           >
@@ -216,4 +215,3 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
     </>
   );
 }
-

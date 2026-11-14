@@ -4,16 +4,30 @@ function readPayoutMode(): "razorpay_route" | "manual" {
   throw new Error("PAYOUT_MODE must be razorpay_route or manual.");
 }
 
+function readSiteUrl(): string {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return new URL(configuredUrl).toString().replace(/\/$/, "");
+}
+
+function readSupportEmail(): string | null {
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
+  if (!supportEmail) return null;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supportEmail)) {
+    throw new Error("NEXT_PUBLIC_SUPPORT_EMAIL must be a valid email address.");
+  }
+  return supportEmail;
+}
+
 const payoutModeValue = readPayoutMode();
 
 export const siteConfig = {
   name: "Beatbazaar",
   description:
     "The marketplace for authentic Indian and global music production beats, licenses, and stems.",
-  url: process.env.NEXT_PUBLIC_APP_URL || "https://beatbazaar.com",
-  ogImage: "https://beatbazaar.com/og.jpg",
+  url: readSiteUrl(),
+  supportEmail: readSupportEmail(),
   publicR2Domain:
-    process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || "https://cdn.beatbazaar.com",
+    process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || "https://cdn.example.invalid",
 
   // Play count display: only show if track has >= this many plays
   minPlayCountThreshold: 50,

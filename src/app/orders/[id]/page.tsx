@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import { requireRole } from "@/server/auth/guards";
 import { connectMongoose } from "@/server/db/mongoose";
 import { OrderModel } from "@/server/db/models/Order";
-import { siteConfig } from "@/config/site";
 import { OrderPageClient } from "./OrderPageClient";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +17,7 @@ interface OrderPageProps {
 export async function generateMetadata({ params }: OrderPageProps): Promise<Metadata> {
   const { id } = await params;
   return {
-    title: `Order #${id.slice(-6)} | ${siteConfig.name}`,
+    title: `Order #${id.slice(-6)}`,
     robots: {
       index: false,
       follow: false,
@@ -64,4 +63,3 @@ export default async function OrderDetailPage({ params }: OrderPageProps) {
 
   return <OrderPageClient order={serializedOrder} />;
 }
-

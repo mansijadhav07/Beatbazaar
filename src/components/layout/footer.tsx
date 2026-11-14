@@ -16,8 +16,8 @@ export function Footer() {
             </Link>
             <p className="text-sm text-steel-dark max-w-md leading-relaxed">
               Beatbazaar is a marketplace connecting music producers and recording artists.
-              Producers upload beats and set custom license tiers, while artists preview
-              watermarked audio and purchase verified commercial production rights.
+              Producers set their own license options and terms. Artists can preview
+              watermarked audio and review those terms before checkout.
             </p>
             <p className="text-xs text-steel-dark">
               Checkout is currently available in INR in Razorpay test mode.
@@ -60,16 +60,34 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 text-sm text-steel-dark">
               <li>
-                <span className="text-xs text-steel-dark/80">Terms of Service</span>
+                <Link href="/terms" className="hover:text-ink transition-colors">
+                  Terms of Service
+                </Link>
               </li>
               <li>
-                <span className="text-xs text-steel-dark/80">Privacy Policy</span>
+                <Link href="/privacy" className="hover:text-ink transition-colors">
+                  Privacy Policy
+                </Link>
               </li>
               <li>
-                <span className="text-xs text-steel-dark/80">Refund & Delivery Policy</span>
+                <Link href="/refunds" className="hover:text-ink transition-colors">
+                  Refunds
+                </Link>
               </li>
               <li>
-                <span className="text-xs text-steel-dark/80">Copyright & Takedown</span>
+                <Link href="/delivery" className="hover:text-ink transition-colors">
+                  Digital delivery
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="hover:text-ink transition-colors">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-ink transition-colors">
+                  Contact
+                </Link>
               </li>
             </ul>
           </div>
@@ -80,9 +98,7 @@ export function Footer() {
           <p>
             © {new Date().getFullYear()} Beatbazaar. All rights reserved.
           </p>
-          <p className="text-xs text-steel-dark">
-            Direct file storage via Cloudflare R2. Encrypted checkout.
-          </p>
+          <p className="text-xs text-steel-dark">Checkout is in test mode.</p>
         </div>
       </div>
     </footer>

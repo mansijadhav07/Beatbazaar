@@ -1,16 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// Mock server-only so Vitest runs outside of Next.js server runtime without throwing
-vi.mock("server-only", () => ({}));
-
 // Mock next/navigation
 const redirectMock = vi.fn((url: string) => {
   const err = new Error(`NEXT_REDIRECT: ${url}`);
   (err as any).digest = `NEXT_REDIRECT;replace;${url};307;;`;
   throw err;
 });
+const notFoundMock = vi.fn(() => {
+  const err = new Error("NEXT_NOT_FOUND");
+  (err as any).digest = "NEXT_NOT_FOUND";
+  throw err;
+});
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => redirectMock(url),
+  notFound: () => notFoundMock(),
 }));
 
 // Mock next/headers
@@ -61,7 +64,7 @@ describe("requireRole server guard", () => {
         id: "sess_123",
         userId: "user_123",
         token: "tok_123",
-        expiresAt: new Date(Date.now() + 3600000),
+        expiresAt: new Date(Date.now() + 600000),
       },
     });
 
@@ -83,7 +86,7 @@ describe("requireRole server guard", () => {
         id: "sess_456",
         userId: "prod_123",
         token: "tok_456",
-        expiresAt: new Date(Date.now() + 3600000),
+        expiresAt: new Date(Date.now() + 600000),
       },
     };
     getSessionMock.mockResolvedValueOnce(mockSession);
@@ -94,12 +97,58 @@ describe("requireRole server guard", () => {
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
-  it("requires the test secret and a loopback host for test role bypass", async () => {
+  it("returns 404 for an invalid test-identity attempt", async () => {
     vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
     vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
     headersMock.mockResolvedValue(
       new Headers({
-        host: "127.0.0.1:3456",
+        "x-playwright-test-role": "admin",
+        "x-playwright-test-secret": "wrong-secret",
+      })
+    );
+
+    await expect(requireRole(["admin"])).rejects.toThrow();
+    expect(notFoundMock).toHaveBeenCalled();
+    expect(getSessionMock).not.toHaveBeenCalled();
+  });
+
+  it("permits test role bypass with the correct secret and a whitelisted role", async () => {
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
+    headersMock.mockResolvedValue(
+      new Headers({
+        "x-playwright-test-role": "producer",
+        "x-playwright-test-secret": "test-secret",
+      })
+    );
+
+    const result = await requireRole(["producer"]);
+    expect(result.user.id).toBe("playwright_test_user");
+    expect(result.user.role).toBe("producer");
+    expect(getSessionMock).not.toHaveBeenCalled();
+  });
+
+  it("does not permit admin impersonation without the separate opt-in", async () => {
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
+    headersMock.mockResolvedValue(
+      new Headers({
+        "x-playwright-test-role": "admin",
+        "x-playwright-test-secret": "test-secret",
+      })
+    );
+
+    await expect(requireRole(["admin"])).rejects.toThrow();
+    expect(notFoundMock).toHaveBeenCalled();
+    expect(getSessionMock).not.toHaveBeenCalled();
+  });
+
+  it("permits admin impersonation only with the separate opt-in", async () => {
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
+    vi.stubEnv("PLAYWRIGHT_TEST_ALLOW_ADMIN", "true");
+    headersMock.mockResolvedValue(
+      new Headers({
         "x-playwright-test-role": "admin",
         "x-playwright-test-secret": "test-secret",
       })
@@ -107,6 +156,7 @@ describe("requireRole server guard", () => {
 
     const result = await requireRole(["admin"]);
     expect(result.user.id).toBe("playwright_test_user");
+    expect(result.user.role).toBe("admin");
     expect(getSessionMock).not.toHaveBeenCalled();
   });
 });

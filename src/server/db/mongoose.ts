@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
 
-const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/beatbazaar";
-
 interface MongooseCache {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
@@ -26,6 +24,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   }
 
   if (!cached.promise) {
+    const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/beatbazaar";
     const opts = {
       bufferCommands: false,
       maxPoolSize: 10,

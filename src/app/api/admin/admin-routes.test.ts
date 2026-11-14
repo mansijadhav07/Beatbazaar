@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 const requireRole = vi.fn();
@@ -7,6 +7,7 @@ const getAuthInstance = vi.fn();
 const checkRateLimit = vi.fn();
 const issueAdminStepUpToken = vi.fn();
 const stepUpCookieOptions = vi.fn();
+const isPlaywrightTestRequest = vi.fn();
 const findCredentialAccount = vi.fn();
 const verifyPassword = vi.fn();
 
@@ -26,7 +27,7 @@ vi.mock("@/server/admin/step-up", () => ({
   consumeAdminStepUpToken: vi.fn(),
   isSameOriginRequest: (request: NextRequest) =>
     request.headers.get("origin") === request.nextUrl.origin,
-  isPlaywrightTestRequest: vi.fn().mockReturnValue(false),
+  isPlaywrightTestRequest: (...args: unknown[]) => isPlaywrightTestRequest(...args),
   issueAdminStepUpToken: (...args: unknown[]) => issueAdminStepUpToken(...args),
   stepUpCookieOptions: (...args: unknown[]) => stepUpCookieOptions(...args),
 }));
@@ -77,6 +78,11 @@ describe("admin endpoint validation", () => {
       path: "/api/admin",
       maxAge: 300,
     });
+    isPlaywrightTestRequest.mockResolvedValue(false);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("rejects a step-up request with a foreign origin before checking credentials", async () => {
@@ -126,6 +132,41 @@ describe("admin endpoint validation", () => {
         targetId: "track-1",
       })
     );
+    expect(response.status).toBe(403);
+    expect(issueAdminStepUpToken).not.toHaveBeenCalled();
+  });
+
+  it("allows test-mode step-up only with the server opt-in and matching runner secret", async () => {
+    vi.stubEnv("PLAYWRIGHT_TEST_ALLOW_ADMIN", "true");
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "runner-secret");
+    isPlaywrightTestRequest.mockResolvedValue(true);
+
+    const response = await stepUpPost(
+      request("/api/admin/step-up", "POST", {
+        password: "runner-secret",
+        action: "track_moderate",
+        targetId: "track-1",
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(getAuthInstance).not.toHaveBeenCalled();
+    expect(issueAdminStepUpToken).toHaveBeenCalled();
+  });
+
+  it("does not treat the runner secret as a password without the admin opt-in", async () => {
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "runner-secret");
+    isPlaywrightTestRequest.mockResolvedValue(true);
+    findCredentialAccount.mockResolvedValue(null);
+
+    const response = await stepUpPost(
+      request("/api/admin/step-up", "POST", {
+        password: "runner-secret",
+        action: "track_moderate",
+        targetId: "track-1",
+      })
+    );
+
     expect(response.status).toBe(403);
     expect(issueAdminStepUpToken).not.toHaveBeenCalled();
   });
