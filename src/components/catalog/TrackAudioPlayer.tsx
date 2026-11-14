@@ -3,7 +3,7 @@
 import React from "react";
 import { Play, Pause } from "lucide-react";
 import { useAudioPlayer, type PlayerTrack } from "@/components/player/AudioPlayerContext";
-import { WaveformScrubber } from "@/components/player/WaveformScrubber";
+import { LazyWaveformScrubber } from "@/components/player/LazyWaveformScrubber";
 
 function formatSeconds(secs: number): string {
   if (isNaN(secs) || secs < 0) return "0:00";
@@ -50,7 +50,7 @@ export function TrackAudioPlayer({ track }: { track: PlayerTrack }) {
             <span>{formatSeconds(activeDuration)}</span>
           </div>
 
-          <WaveformScrubber
+          <LazyWaveformScrubber
             peaks={track.waveform}
             currentTime={activeTime}
             duration={activeDuration}
@@ -67,4 +67,3 @@ export function TrackAudioPlayer({ track }: { track: PlayerTrack }) {
     </div>
   );
 }
-

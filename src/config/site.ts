@@ -1,3 +1,5 @@
+import { RESERVED_PRODUCER_USERNAMES } from "@/lib/producer-username";
+
 function readPayoutMode(): "razorpay_route" | "manual" {
   const value = process.env.PAYOUT_MODE || "razorpay_route";
   if (value === "razorpay_route" || value === "manual") return value;
@@ -18,6 +20,10 @@ function readSupportEmail(): string | null {
   return supportEmail;
 }
 
+export function readPayoutsEnabled(value = process.env.PAYOUTS_ENABLED): boolean {
+  return value === "true";
+}
+
 const payoutModeValue = readPayoutMode();
 
 export const siteConfig = {
@@ -34,6 +40,10 @@ export const siteConfig = {
 
   // Location-based landing page minimum content threshold
   minProducersForLocationPage: 5,
+  minTracksForLandingPage: 5,
+  minTracksForCityBeatPage: 5,
+  reservedProducerUsernames: RESERVED_PRODUCER_USERNAMES,
+  payoutsEnabled: readPayoutsEnabled(),
 
   // -------------------------------------------------------------------------
   // Phase 4: payments and fees
@@ -84,4 +94,4 @@ export const siteConfig = {
   refundWindowDays: Number(process.env.REFUND_WINDOW_DAYS || "14"),
 
   payoutMode: payoutModeValue,
-};
+}

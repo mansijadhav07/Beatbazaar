@@ -9,6 +9,8 @@
 # Next.js
 /.next/
 /.next-dev/
+/.next-playwright/
+/.next-perf/
 /out/
 
 # Production

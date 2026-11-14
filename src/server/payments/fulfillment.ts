@@ -11,6 +11,7 @@ import { sendEmail } from "@/server/email";
 import { siteConfig } from "@/config/site";
 import { getPaymentProvider } from "./index";
 import { getPlatformFeePercent } from "./fees";
+import { revalidatePublicTrack } from "@/server/catalog/revalidation";
 
 class ExclusivePurchaseConflict extends Error {
   constructor(readonly trackId: string) {
@@ -178,6 +179,14 @@ export async function fulfillOrder(orderId: string): Promise<void> {
   }
 
   if (!fulfilledOrder) return;
+
+  for (const trackId of new Set(
+    fulfilledOrder.items
+      .filter((item) => item.licenseTier === "exclusive")
+      .map((item) => item.trackId.toString())
+  )) {
+    revalidatePublicTrack(trackId);
+  }
 
   const orderUrl = `${siteConfig.url}/orders/${orderId}`;
   const itemsHtml = fulfilledOrder.items

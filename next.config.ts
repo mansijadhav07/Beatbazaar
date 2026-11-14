@@ -36,7 +36,12 @@ if (
 const publicR2Path = `${publicR2Url.pathname.replace(/\/$/, "")}/**`;
 
 const nextConfig: NextConfig = {
-  distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
+  distDir:
+    process.env.PLAYWRIGHT_TEST_AUTH_ENABLED === "true"
+      ? ".next-playwright"
+      : process.env.NODE_ENV === "development"
+        ? ".next-dev"
+        : ".next",
   reactStrictMode: true,
   poweredByHeader: false,
   outputFileTracingRoot: path.join(__dirname),

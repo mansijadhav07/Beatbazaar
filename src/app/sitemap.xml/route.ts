@@ -3,7 +3,12 @@ import { siteConfig } from "@/config/site";
 
 export const dynamic = "force-dynamic";
 
-const sitemapPaths = ["/sitemaps/static.xml", "/sitemaps/tracks.xml"];
+const sitemapPaths = [
+  "/sitemaps/static.xml",
+  "/sitemaps/tracks.xml",
+  "/sitemaps/producers.xml",
+  "/sitemaps/landings.xml",
+];
 
 function escapeXml(value: string): string {
   return value

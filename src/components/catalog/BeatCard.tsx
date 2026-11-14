@@ -15,6 +15,7 @@ export interface BeatCardTrack {
   bpm: number;
   coverKey?: string | null;
   producerName?: string;
+  producerUsername?: string;
   waveform?: number[];
   previewKey?: string;
   lowestPriceAmount: number | null;
@@ -22,7 +23,13 @@ export interface BeatCardTrack {
   playCount?: number;
 }
 
-export function BeatCard({ track }: { track: BeatCardTrack }) {
+export function BeatCard({
+  track,
+  priority = false,
+}: {
+  track: BeatCardTrack;
+  priority?: boolean;
+}) {
   const { currentTrack, isPlaying, playTrack, togglePlay } = useAudioPlayer();
 
   const isCurrent = currentTrack?.id === track.id;
@@ -46,7 +53,8 @@ export function BeatCard({ track }: { track: BeatCardTrack }) {
       const playerItem: PlayerTrack = {
         id: track.id,
         title: track.title,
-        producerName: track.producerName || "Beatbazaar Producer",
+        producerName: track.producerName || "Producer not listed",
+        producerUsername: track.producerUsername,
         genre: track.genre,
         bpm: track.bpm,
         coverUrl,
@@ -71,11 +79,12 @@ export function BeatCard({ track }: { track: BeatCardTrack }) {
             alt={track.title}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+            priority={priority}
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center font-mono text-xs font-bold text-steel">
-            BEAT
+          <div className="flex h-full w-full items-center justify-center bg-ink px-3 text-center text-sm font-medium text-white">
+            Artwork not provided
           </div>
         )}
 
@@ -106,8 +115,19 @@ export function BeatCard({ track }: { track: BeatCardTrack }) {
           >
             {track.title}
           </Link>
-          <div className="mt-0.5 text-[11px] text-steel line-clamp-1">
-            {track.producerName || "Beatbazaar Producer"}
+          <div className="mt-0.5 line-clamp-1 text-xs text-steel">
+            {track.producerUsername ? (
+              <Link
+                href={`/producer/${track.producerUsername}`}
+                className="hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+                aria-label={`View producer ${track.producerName || "profile"}`}
+                onClick={(event) => event.stopPropagation()}
+              >
+                {track.producerName || "Producer profile"}
+              </Link>
+            ) : (
+              track.producerName || "Producer not listed"
+            )}
           </div>
         </div>
 

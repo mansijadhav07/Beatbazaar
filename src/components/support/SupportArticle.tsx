@@ -21,13 +21,20 @@ export function SupportArticle({
         </h1>
         <p className="text-base leading-7 text-ink">{intro}</p>
         {legalReview && (
-          <p
-            role="note"
-            className="bg-surface-muted px-4 py-3 text-sm font-medium leading-6 text-ink"
-          >
-            LEGAL REVIEW REQUIRED. This draft is not a final policy. Do not rely
-            on it as legal advice or enable live payments until it is approved.
-          </p>
+          <>
+            <p
+              role="note"
+              className="bg-surface-muted px-4 py-3 text-sm font-medium leading-6 text-ink"
+            >
+              LEGAL REVIEW REQUIRED. This draft is not a final policy. Do not rely
+              on it as legal advice or enable live payments until it is approved.
+            </p>
+            {process.env.NODE_ENV !== "production" && (
+              <p className="border-l-4 border-status-warning bg-status-warning-bg px-4 py-3 text-sm font-medium text-ink">
+                Draft page. This content is not approved for production use.
+              </p>
+            )}
+          </>
         )}
       </header>
       <div className="mt-10 space-y-8 text-base leading-7 text-ink">{children}</div>

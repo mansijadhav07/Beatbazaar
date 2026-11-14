@@ -41,8 +41,18 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#licenses" className="hover:text-ink transition-colors">
-                  License Comparison
+                <Link href="/license-overview" className="hover:text-ink transition-colors">
+                  License overview
+                </Link>
+              </li>
+              <li>
+                <Link href="/producer-guidelines" className="hover:text-ink transition-colors">
+                  Producer guidelines
+                </Link>
+              </li>
+              <li>
+                <Link href="/copyright-and-takedown" className="hover:text-ink transition-colors">
+                  Copyright and takedown
                 </Link>
               </li>
               <li>

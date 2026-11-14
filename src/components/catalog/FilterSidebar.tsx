@@ -45,13 +45,14 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
     <div className="space-y-6">
       {/* Sort Option */}
       <div>
-        <label className="text-xs font-bold text-ink uppercase tracking-wider block mb-2">
+        <label htmlFor="track-sort" className="mb-2 block text-sm font-bold text-ink">
           Sort By
         </label>
         <select
+          id="track-sort"
           value={currentSort}
           onChange={(e) => updateParam("sort", e.target.value)}
-          className="w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs text-ink focus:border-brass focus:outline-none"
+          className="min-h-11 w-full rounded border border-border bg-surface px-2.5 text-base text-ink focus:border-brass focus:outline-none"
         >
           {SORTS.map((s) => (
             <option key={s.value} value={s.value}>
@@ -63,20 +64,21 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
 
       {/* Genre Filter */}
       <div>
-        <label className="text-xs font-bold text-ink uppercase tracking-wider block mb-2">
+        <p className="mb-2 text-sm font-bold text-ink">
           Genre
-        </label>
+        </p>
         <div className="flex flex-wrap gap-1.5">
           {GENRES.map((g) => {
             const active = (g === "All Genres" && !searchParams.get("genre")) || searchParams.get("genre") === g;
             return (
               <button
                 key={g}
+                type="button"
                 onClick={() => updateParam("genre", g === "All Genres" ? null : g)}
-                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`min-h-11 rounded px-2.5 text-sm font-medium transition-colors ${
                   active
                     ? "bg-ink text-surface"
-                    : "bg-surface-muted text-steel hover:text-ink hover:bg-border"
+                    : "bg-surface-muted text-steel-dark hover:text-ink hover:bg-border"
                 }`}
               >
                 {g}
@@ -88,41 +90,44 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
 
       {/* BPM Range Filter */}
       <div>
-        <label className="text-xs font-bold text-ink uppercase tracking-wider block mb-2">
+        <p className="mb-2 text-sm font-bold text-ink">
           BPM Range
-        </label>
+        </p>
         <div className="flex items-center gap-2">
           <input
             type="number"
+            aria-label="Minimum BPM"
             placeholder="Min"
             min={40}
             max={280}
             defaultValue={currentMinBpm}
             onBlur={(e) => updateParam("minBpm", e.target.value || null)}
-            className="w-full rounded border border-border bg-surface px-2 py-1.5 text-xs text-ink focus:border-brass focus:outline-none"
+            className="min-h-11 w-full rounded border border-border bg-surface px-2 text-base text-ink focus:border-brass focus:outline-none"
           />
-          <span className="text-steel text-xs">:</span>
+          <span aria-hidden="true" className="text-steel-dark text-xs">:</span>
           <input
             type="number"
+            aria-label="Maximum BPM"
             placeholder="Max"
             min={40}
             max={280}
             defaultValue={currentMaxBpm}
             onBlur={(e) => updateParam("maxBpm", e.target.value || null)}
-            className="w-full rounded border border-border bg-surface px-2 py-1.5 text-xs text-ink focus:border-brass focus:outline-none"
+            className="min-h-11 w-full rounded border border-border bg-surface px-2 text-base text-ink focus:border-brass focus:outline-none"
           />
         </div>
       </div>
 
       {/* Musical Key Filter */}
       <div>
-        <label className="text-xs font-bold text-ink uppercase tracking-wider block mb-2">
+        <label htmlFor="track-key" className="mb-2 block text-sm font-bold text-ink">
           Key
         </label>
         <select
+          id="track-key"
           value={currentKey}
           onChange={(e) => updateParam("key", e.target.value === "All Keys" ? null : e.target.value)}
-          className="w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs text-ink focus:border-brass focus:outline-none"
+          className="min-h-11 w-full rounded border border-border bg-surface px-2.5 text-base text-ink focus:border-brass focus:outline-none"
         >
           {KEYS.map((k) => (
             <option key={k} value={k}>
@@ -134,7 +139,7 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
 
       {/* Free Only Toggle */}
       <div className="pt-2 border-t border-border">
-        <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-ink">
+        <label className="flex min-h-11 items-center gap-2 cursor-pointer text-sm font-medium text-ink">
           <input
             type="checkbox"
             checked={currentFreeOnly}
@@ -150,7 +155,7 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
         variant="outline"
         size="sm"
         onClick={clearAllFilters}
-        className="w-full text-xs text-steel hover:text-ink"
+        className="min-h-11 w-full text-sm text-steel-dark hover:text-ink"
       >
         Reset All Filters
       </Button>
@@ -167,7 +172,7 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
               <Filter className="h-3.5 w-3.5 text-steel" />
               <span>Filters</span>
             </span>
-            <span className="text-[11px] text-steel">{totalResults} beats</span>
+            <span className="text-xs text-steel-dark">{totalResults} beats</span>
           </div>
           {filterContent}
         </div>
@@ -179,7 +184,7 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
           variant="outline"
           size="sm"
           onClick={() => setMobileOpen(true)}
-          className="text-xs flex items-center gap-2"
+          className="min-h-11 flex items-center gap-2 text-sm"
         >
           <Filter className="h-3.5 w-3.5" />
           <span>Filters ({totalResults})</span>

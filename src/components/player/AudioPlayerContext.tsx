@@ -7,6 +7,7 @@ export interface PlayerTrack {
   id: string;
   title: string;
   producerName: string;
+  producerUsername?: string;
   genre: string;
   bpm: number;
   coverUrl?: string | null;

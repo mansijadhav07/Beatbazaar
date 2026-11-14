@@ -3,6 +3,7 @@ import { requireRole } from "@/server/auth/guards";
 import { connectMongoose } from "@/server/db/mongoose";
 import { ProducerProfileModel } from "@/server/db/models/ProducerProfile";
 import { ProducerProfileSchema } from "@/lib/validations/producer-profile";
+import { revalidatePublicProducerProfile } from "@/server/catalog/revalidation";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,10 @@ export async function POST(request: NextRequest) {
     if (existing) {
       return NextResponse.json({ error: "This producer handle is already taken." }, { status: 409 });
     }
+    const previousProfile = await ProducerProfileModel.findOne(
+      { userId: session.user.id },
+      { slug: 1 }
+    ).lean();
 
     const profile = await ProducerProfileModel.findOneAndUpdate(
       { userId: session.user.id },
@@ -65,10 +70,10 @@ export async function POST(request: NextRequest) {
       { $set: { producerName: parsed.data.displayName } }
     );
 
+    revalidatePublicProducerProfile(profile.slug, previousProfile?.slug);
     return NextResponse.json({ success: true, profile });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to update profile";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

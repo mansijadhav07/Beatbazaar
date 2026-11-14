@@ -10,7 +10,12 @@ test.describe("Producer Upload Flow (iPhone 14)", () => {
 
   test("loads the upload wizard at /dashboard/beats/new and verifies step transitions", async ({
     page,
-  }) => {
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "Mobile Safari (iPhone 14)",
+      "The upload flow is specifically configured for the iPhone 14 profile."
+    );
+
     // Intercept backend auth and upload APIs for isolated UI testing
     await page.route("**/api/auth/get-session", async (route) => {
       await route.fulfill({
@@ -67,6 +72,7 @@ test.describe("Producer Upload Flow (iPhone 14)", () => {
     });
 
     await page.goto("/dashboard/beats/new");
+    await page.waitForLoadState("networkidle");
 
     // Check heading
     await expect(page.locator("h2")).toContainText("Upload New Beat");

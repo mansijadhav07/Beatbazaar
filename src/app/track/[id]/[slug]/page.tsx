@@ -1,14 +1,20 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
-import { getTrackById, getRelatedTracks } from "@/server/catalog/repository";
+import {
+  getProducerDirectoryEntries,
+  getTrackById,
+  getRelatedTracks,
+} from "@/server/catalog/repository";
 import { BeatCard, type BeatCardTrack } from "@/components/catalog/BeatCard";
 import { TrackAudioPlayer } from "@/components/catalog/TrackAudioPlayer";
 import { TrackBuyButton } from "@/components/catalog/TrackBuyButton";
 import { ReportBeatDialog } from "@/components/catalog/ReportBeatDialog";
 import { siteConfig } from "@/config/site";
 import { serializeJsonLd } from "@/lib/json-ld";
+import { buildTrackStructuredData } from "@/lib/structured-data";
 import { FileAudio, Lock } from "lucide-react";
 import type { ILicenseOption } from "@/server/db/models/Track";
 
@@ -122,6 +128,9 @@ export default async function TrackPage({ params }: TrackPageProps) {
       4
     );
 
+    const producerDirectory = await getProducerDirectoryEntries(
+      [...new Set(similarTracks.map((item) => item.producerId))]
+    );
     const relatedCards: BeatCardTrack[] = similarTracks.map((t) => ({
       id: t._id.toString(),
       title: t.title,
@@ -129,7 +138,8 @@ export default async function TrackPage({ params }: TrackPageProps) {
       genre: t.genre,
       bpm: t.bpm,
       coverKey: t.coverKey,
-      producerName: t.producerName,
+      producerName: producerDirectory.get(t.producerId)?.displayName || t.producerName,
+      producerUsername: producerDirectory.get(t.producerId)?.username,
       waveform: t.waveform,
       previewKey: t.files.find((f) => f.kind === "preview")?.r2Key,
       lowestPriceAmount: lowestAvailableInrLicense(t.licenses)?.price.amount ?? null,
@@ -173,6 +183,12 @@ export default async function TrackPage({ params }: TrackPageProps) {
     4
   );
 
+  const producerDirectory = await getProducerDirectoryEntries(
+    [...new Set([track.producerId, ...relatedTracks.map((item) => item.producerId)])]
+  );
+  const producerProfile = producerDirectory.get(track.producerId);
+  const producerName = producerProfile?.displayName || track.producerName || "Producer not listed";
+
   const relatedCards: BeatCardTrack[] = relatedTracks.map((t) => ({
     id: t._id.toString(),
     title: t.title,
@@ -180,7 +196,8 @@ export default async function TrackPage({ params }: TrackPageProps) {
     genre: t.genre,
     bpm: t.bpm,
     coverKey: t.coverKey,
-    producerName: t.producerName,
+    producerName: producerDirectory.get(t.producerId)?.displayName || t.producerName,
+    producerUsername: producerDirectory.get(t.producerId)?.username,
     waveform: t.waveform,
     previewKey: t.files.find((f) => f.kind === "preview")?.r2Key,
     lowestPriceAmount: t.licenses[0]?.price.amount || 0,
@@ -188,74 +205,19 @@ export default async function TrackPage({ params }: TrackPageProps) {
     playCount: t.playCount,
   }));
 
-  // Build JSON-LD structured data
-  const jsonLdOffers = isSoldExclusive
-    ? []
-    : track.licenses
-        .filter(
-          (license) =>
-            license.enabled &&
-            license.price.currency === "INR" &&
-            Boolean(license.termsText?.trim())
-        )
-        .map((l) => ({
-          "@type": "Offer",
-          name: l.name,
-          price: (l.price.amount / 100).toFixed(2),
-          priceCurrency: l.price.currency,
-          availability: isSoldExclusive
-            ? "https://schema.org/SoldOut"
-            : "https://schema.org/InStock",
-          url: `${siteConfig.url}/track/${track._id.toString()}/${track.slug}`,
-        }));
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "MusicRecording",
-        "@id": `${siteConfig.url}/track/${track._id.toString()}/${track.slug}#audio`,
-        name: track.title,
-        genre: track.genre,
-        byArtist: {
-          "@type": "MusicGroup",
-          name: track.producerName || "Beatbazaar Producer",
-        },
-        image: coverUrl,
-      },
-      {
-        "@type": "Product",
-        "@id": `${siteConfig.url}/track/${track._id.toString()}/${track.slug}#product`,
-        name: `${track.title} (License & Audio)`,
-        description: `License options and included files for ${track.title}.`,
-        image: coverUrl,
-        offers: jsonLdOffers,
-      },
-      {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "Home",
-            item: siteConfig.url,
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: "Tracks",
-            item: `${siteConfig.url}/tracks`,
-          },
-          {
-            "@type": "ListItem",
-            position: 3,
-            name: track.title,
-            item: `${siteConfig.url}/track/${track._id.toString()}/${track.slug}`,
-          },
-        ],
-      },
-    ],
-  };
+  const jsonLd = buildTrackStructuredData({
+    siteUrl: siteConfig.url,
+    id: track._id.toString(),
+    slug: track.slug,
+    title: track.title,
+    genre: track.genre,
+    key: track.key,
+    producerName,
+    producerUsername: producerProfile?.username,
+    coverUrl,
+    soldExclusive: isSoldExclusive,
+    licenses: track.licenses,
+  });
 
   return (
     <>
@@ -285,19 +247,20 @@ export default async function TrackPage({ params }: TrackPageProps) {
                 alt={track.title}
                 width={208}
                 height={208}
+                sizes="(max-width: 640px) 176px, 208px"
                 className="h-full w-full object-cover"
                 priority
               />
             ) : (
-              <div className="h-full w-full flex items-center justify-center font-mono text-sm font-bold text-steel">
-                BEAT
+              <div className="flex h-full w-full items-center justify-center bg-ink px-3 text-center text-sm font-medium text-white">
+                Artwork not provided
               </div>
             )}
           </div>
 
           {/* Details & Waveform Player */}
           <div className="flex-1 min-w-0 w-full">
-            <div className="flex items-center gap-2 text-xs font-medium text-brass">
+            <div className="flex items-center gap-2 text-xs font-medium text-ink">
               <span>{track.genre}</span>
               <span>•</span>
               <span>{track.bpm} BPM</span>
@@ -311,9 +274,16 @@ export default async function TrackPage({ params }: TrackPageProps) {
 
             <div className="text-xs text-steel mt-1">
               Produced by{" "}
-              <span className="font-semibold text-ink">
-                {track.producerName || "Beatbazaar Producer"}
-              </span>
+              {producerProfile ? (
+                <Link
+                  href={`/producer/${producerProfile.username}`}
+                  className="font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+                >
+                  {producerName}
+                </Link>
+              ) : (
+                <span className="font-semibold text-ink">{producerName}</span>
+              )}
               {track.playCount >= siteConfig.minPlayCountThreshold && (
                 <span className="ml-2">• {track.playCount.toLocaleString()} plays</span>
               )}
@@ -325,7 +295,8 @@ export default async function TrackPage({ params }: TrackPageProps) {
                 track={{
                   id: track._id.toString(),
                   title: track.title,
-                  producerName: track.producerName || "Beatbazaar Producer",
+                  producerName,
+                  producerUsername: producerProfile?.username,
                   genre: track.genre,
                   bpm: track.bpm,
                   coverUrl,

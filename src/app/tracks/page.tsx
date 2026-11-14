@@ -133,8 +133,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
             <>
               {/* Responsive Beat Grid: 2 cols mobile, 3 tablet, up to 5 desktop */}
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
-                {tracks.map((track) => (
-                  <BeatCard key={track.id} track={track} />
+                {tracks.map((track, index) => (
+                  <BeatCard key={track.id} track={track} priority={index === 0} />
                 ))}
               </div>
 

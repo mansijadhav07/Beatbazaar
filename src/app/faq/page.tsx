@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SupportArticle } from "@/components/support/SupportArticle";
 import { serializeJsonLd } from "@/lib/json-ld";
+import { buildFaqStructuredData } from "@/lib/structured-data";
 
 export const metadata: Metadata = {
   title: "Frequently asked questions",
@@ -58,15 +59,7 @@ export default function FaqPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: serializeJsonLd({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: questions.map(({ question, answer }) => ({
-              "@type": "Question",
-              name: question,
-              acceptedAnswer: { "@type": "Answer", text: answer },
-            })),
-          }),
+          __html: serializeJsonLd(buildFaqStructuredData(questions)),
         }}
       />
     </>

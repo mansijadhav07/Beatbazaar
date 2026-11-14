@@ -1,12 +1,34 @@
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
+import dotenv from "dotenv";
+
+dotenv.config({ path: ".env.local", quiet: true });
+
+const testUri = process.env.MONGODB_TEST_URI;
+if (!testUri || testUri === process.env.MONGODB_URI) {
+  throw new Error("Playwright requires a separate MONGODB_TEST_URI.");
+}
+const testDatabaseName = decodeURIComponent(
+  new URL(testUri.replace(/^mongodb\+srv:/, "https:").replace(/^mongodb:/, "http:"))
+    .pathname.slice(1)
+);
+if (!/(^|[_-])test($|[_-])/i.test(testDatabaseName)) {
+  throw new Error("MONGODB_TEST_URI must use a database name containing test.");
+}
+process.env.MONGODB_URI = testUri;
 
 const require = createRequire(import.meta.url);
 const playwrightCli = require.resolve("@playwright/test/cli");
 const testArgs = process.argv.slice(2);
+const explicitTestFiles = testArgs.filter((arg) =>
+  /\.(?:spec|test)\.[cm]?[jt]sx?$/.test(arg)
+);
 const usesAdminTestIdentity =
-  testArgs.length === 0 || testArgs.some((arg) => arg.includes("phase6-admin.spec"));
+  explicitTestFiles.length === 0 ||
+  explicitTestFiles.some((arg) =>
+    /(?:phase6-admin|accessibility)\.spec\./.test(arg)
+  );
 const result = spawnSync(
   process.execPath,
   [playwrightCli, "test", ...testArgs],

@@ -5,6 +5,9 @@ const playwrightTestSecret = process.env.PLAYWRIGHT_TEST_AUTH_SECRET;
 if (!playwrightTestSecret) {
   throw new Error("Run Playwright through npm run e2e to configure its test identity.");
 }
+if (!process.env.MONGODB_TEST_URI || process.env.MONGODB_URI !== process.env.MONGODB_TEST_URI) {
+  throw new Error("Run Playwright with the isolated MONGODB_TEST_URI via npm run e2e.");
+}
 process.env.PLAYWRIGHT_TEST_AUTH_ENABLED = "true";
 
 export default defineConfig<TestOptions>({

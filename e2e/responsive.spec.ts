@@ -38,7 +38,9 @@ test.describe("Beatbazaar Responsive Shell", () => {
 
   test("login page displays sign in and registration tabs", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.locator("text=Sign In to Beatbazaar")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Sign In to Beatbazaar" }).last()
+    ).toBeVisible();
 
     const hasHorizontalOverflow = await page.evaluate(() => {
       return (
@@ -50,4 +52,3 @@ test.describe("Beatbazaar Responsive Shell", () => {
     expect(hasHorizontalOverflow).toBe(false);
   });
 });
-

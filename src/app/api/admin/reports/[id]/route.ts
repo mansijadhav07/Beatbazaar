@@ -7,6 +7,7 @@ import { AuditLogModel } from "@/server/db/models/AuditLog";
 import { ReportModel } from "@/server/db/models/Report";
 import { TrackModel } from "@/server/db/models/Track";
 import { connectMongoose } from "@/server/db/mongoose";
+import { revalidatePublicTrack } from "@/server/catalog/revalidation";
 
 export const dynamic = "force-dynamic";
 const bodySchema = z.object({
@@ -39,6 +40,7 @@ export async function PATCH(
   });
   await connectMongoose();
   const mongoSession = await mongoose.startSession();
+  const removedTracks: Array<{ id: string; slug: string }> = [];
   try {
     await mongoSession.withTransaction(async () => {
       const current = await ReportModel.findOne({
@@ -62,6 +64,7 @@ export async function PATCH(
         if (!track || !["live", "sold_exclusive"].includes(track.status)) {
           throw new Error("This beat is no longer available for takedown.");
         }
+        removedTracks.push({ id: track._id.toString(), slug: track.slug });
         const trackUpdate = await TrackModel.updateOne(
           { _id: current.trackId, status: track.status },
           { $set: { status: "removed", featured: false } },
@@ -128,6 +131,9 @@ export async function PATCH(
         { session: mongoSession }
       );
     });
+    for (const track of removedTracks) {
+      revalidatePublicTrack(track.id, track.slug);
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

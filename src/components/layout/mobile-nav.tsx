@@ -27,7 +27,7 @@ export function MobileNav() {
               href={item.href}
               className={cn(
                 "flex h-11 w-16 flex-col items-center justify-center gap-1 text-xs font-medium transition-colors touch-manipulation",
-                isActive ? "text-brass-dark font-semibold" : "text-steel-dark hover:text-ink"
+                isActive ? "text-ink font-semibold" : "text-steel-dark hover:text-ink"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -39,4 +39,3 @@ export function MobileNav() {
     </nav>
   );
 }
-

@@ -271,6 +271,7 @@ export async function ensureOrderPayoutTransfers(
   gateway: RouteGateway = createRouteGateway(),
   now = new Date()
 ): Promise<void> {
+  if (!siteConfig.payoutsEnabled) return;
   await connectMongoose();
   const order = await OrderModel.findById(orderId);
   if (!order || order.status !== "paid") {
@@ -364,6 +365,7 @@ export async function processAwaitingKycTransfers(
   gateway: RouteGateway = createRouteGateway(),
   now = new Date()
 ): Promise<void> {
+  if (!siteConfig.payoutsEnabled) return;
   await connectMongoose();
   const profile = await ProducerProfileModel.findOne({ userId: producerId });
   if (!profile?.payoutAccountRef || profile.kycStatus !== "active") return;
@@ -396,6 +398,7 @@ export async function processCoolingPayoutTransfers(
   gateway: RouteGateway = createRouteGateway(),
   now = new Date()
 ): Promise<void> {
+  if (!siteConfig.payoutsEnabled) return;
   await connectMongoose();
   const producerIds = await PayoutTransferModel.distinct("producerId", {
     status: { $in: ["awaiting_kyc", "awaiting_account_cooling"] },

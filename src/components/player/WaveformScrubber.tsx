@@ -22,10 +22,7 @@ export function WaveformScrubber({
   // Normalize or default peaks array to 100 bars for compact UI rendering
   const bars = useMemo(() => {
     const targetCount = 100;
-    if (!peaks || peaks.length === 0) {
-      // Fallback synthetic wave
-      return Array.from({ length: targetCount }, (_, i) => 0.2 + 0.6 * Math.abs(Math.sin(i / 6)));
-    }
+    if (!peaks?.length) return [];
 
     if (peaks.length === targetCount) return peaks;
 
@@ -48,11 +45,36 @@ export function WaveformScrubber({
     onSeek(fraction * duration);
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (duration <= 0) return;
+    const seekStep = event.shiftKey ? 10 : 5;
+    let targetTime: number;
+    switch (event.key) {
+      case "ArrowLeft":
+        targetTime = currentTime - seekStep;
+        break;
+      case "ArrowRight":
+        targetTime = currentTime + seekStep;
+        break;
+      case "Home":
+        targetTime = 0;
+        break;
+      case "End":
+        targetTime = duration;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    onSeek(Math.max(0, Math.min(duration, targetTime)));
+  };
+
   return (
     <div
       ref={containerRef}
       onPointerDown={handlePointerDown}
-      className={`relative flex items-center h-8 cursor-pointer select-none group ${className}`}
+      onKeyDown={handleKeyDown}
+      className={`group relative flex h-11 cursor-pointer touch-manipulation select-none items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel sm:h-8 ${className}`}
       role="slider"
       aria-label="Seek waveform"
       aria-valuemin={0}
@@ -60,7 +82,20 @@ export function WaveformScrubber({
       aria-valuenow={currentTime}
       tabIndex={0}
     >
-      <div className="flex items-center gap-[2px] w-full h-full">
+      {bars.length === 0 && (
+        <>
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 bg-mist"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute left-0 top-1/2 h-1 -translate-y-1/2 bg-steel"
+            style={{ width: `${progressFraction * 100}%` }}
+          />
+        </>
+      )}
+      <div className="relative z-10 flex h-full w-full items-center gap-[2px]">
         {bars.map((bar, idx) => {
           const barFraction = idx / bars.length;
           const isPlayed = barFraction <= progressFraction;
@@ -82,4 +117,3 @@ export function WaveformScrubber({
     </div>
   );
 }
-

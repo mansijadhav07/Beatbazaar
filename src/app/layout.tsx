@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
 import { serializeJsonLd } from "@/lib/json-ld";
+import { buildSiteStructuredData } from "@/lib/structured-data";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -43,42 +44,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en-IN">
       <body className="flex min-h-[100dvh] flex-col bg-surface text-ink antialiased">
         <AudioPlayerProvider>
           <CartProvider>
             <script
               type="application/ld+json"
               dangerouslySetInnerHTML={{
-                __html: serializeJsonLd({
-                  "@context": "https://schema.org",
-                  "@graph": [
-                    {
-                      "@type": "Organization",
-                      "@id": `${siteConfig.url}/#organization`,
-                      name: siteConfig.name,
-                      url: siteConfig.url,
-                      areaServed: {
-                        "@type": "Country",
-                        name: "India",
-                      },
-                    },
-                    {
-                      "@type": "WebSite",
-                      "@id": `${siteConfig.url}/#website`,
-                      name: siteConfig.name,
-                      url: siteConfig.url,
-                      publisher: {
-                        "@id": `${siteConfig.url}/#organization`,
-                      },
-                      potentialAction: {
-                        "@type": "SearchAction",
-                        target: `${siteConfig.url}/tracks?q={search_term_string}`,
-                        "query-input": "required name=search_term_string",
-                      },
-                    },
-                  ],
-                }),
+                __html: serializeJsonLd(
+                  buildSiteStructuredData(
+                    siteConfig.url,
+                    siteConfig.name,
+                    siteConfig.description
+                  )
+                ),
               }}
             />
             <Header />

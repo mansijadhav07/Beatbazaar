@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Music2, User, Menu, X, ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/CartContext";
 
 export function Header() {
@@ -67,18 +66,20 @@ export function Header() {
           </Link>
 
           {/* User Account / Sign In */}
-          <Link href="/login">
-            <Button variant="outline" size="sm" className="hidden sm:inline-flex gap-1.5">
-              <User className="h-3.5 w-3.5" />
-              <span>Sign In</span>
-            </Button>
+          <Link
+            href="/login"
+            className="hidden h-10 items-center gap-1.5 rounded border border-border px-3 text-sm font-medium text-ink hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel sm:inline-flex"
+          >
+            <User aria-hidden="true" className="h-4 w-4" />
+            <span>Sign In</span>
           </Link>
 
           {/* Sell Beats CTA */}
-          <Link href="/login?intent=producer">
-            <Button size="sm" className="hidden sm:inline-flex">
-              Sell Beats
-            </Button>
+          <Link
+            href="/login?intent=producer"
+            className="hidden h-10 items-center bg-ink px-3 text-sm font-semibold text-white hover:bg-ink-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel sm:inline-flex"
+          >
+            Sell Beats
           </Link>
 
           {/* Mobile menu toggle */}

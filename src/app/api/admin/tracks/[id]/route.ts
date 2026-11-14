@@ -6,6 +6,7 @@ import { consumeAdminStepUpToken, isSameOriginRequest } from "@/server/admin/ste
 import { AuditLogModel } from "@/server/db/models/AuditLog";
 import { TrackModel } from "@/server/db/models/Track";
 import { connectMongoose } from "@/server/db/mongoose";
+import { revalidatePublicTrack } from "@/server/catalog/revalidation";
 
 export const dynamic = "force-dynamic";
 const bodySchema = z.object({
@@ -39,6 +40,7 @@ export async function PATCH(
   const mongoSession = await mongoose.startSession();
   try {
     let updated = false;
+    let updatedSlug: string | undefined;
     await mongoSession.withTransaction(async () => {
       const current = await TrackModel.findOne({
         _id: id,
@@ -47,6 +49,7 @@ export async function PATCH(
         .session(mongoSession)
         .lean();
       if (!current) throw new Error("This beat is no longer awaiting moderation.");
+      updatedSlug = current.slug;
       if (
         parsed.data.status === "live" &&
         (current.processingStatus !== "ready" ||
@@ -86,6 +89,7 @@ export async function PATCH(
     if (!updated) {
       return NextResponse.json({ error: "The moderation change was not saved." }, { status: 409 });
     }
+    revalidatePublicTrack(id, updatedSlug);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

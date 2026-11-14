@@ -42,10 +42,10 @@ export function buildTrackOpenGraphData(
   const priceLabel = lowestLicense
     ? lowestLicense.price.amount === 0
       ? "Free"
-      : new Intl.NumberFormat("en-IN", {
-          style: "currency",
-          currency: "INR",
-        }).format(lowestLicense.price.amount / 100)
+      : `INR ${new Intl.NumberFormat("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(lowestLicense.price.amount / 100)}`
     : "No active license";
 
   return {

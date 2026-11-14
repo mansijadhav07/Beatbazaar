@@ -8,8 +8,10 @@ export const up = async (db) => {
   try {
     await db.collection("tracks").dropIndex("TrackTextSearchIndex");
   } catch (_e) {}
+  try {
+    await db.collection("tracks").dropIndex("idx_tracks_catalog_text_search");
+  } catch (_e) {}
 
-  // Create unified text index covering title, tags, genre, moods and producerName with default_language "none"
   await db.collection("tracks").createIndex(
     {
       title: "text",
@@ -21,10 +23,16 @@ export const up = async (db) => {
     {
       name: "idx_tracks_catalog_text_search",
       default_language: "none",
+      language_override: "searchLanguage",
     }
   );
 
-  // Play events hourly index for play buffering
+  try {
+    await db.collection("playevents").dropIndex("trackId_1_hourBucket_1");
+  } catch (_e) {}
+  try {
+    await db.collection("playevents").dropIndex("idx_playevents_hourly_unique");
+  } catch (_e) {}
   await db.collection("playevents").createIndex(
     { trackId: 1, hourBucket: 1 },
     { unique: true, name: "idx_playevents_hourly_unique" }
@@ -39,4 +47,3 @@ export const down = async (db) => {
     await db.collection("playevents").dropIndex("idx_playevents_hourly_unique");
   } catch (_e) {}
 };
-

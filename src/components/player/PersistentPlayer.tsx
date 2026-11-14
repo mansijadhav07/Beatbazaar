@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAudioPlayer } from "./AudioPlayerContext";
-import { WaveformScrubber } from "./WaveformScrubber";
+import { LazyWaveformScrubber } from "./LazyWaveformScrubber";
 import {
   Play,
   Pause,
@@ -82,8 +82,18 @@ export function PersistentPlayer() {
             >
               {currentTrack.title}
             </Link>
-            <div className="text-[11px] text-steel truncate">
-              {currentTrack.producerName || "Beatbazaar Producer"} • {currentTrack.bpm} BPM
+            <div className="truncate text-xs text-steel">
+              {currentTrack.producerUsername ? (
+                <Link
+                  href={`/producer/${currentTrack.producerUsername}`}
+                  className="hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+                >
+                  {currentTrack.producerName}
+                </Link>
+              ) : (
+                currentTrack.producerName || "Producer not listed"
+              )}{" "}
+              · {currentTrack.bpm} BPM
             </div>
           </div>
         </div>
@@ -133,7 +143,7 @@ export function PersistentPlayer() {
           <div className="w-full flex items-center gap-2 text-[10px] text-steel font-mono">
             <span className="w-8 text-right">{formatSeconds(currentTime)}</span>
             <div className="flex-1">
-              <WaveformScrubber
+              <LazyWaveformScrubber
                 peaks={currentTrack.waveform}
                 currentTime={currentTime}
                 duration={duration}

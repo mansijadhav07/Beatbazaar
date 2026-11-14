@@ -103,7 +103,9 @@ export default async function OpenGraphImage({
             padding: "12px 0",
           }}
         >
-          <div style={{ fontSize: 24, color: "#C2A56D" }}>{siteConfig.name}</div>
+          <div style={{ display: "flex", fontSize: 24, color: "#C2A56D" }}>
+            {siteConfig.name}
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <div
               style={{
@@ -117,15 +119,22 @@ export default async function OpenGraphImage({
             >
               {content.title}
             </div>
-            <div style={{ fontSize: 26 }}>{content.producerLabel}</div>
-            <div style={{ fontSize: 20, color: "#E8EDF2" }}>
+            <div style={{ display: "flex", fontSize: 26 }}>{content.producerLabel}</div>
+            <div style={{ display: "flex", fontSize: 20, color: "#E8EDF2" }}>
               {content.genre} · {content.bpm} BPM
             </div>
           </div>
-          <div style={{ fontSize: 30, fontWeight: 700 }}>{content.priceLabel}</div>
+          <div style={{ display: "flex", fontSize: 30, fontWeight: 700 }}>
+            {content.priceLabel}
+          </div>
         </div>
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      headers: {
+        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+      },
+    }
   );
 }

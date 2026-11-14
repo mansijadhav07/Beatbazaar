@@ -15,6 +15,7 @@ test.describe("Phase 3: Catalog Browsing, Search, and Track Page", () => {
 
   test("filters search parameter updates the URL", async ({ page }) => {
     await page.goto("/tracks");
+    await page.waitForLoadState("networkidle");
     const searchInput = page.getByPlaceholder(/Search beats by title/i);
     await searchInput.fill("Trap Anthem");
     await searchInput.press("Enter");

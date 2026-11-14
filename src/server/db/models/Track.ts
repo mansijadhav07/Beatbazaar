@@ -154,8 +154,9 @@ TrackSchema.index(
     producerName: "text",
   },
   {
+    language_override: "searchLanguage",
     default_language: "none",
-    name: "TrackTextSearchIndex",
+    name: "idx_tracks_catalog_text_search",
   }
 );
 
