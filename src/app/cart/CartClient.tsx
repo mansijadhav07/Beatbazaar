@@ -14,28 +14,13 @@ interface SummaryItem {
   title: string;
   producerName: string;
   coverKey: string | null;
+  includedFiles?: string[];
+  termsText?: string;
+  termsVersion?: string;
   price: { amount: number; currency: "INR" | "USD" };
   available: boolean;
   unavailabilityReason?: string;
 }
-
-const TIER_BENEFITS: Record<LicenseTier, { label: string; files: string; terms: string }> = {
-  free: {
-    label: "Free Non-Commercial",
-    files: "MP3 Audio (Tagged)",
-    terms: "Non-profit listening, audition, credit required in title.",
-  },
-  non_exclusive: {
-    label: "Non-Exclusive Standard",
-    files: "Untagged WAV + MP3",
-    terms: "Commercial streaming (up to 100k plays), music video, live performance.",
-  },
-  exclusive: {
-    label: "Exclusive Buyout",
-    files: "Untagged WAV + MP3 + Track Stems",
-    terms: "Full commercial ownership. The beat is permanently retired from sale.",
-  },
-};
 
 export function CartClient() {
   const router = useRouter();
@@ -92,8 +77,10 @@ export function CartClient() {
 
   const formatPrice = (amountPaiseOrCents: number, curr: "INR" | "USD") => {
     if (curr === "INR") {
-      const rupees = Math.round(amountPaiseOrCents / 100);
-      return `₹${rupees.toLocaleString("en-IN")}`;
+      return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+      }).format(amountPaiseOrCents / 100);
     }
     return `$${(amountPaiseOrCents / 100).toFixed(2)}`;
   };
@@ -165,6 +152,9 @@ export function CartClient() {
           <span>{error}</span>
         </div>
       )}
+      <p className="mt-4 rounded border border-border bg-surface-muted p-3 text-sm text-ink">
+        Payments are in Razorpay test mode. No live payment will be collected.
+      </p>
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* Cart items list */}
@@ -180,7 +170,6 @@ export function CartClient() {
             </div>
           ) : (
             summary.map((item) => {
-              const tierInfo = TIER_BENEFITS[item.licenseTier];
               const coverUrl = item.coverKey
                 ? `${siteConfig.publicR2Domain}/${item.coverKey.replace(/^\//, "")}`
                 : null;
@@ -236,13 +225,13 @@ export function CartClient() {
                       {/* License terms description */}
                       <div className="mt-3 rounded bg-surface-muted p-2.5 text-xs border border-border/60">
                         <div className="flex items-center justify-between font-semibold text-ink-dark">
-                          <span>{tierInfo.label} License</span>
+                          <span>{item.licenseTier.replace("_", " ")} License</span>
                           <span className="text-[11px] text-steel font-normal">
-                            Includes: {tierInfo.files}
+                            Includes: {item.includedFiles?.join(", ").toUpperCase() || "Not specified"}
                           </span>
                         </div>
-                        <p className="mt-1 text-[11px] text-steel-dark leading-relaxed">
-                          {tierInfo.terms}
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-steel-dark leading-relaxed">
+                          {item.termsText || "License terms are unavailable."}
                         </p>
                       </div>
 
@@ -254,12 +243,7 @@ export function CartClient() {
                       )}
 
                       {/* Action buttons */}
-                      <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-2 text-xs">
-                        <span className="text-steel text-[11px] flex items-center gap-1">
-                          <ShieldCheck className="h-3.5 w-3.5 text-status-success" />
-                          <span>Instant digital delivery + signed PDF license</span>
-                        </span>
-
+                      <div className="mt-3 flex items-center justify-end border-t border-border/40 pt-2 text-xs">
                         <button
                           type="button"
                           onClick={() => removeFromCart(item.trackId, item.licenseTier)}
@@ -307,10 +291,8 @@ export function CartClient() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span>Estimated Tax</span>
-                <span className="font-semibold text-ink">
-                  {formatPrice(0, currency)}
-                </span>
+                <span>Tax treatment</span>
+                <span className="font-semibold text-ink">LEGAL REVIEW REQUIRED</span>
               </div>
               <div className="flex justify-between">
                 <span>Delivery</span>
@@ -324,7 +306,7 @@ export function CartClient() {
             </div>
 
             <p className="mt-2 text-[11px] text-steel leading-relaxed">
-              Amounts are charged in {currency}. You will be able to download stems and your signed PDF license contract immediately after payment confirmation.
+              Checkout currency: {currency}. Download access is issued after payment confirmation. Tax treatment is LEGAL REVIEW REQUIRED.
             </p>
 
             <div className="mt-6">
@@ -347,7 +329,7 @@ export function CartClient() {
             <div className="mt-6 border-t border-border pt-4 text-[11px] text-steel space-y-2">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-brass shrink-0" />
-                <span>Verified authentic beats with cleared rights</span>
+                <span>Producer rights confirmation recorded at upload</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-brass shrink-0" />
@@ -360,4 +342,3 @@ export function CartClient() {
     </div>
   );
 }
-

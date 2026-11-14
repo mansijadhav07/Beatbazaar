@@ -59,6 +59,7 @@ describe("Validation Schemas", () => {
           name: "Standard License",
           price: { amount: 249900, currency: "INR" },
           includedFiles: ["mp3", "wav"],
+          termsText: "Producer-provided terms for this license.",
           termsVersion: "1.0",
           enabled: true,
         },
@@ -103,4 +104,3 @@ describe("Validation Schemas", () => {
     expect(invalidSlug.success).toBe(false);
   });
 });
-

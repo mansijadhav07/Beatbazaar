@@ -10,7 +10,7 @@
     "worker": "NODE_OPTIONS=\"--conditions=react-server\" tsx worker/index.ts",
     "lint": "next lint && tsc --noEmit",
     "test": "vitest run",
-    "e2e": "playwright test",
+    "e2e": "node scripts/run-playwright.mjs",
     "db:migrate": "migrate-mongo up",
     "db:migrate:down": "migrate-mongo down",
     "db:seed": "tsx src/server/db/seed.ts"

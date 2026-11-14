@@ -37,7 +37,7 @@ export default async function BuyerOrdersPage() {
       <div className="border-b border-border pb-4 mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-ink">My Order History</h1>
         <p className="text-xs text-steel mt-1">
-          Review your previous beat purchases, re-download stems, and retrieve signed license PDFs.
+          Review previous purchases, re-download eligible files, and open license PDFs with the terms saved at purchase.
         </p>
       </div>
 
@@ -48,7 +48,7 @@ export default async function BuyerOrdersPage() {
           </div>
           <h2 className="mt-3 text-base font-bold text-ink">You have not placed any orders yet</h2>
           <p className="mt-1 text-xs text-steel">
-            When you purchase beats or claim free non-exclusive licenses, they will appear here.
+            Purchased beats and claimed free licenses will appear here.
           </p>
           <div className="mt-6">
             <Link href="/tracks">
@@ -136,4 +136,3 @@ export default async function BuyerOrdersPage() {
     </div>
   );
 }
-

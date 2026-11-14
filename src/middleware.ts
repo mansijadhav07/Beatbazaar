@@ -9,8 +9,18 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
 
   if (isProtectedPath) {
-    // Permit test header in non-production
-    if (request.headers.get("x-playwright-test-role")) {
+    const testRole = request.headers.get("x-playwright-test-role");
+    const testSecret = process.env.PLAYWRIGHT_TEST_AUTH_SECRET;
+    const isLoopbackHost = ["localhost", "127.0.0.1", "::1"].includes(
+      request.nextUrl.hostname
+    );
+    if (
+      process.env.PLAYWRIGHT_TEST_AUTH_ENABLED === "true" &&
+      testSecret &&
+      isLoopbackHost &&
+      request.headers.get("x-playwright-test-secret") === testSecret &&
+      ["buyer", "producer", "admin"].includes(testRole || "")
+    ) {
       return NextResponse.next();
     }
 
@@ -36,4 +46,3 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/dashboard/:path*", "/admin/:path*"],
 };
-

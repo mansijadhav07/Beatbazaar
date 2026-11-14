@@ -1,6 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
+import type { TestOptions } from "./e2e/fixtures";
 
-export default defineConfig({
+const playwrightTestSecret = process.env.PLAYWRIGHT_TEST_AUTH_SECRET;
+if (!playwrightTestSecret) {
+  throw new Error("Run Playwright through npm run e2e to configure its test identity.");
+}
+process.env.PLAYWRIGHT_TEST_AUTH_ENABLED = "true";
+
+export default defineConfig<TestOptions>({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -8,8 +15,9 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "list",
   use: {
-    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3456",
+    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://127.0.0.1:3456",
     trace: "on-first-retry",
+    playwrightTestAuthSecret: playwrightTestSecret,
   },
   projects: [
     {
@@ -34,10 +42,14 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npx next start -p 3456",
-    url: "http://localhost:3456",
-    reuseExistingServer: !process.env.CI,
+    command: "npx next start -H 127.0.0.1 -p 3456",
+    url: "http://127.0.0.1:3456",
+    env: {
+      ...process.env,
+      PLAYWRIGHT_TEST_AUTH_ENABLED: "true",
+      PLAYWRIGHT_TEST_AUTH_SECRET: playwrightTestSecret,
+    },
+    reuseExistingServer: false,
     timeout: 120 * 1000,
   },
 });
-

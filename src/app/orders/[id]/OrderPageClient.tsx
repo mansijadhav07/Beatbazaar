@@ -144,7 +144,7 @@ export function OrderPageClient({ order }: OrderPageClientProps) {
           <div className="mt-4 rounded bg-surface-muted border border-border p-4 text-xs text-steel-dark">
             <p className="font-semibold text-ink">This order has been refunded.</p>
             <p className="mt-1">
-              File download links and license agreements for this order have been permanently revoked.
+              File download links and the saved license terms for this order have been revoked.
             </p>
           </div>
         )}

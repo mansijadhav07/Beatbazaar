@@ -4,7 +4,8 @@ export interface IEarningsLedgerEntry extends Document {
   producerId: string;
   orderId: string;
   orderItemIdx: number;
-  entryType: "sale" | "reversal"; // reversals for refunds
+  entryType: "sale" | "reversal" | "dispute" | "transfer_reversal";
+  eventKey?: string;
   trackId: string;
   trackTitle: string;
   licenseTier: "free" | "non_exclusive" | "exclusive";
@@ -25,9 +26,10 @@ const EarningsLedgerSchema = new Schema<IEarningsLedgerEntry>(
     orderItemIdx: { type: Number, required: true },
     entryType: {
       type: String,
-      enum: ["sale", "reversal"],
+      enum: ["sale", "reversal", "dispute", "transfer_reversal"],
       required: true,
     },
+    eventKey: { type: String, sparse: true, unique: true },
     trackId: { type: String, required: true },
     trackTitle: { type: String, required: true },
     licenseTier: {
@@ -56,7 +58,7 @@ const EarningsLedgerSchema = new Schema<IEarningsLedgerEntry>(
 // Refunds create a separate "reversal" entry rather than mutating the original.
 EarningsLedgerSchema.index(
   { orderId: 1, orderItemIdx: 1, entryType: 1 },
-  { unique: true }
+  { unique: true, partialFilterExpression: { entryType: { $in: ["sale", "reversal"] } } }
 );
 
 // Producer dashboard queries: show earnings newest first

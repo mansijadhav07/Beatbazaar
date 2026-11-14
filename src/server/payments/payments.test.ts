@@ -1,8 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import crypto from "crypto";
+import mongoose from "mongoose";
+import { LicenseOptionSchema } from "@/lib/validations/track";
 import { RazorpayProvider } from "./razorpay";
 import { generateLicensePdf } from "./pdf";
-import { TERMS_TEXT, TERMS_VERSION, assertLegalTextAllowed } from "./checkout";
+import { assertLegalTextAllowed } from "./checkout";
+import { getCaptureMismatchReason } from "./payment-integrity";
 
 describe("Payment Provider & Razorpay Webhook Security", () => {
   const secret = "test_webhook_secret_key_12345";
@@ -23,6 +26,9 @@ describe("Payment Provider & Razorpay Webhook Security", () => {
             amount: 199900,
             currency: "INR",
             order_id: "order_test_rzp",
+            status: "captured",
+            captured: true,
+            fee: 5100,
           },
         },
       },
@@ -40,6 +46,9 @@ describe("Payment Provider & Razorpay Webhook Security", () => {
     expect(event?.providerPaymentId).toBe("pay_test123");
     expect(event?.amountMinorUnits).toBe(199900);
     expect(event?.currency).toBe("INR");
+    expect(event?.paymentCaptured).toBe(true);
+    expect(event?.gatewayFeeMinorUnits).toBe(5100);
+    expect(event).not.toHaveProperty("raw");
   });
 
   it("rejects tampered or forged webhook payloads with invalid signature", () => {
@@ -80,9 +89,10 @@ describe("Payment Provider & Razorpay Webhook Security", () => {
       .update(rawPayload)
       .digest("hex");
 
-    const event = provider.verifyWebhook(rawPayload, signature);
+    const event = provider.verifyWebhook(rawPayload, signature, "event_order_paid");
     expect(event?.type).toBe("order.paid");
-    expect(event?.providerEventId).toBe("order_rzp_999");
+    expect(event?.providerEventId).toBe("event_order_paid");
+    expect(event?.providerOrderId).toBe("order_rzp_999");
     expect(event?.providerPaymentId).toBe("pay_rzp_999");
   });
 
@@ -106,8 +116,9 @@ describe("License PDF Generator", () => {
       producerId: "prod456" as any,
       producerName: "Beatbazaar Producer",
       licenseTier: "non_exclusive" as const,
-      termsText: TERMS_TEXT,
-      termsVersion: TERMS_VERSION,
+      termsText: "Producer-provided terms for this non-exclusive license.",
+      termsVersion: "1.0",
+      platformFeeAmount: 0,
       pricePaid: {
         amount: 249900,
         currency: "INR" as const,
@@ -127,6 +138,48 @@ describe("License PDF Generator", () => {
     // Verify standard PDF magic header
     const header = pdfBuffer.subarray(0, 5).toString("utf-8");
     expect(header).toBe("%PDF-");
+  });
+});
+
+describe("Captured payment integrity", () => {
+  const order = {
+    _id: new mongoose.Types.ObjectId("507f1f77bcf86cd799439011"),
+    providerOrderId: "order_expected",
+    totalAmount: 199900,
+    currency: "INR" as const,
+  };
+  const event = {
+    type: "payment.captured" as const,
+    providerEventId: "event_1",
+    providerPaymentId: "pay_1",
+    providerOrderId: "order_expected",
+    internalOrderId: order._id.toString(),
+    amountMinorUnits: 199900,
+    currency: "INR" as const,
+    paymentCaptured: true,
+    requiredActions: [],
+  };
+
+  it("accepts only a captured payment matching the stored order, amount, and currency", () => {
+    expect(getCaptureMismatchReason(event, order)).toBeNull();
+  });
+
+  it("rejects an uncaptured payment and mismatched order totals", () => {
+    expect(
+      getCaptureMismatchReason({ ...event, paymentCaptured: false }, order)
+    ).toMatch(/not captured/);
+    expect(
+      getCaptureMismatchReason({ ...event, amountMinorUnits: 1 }, order)
+    ).toMatch(/amount or currency/);
+  });
+
+  it("rejects provider order and internal order mismatches", () => {
+    expect(
+      getCaptureMismatchReason({ ...event, providerOrderId: "order_other" }, order)
+    ).toMatch(/Provider order ID/);
+    expect(
+      getCaptureMismatchReason({ ...event, internalOrderId: "other" }, order)
+    ).toMatch(/Internal order ID/);
   });
 });
 
@@ -151,9 +204,21 @@ describe("Legal Text & Pricing Integrity Guarantees", () => {
     }
   });
 
-  it("enforces immutable terms version placeholder tag", () => {
-    expect(TERMS_VERSION).toBe("0.1-placeholder");
-    expect(TERMS_TEXT).toContain("[LEGAL REVIEW REQUIRED]");
+  it("requires producer-provided terms on each license option", () => {
+    const license = {
+      tier: "non_exclusive",
+      name: "Non-Exclusive License",
+      price: { amount: 199900, currency: "INR" },
+      includedFiles: ["mp3"],
+      termsText: "Producer-provided license terms.",
+      termsVersion: "1.0",
+      enabled: true,
+    };
+
+    expect(LicenseOptionSchema.safeParse(license).success).toBe(true);
+    expect(
+      LicenseOptionSchema.safeParse({ ...license, termsText: undefined }).success
+    ).toBe(false);
   });
 
   it("server-side calculations ignore client price and derive from DB only", () => {

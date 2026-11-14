@@ -1,11 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Upload, Music, DollarSign, ShieldCheck } from "lucide-react";
+
+type LicenseFile = "mp3" | "wav" | "stems";
+
+function parseRupeesToPaise(value: string): number | null {
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(value.trim());
+  if (!match) return null;
+  const rupees = Number(match[1]);
+  const paise = Number((match[2] || "").padEnd(2, "0"));
+  const amount = rupees * 100 + paise;
+  return Number.isSafeInteger(amount) && amount > 0 ? amount : null;
+}
 
 export default function UploadBeatWizard() {
   const router = useRouter();
@@ -26,13 +37,53 @@ export default function UploadBeatWizard() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
 
   // Licenses
-  const [nonExclusivePrice, setNonExclusivePrice] = useState(1999); // INR
-  const [exclusivePrice, setExclusivePrice] = useState(14999); // INR
+  const [freeLicenseEnabled, setFreeLicenseEnabled] = useState(false);
+  const [freeTermsText, setFreeTermsText] = useState("");
+  const [nonExclusivePrice, setNonExclusivePrice] = useState("");
+  const [exclusivePrice, setExclusivePrice] = useState("");
+  const [freeIncludedFiles, setFreeIncludedFiles] = useState<LicenseFile[]>(["mp3"]);
+  const [nonExclusiveIncludedFiles, setNonExclusiveIncludedFiles] = useState<LicenseFile[]>(["mp3"]);
+  const [exclusiveIncludedFiles, setExclusiveIncludedFiles] = useState<LicenseFile[]>(["mp3"]);
+  const [nonExclusiveTermsText, setNonExclusiveTermsText] = useState("");
+  const [exclusiveTermsText, setExclusiveTermsText] = useState("");
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [progressText, setProgressText] = useState("");
+  const availableLicenseFiles: Array<{ kind: LicenseFile; label: string }> = [
+    { kind: "mp3", label: "MP3" },
+    ...(wavFile ? [{ kind: "wav" as const, label: "WAV" }] : []),
+    ...(stemsFile ? [{ kind: "stems" as const, label: "Stems archive" }] : []),
+  ];
+
+  const renderFileChoices = (
+    selectedFiles: LicenseFile[],
+    setSelectedFiles: Dispatch<SetStateAction<LicenseFile[]>>
+  ) => (
+    <fieldset className="mt-3">
+      <legend className="text-sm font-semibold text-ink">Included files</legend>
+      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+        {availableLicenseFiles.map(({ kind, label }) => (
+          <label key={kind} className="flex min-h-11 items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={selectedFiles.includes(kind)}
+              onChange={(event) => {
+                setSelectedFiles((current) =>
+                  event.target.checked
+                    ? [...current, kind]
+                    : current.filter((file) => file !== kind)
+                );
+              }}
+              className="h-4 w-4 rounded border-border text-brass focus:ring-brass"
+            />
+            {label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
 
   const handleNextFromStep1 = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,8 +107,29 @@ export default function UploadBeatWizard() {
 
   const handleNextFromStep3 = (e: React.FormEvent) => {
     e.preventDefault();
+    const availableKinds = new Set(availableLicenseFiles.map((file) => file.kind));
+    const hasAvailableFile = (files: LicenseFile[]) =>
+      files.some((file) => availableKinds.has(file));
     if (!rightsConfirmed) {
-      setErrorMsg("You must confirm you hold 100% rights to this beat.");
+      setErrorMsg("Confirm that you have the rights required to offer this beat.");
+      return;
+    }
+    if (
+      parseRupeesToPaise(nonExclusivePrice) === null ||
+      parseRupeesToPaise(exclusivePrice) === null
+    ) {
+      setErrorMsg("Enter a valid INR price for each paid license.");
+      return;
+    }
+    if (
+      (freeLicenseEnabled && !hasAvailableFile(freeIncludedFiles)) ||
+      !hasAvailableFile(nonExclusiveIncludedFiles) ||
+      !hasAvailableFile(exclusiveIncludedFiles) ||
+      !nonExclusiveTermsText.trim() ||
+      !exclusiveTermsText.trim() ||
+      (freeLicenseEnabled && !freeTermsText.trim())
+    ) {
+      setErrorMsg("Choose at least one included file and provide terms for each enabled license.");
       return;
     }
     setErrorMsg(null);
@@ -67,7 +139,13 @@ export default function UploadBeatWizard() {
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!rightsConfirmed) {
-      setErrorMsg("You must confirm you hold 100% rights to this beat.");
+      setErrorMsg("Confirm that you have the rights required to offer this beat.");
+      return;
+    }
+    const nonExclusiveAmount = parseRupeesToPaise(nonExclusivePrice);
+    const exclusiveAmount = parseRupeesToPaise(exclusivePrice);
+    if (nonExclusiveAmount === null || exclusiveAmount === null) {
+      setErrorMsg("Enter a valid INR price for each paid license.");
       return;
     }
 
@@ -221,19 +299,38 @@ export default function UploadBeatWizard() {
           cover: coverPayload,
           files: confirmedFilesPayload,
           licenses: [
+            ...(freeLicenseEnabled
+              ? [{
+                  tier: "free",
+                  name: "Free License",
+                  price: { amount: 0, currency: "INR" },
+                  includedFiles: freeIncludedFiles.filter((file) =>
+                    availableLicenseFiles.some((available) => available.kind === file)
+                  ),
+                  termsText: freeTermsText.trim(),
+                  termsVersion: "1.0",
+                  enabled: true,
+                }]
+              : []),
             {
               tier: "non_exclusive",
-              name: "Standard Commercial License",
-              price: { amount: nonExclusivePrice * 100, currency: "INR" },
-              includedFiles: ["mp3"],
+              name: "Non-Exclusive License",
+              price: { amount: nonExclusiveAmount, currency: "INR" },
+              includedFiles: nonExclusiveIncludedFiles.filter((file) =>
+                availableLicenseFiles.some((available) => available.kind === file)
+              ),
+              termsText: nonExclusiveTermsText.trim(),
               termsVersion: "1.0",
               enabled: true,
             },
             {
               tier: "exclusive",
-              name: "Exclusive Rights Buyout",
-              price: { amount: exclusivePrice * 100, currency: "INR" },
-              includedFiles: ["mp3", "wav", "stems"],
+              name: "Exclusive License",
+              price: { amount: exclusiveAmount, currency: "INR" },
+              includedFiles: exclusiveIncludedFiles.filter((file) =>
+                availableLicenseFiles.some((available) => available.kind === file)
+              ),
+              termsText: exclusiveTermsText.trim(),
               termsVersion: "1.0",
               enabled: true,
             },
@@ -472,40 +569,100 @@ export default function UploadBeatWizard() {
         {/* Step 3: Licenses */}
         {step === 3 && (
           <form onSubmit={handleNextFromStep3} className="space-y-4">
+            <p className="text-sm leading-relaxed text-steel">
+              Set the available license options, included files, prices in INR, and your terms.
+              License terms are producer-provided and should receive legal review before publishing.
+            </p>
             <div className="space-y-3">
               <div className="rounded border border-border p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-ink flex items-center gap-1.5">
+                <label className="flex min-h-11 items-center gap-2 text-sm font-semibold text-ink">
+                  <input
+                    type="checkbox"
+                    checked={freeLicenseEnabled}
+                    onChange={(event) => setFreeLicenseEnabled(event.target.checked)}
+                    className="h-4 w-4 rounded border-border text-brass focus:ring-brass"
+                  />
+                  Offer a free license
+                </label>
+                {freeLicenseEnabled && (
+                  <div className="mt-3 border-t border-border pt-3">
+                    {renderFileChoices(freeIncludedFiles, setFreeIncludedFiles)}
+                    <label className="mt-3 block text-sm font-semibold text-ink" htmlFor="free-terms">
+                      Free license terms
+                    </label>
+                    <textarea
+                      id="free-terms"
+                      required
+                      maxLength={5000}
+                      value={freeTermsText}
+                      onChange={(event) => setFreeTermsText(event.target.value)}
+                      className="mt-1 min-h-24 w-full rounded border border-border bg-surface px-3 py-2 text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-steel"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded border border-border p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <label htmlFor="non-exclusive-price" className="text-sm font-semibold text-ink flex items-center gap-1.5">
                     <DollarSign className="h-3.5 w-3.5 text-steel" />
-                    <span>Non-Exclusive License (MP3)</span>
-                  </span>
-                  <span className="text-xs text-steel">INR</span>
+                    Non-Exclusive License
+                  </label>
+                  <span className="text-sm text-steel">INR</span>
                 </div>
                 <Input
                   required
                   type="number"
-                  min={100}
+                  min="0.01"
+                  step="0.01"
+                  id="non-exclusive-price"
                   value={nonExclusivePrice}
-                  onChange={(e) => setNonExclusivePrice(Number(e.target.value))}
-                  className="text-xs"
+                  onChange={(e) => setNonExclusivePrice(e.target.value)}
+                  className="text-base"
+                />
+                {renderFileChoices(nonExclusiveIncludedFiles, setNonExclusiveIncludedFiles)}
+                <label className="mt-3 block text-sm font-semibold text-ink" htmlFor="non-exclusive-terms">
+                  Non-exclusive license terms
+                </label>
+                <textarea
+                  id="non-exclusive-terms"
+                  required
+                  maxLength={5000}
+                  value={nonExclusiveTermsText}
+                  onChange={(event) => setNonExclusiveTermsText(event.target.value)}
+                  className="mt-1 min-h-24 w-full rounded border border-border bg-surface px-3 py-2 text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-steel"
                 />
               </div>
 
               <div className="rounded border border-border p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-ink flex items-center gap-1.5">
+                <div className="mb-2 flex items-center justify-between">
+                  <label htmlFor="exclusive-price" className="text-sm font-semibold text-ink flex items-center gap-1.5">
                     <DollarSign className="h-3.5 w-3.5 text-steel" />
-                    <span>Exclusive Buyout License (All Files)</span>
-                  </span>
-                  <span className="text-xs text-steel">INR</span>
+                    Exclusive License
+                  </label>
+                  <span className="text-sm text-steel">INR</span>
                 </div>
                 <Input
                   required
                   type="number"
-                  min={1000}
+                  min="0.01"
+                  step="0.01"
+                  id="exclusive-price"
                   value={exclusivePrice}
-                  onChange={(e) => setExclusivePrice(Number(e.target.value))}
-                  className="text-xs"
+                  onChange={(e) => setExclusivePrice(e.target.value)}
+                  className="text-base"
+                />
+                {renderFileChoices(exclusiveIncludedFiles, setExclusiveIncludedFiles)}
+                <label className="mt-3 block text-sm font-semibold text-ink" htmlFor="exclusive-terms">
+                  Exclusive license terms
+                </label>
+                <textarea
+                  id="exclusive-terms"
+                  required
+                  maxLength={5000}
+                  value={exclusiveTermsText}
+                  onChange={(event) => setExclusiveTermsText(event.target.value)}
+                  className="mt-1 min-h-24 w-full rounded border border-border bg-surface px-3 py-2 text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-steel"
                 />
               </div>
             </div>
@@ -524,7 +681,7 @@ export default function UploadBeatWizard() {
                     <ShieldCheck className="h-3.5 w-3.5 text-brass" />
                     Rights Confirmation
                   </span>
-                  I warrant that I am the sole author and owner of this musical composition and sound recording, that all samples have been legally cleared, and that I hold all rights required to grant these commercial licenses.
+                  I confirm that I own or have obtained the rights needed to offer this beat and that any samples have been cleared.
                 </div>
               </label>
             </div>
@@ -589,11 +746,18 @@ export default function UploadBeatWizard() {
               <div className="rounded border border-border p-3 bg-surface-muted">
                 <h4 className="text-xs font-bold text-ink uppercase tracking-wider mb-2">License Pricing</h4>
                 <div className="space-y-1 text-xs text-ink">
+                  {freeLicenseEnabled && (
+                    <div>
+                      <span className="text-steel">Free License:</span> Free
+                    </div>
+                  )}
                   <div>
-                    <span className="text-steel">Non-Exclusive License:</span> ₹{nonExclusivePrice.toLocaleString("en-IN")}
+                    <span className="text-steel">Non-Exclusive License:</span>{" "}
+                    ₹{Number(nonExclusivePrice).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                   <div>
-                    <span className="text-steel">Exclusive Buyout:</span> ₹{exclusivePrice.toLocaleString("en-IN")}
+                    <span className="text-steel">Exclusive License:</span>{" "}
+                    ₹{Number(exclusivePrice).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
               </div>

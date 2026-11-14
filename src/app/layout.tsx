@@ -17,10 +17,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Beatbazaar | Licensed Beats and Music Production Marketplace",
   description:
-    "Buy and sell licensed beats online. Independent producers upload stems and audio; artists purchase instant commercial licenses with UPI, cards, and international payment options.",
+    "Browse beats from independent producers and review producer-defined license terms. Checkout is currently available in Razorpay test mode for INR.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   openGraph: {
-    title: "Beatbazaar | Licensed Beats and Music Production Marketplace",
+    title:     "Browse beats and review producer-defined license options. INR checkout is currently in test mode.",
     description:
       "Buy and sell licensed beats online. Commercial music licenses, instant stems downloads, and producer storefronts.",
     url: "https://beatbazaar.com",
@@ -54,4 +54,3 @@ export default function RootLayout({
     </html>
   );
 }
-

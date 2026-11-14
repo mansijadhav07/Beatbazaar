@@ -27,7 +27,7 @@ export const OrderSchema = z.object({
   status: OrderStatusSchema.default("pending"),
   currency: CurrencyCodeSchema,
   totalAmount: z.number().int().nonnegative(),
-  taxAmount: z.number().int().nonnegative().default(0),
+  taxAmount: z.number().int().nonnegative().nullable().default(null),
   platformFeeAmount: z.number().int().nonnegative().default(0),
   paymentProvider: z.enum(["razorpay", "stripe"]).optional(),
   paymentRef: z.string().optional(),
@@ -37,4 +37,3 @@ export const OrderSchema = z.object({
 });
 
 export type Order = z.infer<typeof OrderSchema>;
-

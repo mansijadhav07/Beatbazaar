@@ -5,8 +5,8 @@ export interface IPaymentEvent extends Document {
   eventId: string;
   eventType: string;
   orderId?: string;
+  status: "processing" | "processed" | "failed";
   processedAt: Date;
-  raw: Record<string, unknown>;
 }
 
 const PaymentEventSchema = new Schema<IPaymentEvent>({
@@ -18,8 +18,13 @@ const PaymentEventSchema = new Schema<IPaymentEvent>({
   eventId: { type: String, required: true },
   eventType: { type: String, required: true },
   orderId: { type: String },
+  status: {
+    type: String,
+    enum: ["processing", "processed", "failed"],
+    default: "processing",
+    index: true,
+  },
   processedAt: { type: Date, default: Date.now },
-  raw: { type: Schema.Types.Mixed, required: true },
 });
 
 // Idempotency: ensure each event from each provider is processed at most once

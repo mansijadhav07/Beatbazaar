@@ -36,36 +36,33 @@ export default function HomePage() {
   const licenseTiers = [
     {
       title: "Free Download",
-      subtitle: "For non-commercial auditioning and demo recording",
+      subtitle: "Available on beats where the producer enables it",
       features: [
-        "MP3 audio file with audio watermark tag",
-        "Personal evaluation use only",
-        "Producer credit required in track description",
-        "No monetized streaming or commercial sales",
+        "Check the track page for included files",
+        "Read the producer's terms before downloading",
+        "Usage and credit details vary by license",
       ],
       badge: "Audition",
     },
     {
       title: "Non-Exclusive License",
-      subtitle: "Commercial distribution up to streaming thresholds",
+      subtitle: "Producer-defined terms and pricing",
       features: [
-        "Untagged 320kbps MP3 and lossless WAV masters",
-        "Optional trackout stems ZIP archive",
-        "Stream on Spotify, Apple Music, and YouTube",
-        "Signed PDF license contract with order identifier",
+        "Included files are listed on each track",
+        "Review usage limits before purchase",
+        "A PDF snapshot of the order terms is available",
       ],
-      badge: "Most Popular",
+      badge: "Producer-defined",
     },
     {
-      title: "Exclusive Ownership",
-      subtitle: "Complete acquisition of production rights",
+      title: "Exclusive License",
+      subtitle: "Available while the beat is listed for sale",
       features: [
-        "All master audio files and full individual stems",
-        "Beat is removed from marketplace immediately upon purchase",
-        "All other non-exclusive listings automatically withdrawn",
-        "Full transfer documentation and license agreement",
+        "Included files are listed on the track page",
+        "Purchase removes the beat from sale",
+        "Read the producer's exclusive terms before purchase",
       ],
-      badge: "Full Buyout",
+      badge: "Exclusive",
     },
   ];
 
@@ -75,13 +72,17 @@ export default function HomePage() {
       <section className="border-b border-border bg-surface-muted py-12 sm:py-16">
         <div className="mx-auto max-w-container px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl space-y-4">
+            <p className="inline-block border border-border bg-surface px-3 py-2 text-sm text-ink">
+              Test mode only. No live payments or producer payouts are processed.
+            </p>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-ink leading-tight">
               Buy and sell licensed beats from independent producers.
             </h1>
             <p className="text-sm sm:text-base text-steel-dark leading-relaxed">
               Every beat is free to audition with watermarked preview audio.
-              Choose between non-exclusive rights or complete exclusive buyouts,
-              with instant download links and signed PDF contracts.
+              Review the producer&apos;s license options, included files, and terms
+              before checkout. After payment is verified, download access and a
+              PDF snapshot of the order terms are available.
             </p>
           </div>
 
@@ -231,7 +232,8 @@ export default function HomePage() {
               </h3>
               <p className="text-xs text-steel-dark leading-relaxed">
                 Review usage rights, distribution limits, and included files before purchase.
-                Prices are shown upfront in INR or USD with zero hidden platform charges.
+                Prices are shown upfront in INR. Applicable fees and tax treatment are
+                subject to configuration and legal review.
               </p>
             </div>
 
@@ -240,11 +242,12 @@ export default function HomePage() {
                 3
               </div>
               <h3 className="text-sm font-semibold text-ink">
-                Instant delivery & PDF agreement
+                Download after payment verification
               </h3>
               <p className="text-xs text-steel-dark leading-relaxed">
-                Pay securely using UPI or cards. Downloads unlock immediately via presigned
-                Cloudflare R2 links, accompanied by a verified PDF license document.
+                Payment is processed through Razorpay test checkout. After our
+                webhook verifies payment, download access and a PDF snapshot of
+                the order terms are available.
               </p>
             </div>
           </div>
@@ -302,8 +305,9 @@ export default function HomePage() {
               Produce music? Sell your beats directly on Beatbazaar.
             </h2>
             <p className="text-xs sm:text-sm text-mist max-w-lg leading-relaxed">
-              Upload stems, WAVs and MP3s. We automatically generate watermarked audio previews
-              and handle payment processing and PDF license delivery to buyers.
+              Upload audio and optional stems. We generate watermarked previews
+              and provide checkout, download access, and a PDF snapshot of
+              license terms after payment verification.
             </p>
           </div>
           <Link href="/login?intent=producer">

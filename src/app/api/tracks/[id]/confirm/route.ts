@@ -42,16 +42,17 @@ const ConfirmUploadSchema = z.object({
   licenses: z.array(
     z.object({
       tier: z.enum(["free", "non_exclusive", "exclusive"]),
-      name: z.string(),
+      name: z.string().trim().min(1).max(80),
       price: z.object({
-        amount: z.number().int().nonnegative(),
-        currency: z.enum(["INR", "USD"]),
+        amount: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+        currency: z.literal("INR"),
       }),
-      includedFiles: z.array(z.enum(["preview", "mp3", "wav", "stems"])),
-      termsVersion: z.string().default("1.0"),
+      includedFiles: z.array(z.enum(["mp3", "wav", "stems"])).min(1),
+      termsText: z.string().trim().min(1).max(5000),
+      termsVersion: z.string().trim().min(1).max(50).default("1.0"),
       enabled: z.boolean().default(true),
     })
-  ).min(1),
+  ).min(1).max(3),
 });
 
 export async function POST(
@@ -76,6 +77,28 @@ export async function POST(
         { error: "You must confirm you hold all legal rights to this audio before publishing." },
         { status: 400 }
       );
+    }
+
+    const licenseTiers = parsed.data.licenses.map((license) => license.tier);
+    if (new Set(licenseTiers).size !== licenseTiers.length) {
+      return NextResponse.json(
+        { error: "Each license tier can only be configured once." },
+        { status: 400 }
+      );
+    }
+
+    const uploadedFileKinds = new Set(parsed.data.files.map((file) => file.kind));
+    for (const license of parsed.data.licenses) {
+      if (
+        (license.tier === "free" && license.price.amount !== 0) ||
+        (license.tier !== "free" && license.price.amount <= 0) ||
+        license.includedFiles.some((kind) => !uploadedFileKinds.has(kind))
+      ) {
+        return NextResponse.json(
+          { error: "License prices and included files must match the uploaded files." },
+          { status: 400 }
+        );
+      }
     }
 
     await connectMongoose();
@@ -232,4 +255,3 @@ export async function POST(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

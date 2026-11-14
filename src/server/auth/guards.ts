@@ -36,9 +36,21 @@ export async function requireRole(
 ): Promise<SessionContext> {
   const requestHeaders = await headers();
 
-  // Test header bypass for automated test suites
+  // The test identity header is disabled unless the local Playwright server opts in.
   const testRole = requestHeaders.get("x-playwright-test-role");
-  if (testRole && allowedRoles.includes(testRole as UserRole)) {
+  const hostHeader = requestHeaders.get("host") || "";
+  const testHost = hostHeader.startsWith("[")
+    ? hostHeader.slice(1, hostHeader.indexOf("]"))
+    : hostHeader.split(":")[0];
+  if (
+    process.env.PLAYWRIGHT_TEST_AUTH_ENABLED === "true" &&
+    process.env.PLAYWRIGHT_TEST_AUTH_SECRET &&
+    ["localhost", "127.0.0.1", "::1"].includes(testHost) &&
+    requestHeaders.get("x-playwright-test-secret") ===
+      process.env.PLAYWRIGHT_TEST_AUTH_SECRET &&
+    testRole &&
+    allowedRoles.includes(testRole as UserRole)
+  ) {
     return {
       user: {
         id: "playwright_test_user",

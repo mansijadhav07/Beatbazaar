@@ -5,14 +5,9 @@ import { TrackModel, type ITrack } from "@/server/db/models/Track";
 import { OrderModel, type IOrderItemSnapshot } from "@/server/db/models/Order";
 import { CheckoutReservationModel } from "@/server/db/models/CheckoutReservation";
 import { getPaymentProvider } from "./index";
+import type { CheckoutResult } from "./types";
+import { getPlatformFeePercent } from "./fees";
 import { fulfillOrder } from "./fulfillment";
-
-// LEGAL REVIEW REQUIRED: This is placeholder license terms text.
-// Replace with reviewed legal text before going live.
-// Production guard: startup fails if ALLOW_PLACEHOLDER_LEGAL is not "true".
-export const TERMS_TEXT = `[LEGAL REVIEW REQUIRED] Placeholder license terms. This text has not been reviewed by a lawyer and must be replaced before the platform goes live. By purchasing this license you agree to the terms provided by the producer. The platform fee is non-refundable after download. Beatbazaar acts as a marketplace and is not a party to the license agreement between buyer and producer.`;
-
-export const TERMS_VERSION = "0.1-placeholder";
 
 export function assertLegalTextAllowed(): void {
   if (
@@ -34,6 +29,8 @@ interface CreateOrderResult {
   orderId: string;
   providerOrderId?: string;
   checkoutKeyId?: string;
+  amountMinorUnits: number;
+  currency: "INR" | "USD";
   isFree: boolean;
 }
 
@@ -69,6 +66,8 @@ export async function createOrder(
   const resolvedItems: Array<{
     track: ITrack;
     licenseTier: CartItem["licenseTier"];
+    termsText: string;
+    termsVersion: string;
     priceMinorUnits: number;
   }> = [];
 
@@ -95,12 +94,13 @@ export async function createOrder(
       );
     }
 
-    // 4. For exclusive items: check for conflicting reservations
+    // 4. For exclusive items: reject known active reservations.
     if (item.licenseTier === "exclusive") {
       const existing = await CheckoutReservationModel.findOne({
         trackId: item.trackId,
+        expiresAt: { $gt: new Date() },
       });
-      if (existing && existing.buyerId !== buyerId) {
+      if (existing) {
         throw new CheckoutError(
           409,
           "This beat is reserved by another buyer. Try again in a few minutes."
@@ -131,7 +131,20 @@ export async function createOrder(
       }
     }
 
-    resolvedItems.push({ track, licenseTier: item.licenseTier, priceMinorUnits });
+    if (!license.termsText?.trim()) {
+      throw new CheckoutError(
+        409,
+        `The producer has not provided terms for "${track.title}".`
+      );
+    }
+
+    resolvedItems.push({
+      track,
+      licenseTier: item.licenseTier,
+      termsText: license.termsText,
+      termsVersion: license.termsVersion,
+      priceMinorUnits,
+    });
   }
 
   // 6. Compute totals
@@ -139,21 +152,27 @@ export async function createOrder(
     (sum, r) => sum + r.priceMinorUnits,
     0
   );
-  const platformFeeAmount = Math.floor(
-    (totalAmount * siteConfig.platformFeePercent) / 100
+  const platformFeePercent = totalAmount > 0 ? getPlatformFeePercent() : 0;
+  const orderItemPlatformFees = resolvedItems.map((item) =>
+    Math.floor((item.priceMinorUnits * platformFeePercent) / 100)
+  );
+  const platformFeeAmount = orderItemPlatformFees.reduce(
+    (sum, fee) => sum + fee,
+    0
   );
   // LEGAL REVIEW REQUIRED: GST applicability TBD
-  const taxAmount = 0;
+  const taxAmount = null;
 
   // 7. Build order item snapshots
-  const orderItems: IOrderItemSnapshot[] = resolvedItems.map((r) => ({
+  const orderItems: IOrderItemSnapshot[] = resolvedItems.map((r, idx) => ({
     trackId: r.track!._id as mongoose.Types.ObjectId,
     title: r.track!.title,
     producerId: new mongoose.Types.ObjectId(r.track!.producerId),
     producerName: r.track!.producerName || "",
     licenseTier: r.licenseTier,
-    termsText: TERMS_TEXT,
-    termsVersion: TERMS_VERSION,
+    termsText: r.termsText,
+    termsVersion: r.termsVersion,
+    platformFeeAmount: orderItemPlatformFees[idx],
     pricePaid: {
       amount: r.priceMinorUnits,
       currency,
@@ -163,6 +182,7 @@ export async function createOrder(
   // 8. Create Order document
   const order = await OrderModel.create({
     buyerId,
+    buyerEmail,
     status: "pending",
     currency,
     totalAmount,
@@ -174,46 +194,74 @@ export async function createOrder(
 
   const orderId = (order._id as mongoose.Types.ObjectId).toString();
 
-  // Upsert checkout reservations for exclusive items
-  for (let idx = 0; idx < resolvedItems.length; idx++) {
-    const r = resolvedItems[idx];
-    if (r.licenseTier === "exclusive") {
+  // Claim exclusive items atomically. The unique track index arbitrates races.
+  try {
+    for (let idx = 0; idx < resolvedItems.length; idx++) {
+      if (resolvedItems[idx].licenseTier !== "exclusive") continue;
+      const now = new Date();
       const expiresAt = new Date(
-        Date.now() + siteConfig.exclusiveReservationTtlSeconds * 1000
+        now.getTime() + siteConfig.exclusiveReservationTtlSeconds * 1000
       );
       await CheckoutReservationModel.findOneAndUpdate(
-        { trackId: items[idx].trackId },
-        {
-          trackId: items[idx].trackId,
-          buyerId,
-          orderId,
-          expiresAt,
-        },
+        { trackId: items[idx].trackId, expiresAt: { $lte: now } },
+        { $set: { buyerId, orderId, expiresAt } },
         { upsert: true, new: true }
       );
     }
+  } catch (error) {
+    await OrderModel.updateOne({ _id: order._id, status: "pending" }, { $set: { status: "failed" } });
+    await CheckoutReservationModel.deleteMany({ orderId });
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === 11000
+    ) {
+      throw new CheckoutError(
+        409,
+        "This beat is reserved by another buyer. Try again in a few minutes."
+      );
+    }
+    throw error;
   }
 
   // 9. Free order: fulfill immediately
   if (totalAmount === 0) {
     await fulfillOrder(orderId);
-    return { orderId, isFree: true };
+    return {
+      orderId,
+      amountMinorUnits: totalAmount,
+      currency,
+      isFree: true,
+    };
   }
 
   // 10. Paid order: create provider checkout
   const receiptId = `bb_${orderId}`.slice(0, 40); // Razorpay receipt max 40 chars
-  const result = await getPaymentProvider().createCheckout({
-    internalOrderId: orderId,
-    currency,
-    amountMinorUnits: totalAmount,
-    receiptId,
-    returnUrl,
-  });
+  let result: CheckoutResult;
+  try {
+    result = await getPaymentProvider().createCheckout({
+      internalOrderId: orderId,
+      currency,
+      amountMinorUnits: totalAmount,
+      receiptId,
+      returnUrl,
+    });
+  } catch (error) {
+    await OrderModel.updateOne({ _id: order._id, status: "pending" }, { $set: { status: "failed" } });
+    await CheckoutReservationModel.deleteMany({ orderId });
+    throw error;
+  }
+
+  order.providerOrderId = result.providerOrderId;
+  await order.save();
 
   return {
     orderId,
     providerOrderId: result.providerOrderId,
     checkoutKeyId: result.checkoutKeyId,
+    amountMinorUnits: totalAmount,
+    currency,
     isFree: false,
   };
 }

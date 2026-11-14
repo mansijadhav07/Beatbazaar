@@ -1,7 +1,8 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test.describe("Producer Upload Flow (iPhone 14)", () => {
   test.use({
+    playwrightTestRole: "producer",
     viewport: { width: 390, height: 844 },
     userAgent:
       "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
@@ -65,11 +66,6 @@ test.describe("Producer Upload Flow (iPhone 14)", () => {
       });
     });
 
-    // Set test header to bypass auth safely in development mode
-    await page.setExtraHTTPHeaders({
-      "x-playwright-test-role": "producer",
-    });
-
     await page.goto("/dashboard/beats/new");
 
     // Check heading
@@ -98,7 +94,11 @@ test.describe("Producer Upload Flow (iPhone 14)", () => {
     await expect(page.getByText("Rights Confirmation")).toBeVisible();
 
     // Confirm rights
-    await page.locator('input[type="checkbox"]').check();
+    await page.getByRole("checkbox", { name: /Rights Confirmation/ }).check();
+    await page.getByRole("spinbutton", { name: "Non-Exclusive License" }).fill("250");
+    await page.getByLabel("Non-exclusive license terms").fill("Test non-exclusive terms.");
+    await page.getByRole("spinbutton", { name: "Exclusive License", exact: true }).fill("2500");
+    await page.getByLabel("Exclusive license terms", { exact: true }).fill("Test exclusive terms.");
 
     // Step 3 to Step 4 (Review)
     await page.locator("button:has-text('Continue to Review')").click();

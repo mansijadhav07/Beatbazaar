@@ -2,11 +2,20 @@ import { z } from "zod";
 
 export const KycStatusSchema = z.enum([
   "not_started",
+  "in_review",
+  "needs_more_information",
+  "active",
+  "rejected",
   "pending",
   "verified",
-  "rejected",
 ]);
 export type KycStatus = z.infer<typeof KycStatusSchema>;
+
+export const PayoutRequiredActionSchema = z.enum([
+  "provider_review",
+  "provider_action_required",
+  "settlement_account_verification",
+]);
 
 export const LocationSchema = z.object({
   country: z.string().min(2).max(100),
@@ -32,10 +41,13 @@ export const ProducerProfileSchema = z.object({
   verified: z.boolean().default(false),
   kycStatus: KycStatusSchema.default("not_started"),
   payoutAccountRef: z.string().nullable().optional(),
+  payoutRequiredActions: z.array(PayoutRequiredActionSchema).default([]),
+  payoutSubmittedAt: z.date().nullable().optional(),
+  payoutStatusUpdatedAt: z.date().nullable().optional(),
+  payoutActivatedAt: z.date().nullable().optional(),
   followerCount: z.number().int().nonnegative().default(0),
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
 });
 
 export type ProducerProfile = z.infer<typeof ProducerProfileSchema>;
-

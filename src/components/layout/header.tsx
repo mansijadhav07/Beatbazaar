@@ -8,12 +8,7 @@ import { useCart } from "@/components/cart/CartContext";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currency, setCurrency] = useState<"INR" | "USD">("INR");
   const { itemCount } = useCart();
-
-  const toggleCurrency = () => {
-    setCurrency((prev) => (prev === "INR" ? "USD" : "INR"));
-  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-surface/95 backdrop-blur-none pt-safe">
@@ -57,16 +52,6 @@ export function Header() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
-          {/* Currency Switcher */}
-          <button
-            type="button"
-            onClick={toggleCurrency}
-            className="hidden sm:inline-flex items-center rounded border border-border px-2.5 py-1 text-xs font-semibold text-steel-dark hover:bg-surface-muted hover:text-ink transition-colors"
-            title="Switch display currency"
-          >
-            {currency === "INR" ? "INR (₹)" : "USD ($)"}
-          </button>
-
           {/* Cart Link with Badge */}
           <Link
             href="/cart"
@@ -132,14 +117,7 @@ export function Header() {
           >
             License Tiers
           </Link>
-          <div className="pt-2 border-t border-border flex items-center justify-between">
-            <button
-              type="button"
-              onClick={toggleCurrency}
-              className="text-xs font-semibold text-steel-dark border border-border px-2 py-1 rounded"
-            >
-              Currency: {currency}
-            </button>
+          <div className="pt-2 border-t border-border flex justify-end">
             <Link
               href="/login"
               onClick={() => setMobileMenuOpen(false)}

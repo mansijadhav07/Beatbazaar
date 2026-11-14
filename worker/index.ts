@@ -7,6 +7,12 @@ import { TrackModel } from "../src/server/db/models/Track";
 import { claimNextJob, completeJob, failJob, reclaimStaleJobs } from "../src/server/jobs/queue";
 import { cleanupAbandonedDrafts } from "../src/server/jobs/cleanup-drafts";
 import { flushBufferedPlays } from "../src/server/jobs/flush-plays";
+import {
+  processAwaitingKycTransfers,
+  processCoolingPayoutTransfers,
+  processFeePendingPayouts,
+} from "../src/server/payouts/transfers";
+import { reconcileRouteTransfers } from "../src/server/payouts/reconciliation";
 import { generateStorageKey, createPresignedDownloadUrl, createR2Client, publicBucketName, deleteObject } from "../src/server/storage/r2";
 import { extractWaveformPeaks, generatePreviewMp3 } from "../src/server/audio/transcoder";
 import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
@@ -182,6 +188,46 @@ setInterval(async () => {
   }
 }, 30 * 1000);
 
+async function reconcilePreviousUtcDay(): Promise<void> {
+  const to = new Date();
+  to.setUTCHours(0, 0, 0, 0);
+  const from = new Date(to.getTime() - 24 * 60 * 60 * 1000);
+  const result = await reconcileRouteTransfers(from, to);
+  console.log(
+    `[Beatbazaar Worker] Route reconciliation completed with ${result.mismatchCount} mismatch(es).`
+  );
+}
+
+setInterval(async () => {
+  try {
+    await processFeePendingPayouts();
+    await processCoolingPayoutTransfers();
+  } catch (err: unknown) {
+    console.error(
+      "[Beatbazaar Worker Timer] Pending payout processing failed.",
+      err instanceof Error ? err.name : "UnknownError"
+    );
+  }
+}, 30 * 60 * 1000);
+
+setInterval(async () => {
+  try {
+    await reconcilePreviousUtcDay();
+  } catch (err: unknown) {
+    console.error(
+      "[Beatbazaar Worker Timer] Route reconciliation failed.",
+      err instanceof Error ? err.name : "UnknownError"
+    );
+  }
+}, 24 * 60 * 60 * 1000);
+
+void reconcilePreviousUtcDay().catch((err: unknown) => {
+  console.error(
+    "[Beatbazaar Worker] Initial Route reconciliation failed.",
+    err instanceof Error ? err.name : "UnknownError"
+  );
+});
+
 async function loop() {
   while (isRunning) {
     try {
@@ -191,6 +237,11 @@ async function loop() {
         try {
           if (job.type === "process-track") {
             await processTrackJob(job.payload.trackId);
+          } else if (job.type === "process-producer-payouts") {
+            if (typeof job.payload.producerId !== "string") {
+              throw new Error("Payout job is missing its producer identifier.");
+            }
+            await processAwaitingKycTransfers(job.payload.producerId);
           }
           await completeJob(job._id.toString());
         } catch (err: unknown) {

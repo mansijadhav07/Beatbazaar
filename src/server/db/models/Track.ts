@@ -16,6 +16,7 @@ export interface ILicenseOption {
     currency: "INR" | "USD";
   };
   includedFiles: Array<"preview" | "mp3" | "wav" | "stems">;
+  termsText: string;
   termsVersion: string;
   enabled: boolean;
 }
@@ -43,6 +44,7 @@ export interface ITrack extends Document {
   processingError?: string | null;
   waveform: number[];
   playCount: number;
+  featured: boolean;
   files: ITrackFile[];
   licenses: ILicenseOption[];
   rightsConfirmedAt?: Date;
@@ -83,6 +85,7 @@ const LicenseOptionSchema = new Schema<ILicenseOption>(
         enum: ["preview", "mp3", "wav", "stems"],
       },
     ],
+    termsText: { type: String, default: "" },
     termsVersion: { type: String, default: "1.0" },
     enabled: { type: Boolean, default: true },
   },
@@ -128,6 +131,7 @@ const TrackSchema = new Schema<ITrack>(
     processingError: { type: String, default: null },
     waveform: [{ type: Number }],
     playCount: { type: Number, default: 0 },
+    featured: { type: Boolean, default: false, index: true },
     files: [TrackFileSchema],
     licenses: [LicenseOptionSchema],
     rightsConfirmedAt: { type: Date },

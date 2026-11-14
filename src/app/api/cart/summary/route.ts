@@ -61,6 +61,9 @@ export async function POST(request: NextRequest) {
       title: string;
       producerName: string;
       coverKey: string | null;
+      includedFiles?: string[];
+      termsText?: string;
+      termsVersion?: string;
       price: { amount: number; currency: "INR" | "USD" };
       available: boolean;
       unavailabilityReason?: string;
@@ -101,7 +104,10 @@ export async function POST(request: NextRequest) {
       }
 
       const license = track.licenses.find(
-        (l) => l.tier === item.licenseTier && l.enabled
+        (l) =>
+          l.tier === item.licenseTier &&
+          l.enabled &&
+          (l.price.currency === "INR" || siteConfig.internationalPaymentsEnabled)
       );
 
       if (!license) {
@@ -114,6 +120,20 @@ export async function POST(request: NextRequest) {
           price: { amount: 0, currency: requestedCurrency },
           available: false,
           unavailabilityReason: `The ${item.licenseTier} license tier is disabled for this beat`,
+        });
+        continue;
+      }
+
+      if (!license.termsText?.trim()) {
+        summaryItems.push({
+          trackId: item.trackId,
+          licenseTier: item.licenseTier,
+          title: track.title,
+          producerName: track.producerName || "Producer",
+          coverKey: track.coverKey || null,
+          price: { amount: 0, currency: requestedCurrency },
+          available: false,
+          unavailabilityReason: "The producer has not provided license terms.",
         });
         continue;
       }
@@ -135,6 +155,9 @@ export async function POST(request: NextRequest) {
         title: track.title,
         producerName: track.producerName || "Producer",
         coverKey: track.coverKey || null,
+        includedFiles: license.includedFiles,
+        termsText: license.termsText,
+        termsVersion: license.termsVersion,
         price: { amount: priceAmount, currency: requestedCurrency },
         available: true,
       });
@@ -152,4 +175,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

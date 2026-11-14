@@ -70,8 +70,18 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const tracks: BeatCardTrack[] = catalogResult.tracks.map((t) => {
     const previewFile = t.files.find((f) => f.kind === "preview");
     // Find lowest active license price
-    const enabledLicenses = t.licenses.filter((l) => l.enabled);
-    const lowestLicense = enabledLicenses.sort((a, b) => a.price.amount - b.price.amount)[0];
+    const availableLicenses = t.licenses.filter(
+      (license) =>
+        license.enabled &&
+        license.price.currency === "INR" &&
+        Boolean(license.termsText?.trim())
+    );
+    const lowestLicense = availableLicenses.reduce<
+      (typeof availableLicenses)[number] | undefined
+    >((lowest, license) => {
+      if (!lowest || license.price.amount < lowest.price.amount) return license;
+      return lowest;
+    }, undefined);
 
     return {
       id: t._id.toString(),
@@ -83,8 +93,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       producerName: t.producerName,
       waveform: t.waveform,
       previewKey: previewFile?.r2Key,
-      lowestPriceAmount: lowestLicense ? lowestLicense.price.amount : 0,
-      lowestPriceCurrency: lowestLicense ? lowestLicense.price.currency : "INR",
+      lowestPriceAmount: lowestLicense?.price.amount ?? null,
+      lowestPriceCurrency: "INR",
       playCount: t.playCount,
     };
   });

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/components/cart/CartContext";
 import { siteConfig } from "@/config/site";
@@ -33,11 +33,8 @@ declare global {
 
 export function CheckoutClient({ userEmail }: { userEmail: string }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialCurrency = (searchParams.get("currency") as "INR" | "USD") || "INR";
-
   const { cart, clearCart } = useCart();
-  const [currency] = useState<"INR" | "USD">(initialCurrency);
+  const currency = "INR" as const;
   const [summary, setSummary] = useState<SummaryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -143,6 +140,15 @@ export function CheckoutClient({ userEmail }: { userEmail: string }) {
         return;
       }
 
+      if (
+        data.currency !== currency ||
+        data.amountMinorUnits !== totalAmount
+      ) {
+        throw new Error(
+          "A beat price changed while you were checking out. Review the updated total and try again."
+        );
+      }
+
       // Paid orders invoke Razorpay modal
       if (!window.Razorpay) {
         throw new Error("Razorpay gateway failed to load. Please check your internet connection and try again.");
@@ -150,8 +156,8 @@ export function CheckoutClient({ userEmail }: { userEmail: string }) {
 
       const options = {
         key: data.checkoutKeyId,
-        amount: totalAmount,
-        currency,
+        amount: data.amountMinorUnits,
+        currency: data.currency,
         name: siteConfig.name,
         description: `Beat License Order #${data.orderId.slice(-6)}`,
         order_id: data.providerOrderId,
@@ -214,6 +220,9 @@ export function CheckoutClient({ userEmail }: { userEmail: string }) {
           Review your license terms, file attachments, and confirm payment.
         </p>
       </div>
+      <p className="mt-4 rounded border border-border bg-surface-muted p-3 text-sm text-ink">
+        Payments are in Razorpay test mode. No live payment will be collected.
+      </p>
 
       {error && (
         <div className="mt-6 rounded border border-status-danger/30 bg-status-danger-bg p-4 text-xs text-status-danger flex items-start gap-2.5">
@@ -261,10 +270,10 @@ export function CheckoutClient({ userEmail }: { userEmail: string }) {
           <div className="rounded border border-border bg-surface-muted/60 p-4 text-xs space-y-2">
             <h3 className="font-bold text-ink flex items-center gap-1.5">
               <ShieldCheck className="h-4 w-4 text-brass" />
-              <span>Commercial License Agreement Guarantee</span>
+              <span>License terms and files</span>
             </h3>
             <p className="text-steel-dark leading-relaxed">
-              Every purchase on Beatbazaar includes instant access to full-resolution audio files (WAV/MP3/Stems) and a customized, electronically signed PDF license certificate with full legal chain of title.
+              After payment is verified, your order page provides the purchased files and a PDF snapshot of the license terms. License language is marked LEGAL REVIEW REQUIRED until approved.
             </p>
           </div>
         </div>
@@ -289,24 +298,19 @@ export function CheckoutClient({ userEmail }: { userEmail: string }) {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span>Platform Processing</span>
-                <span className="font-semibold text-status-success">Included</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax</span>
-                <span className="font-semibold text-ink">
-                  {formatPrice(0, currency)}
-                </span>
+                <span>Tax and invoice treatment</span>
+                <span className="font-semibold text-ink">LEGAL REVIEW REQUIRED</span>
               </div>
             </div>
 
             <div className="mt-4 flex justify-between text-lg font-bold text-ink">
-              <span>Total to Pay</span>
+              <span>Amount charged now</span>
               <span>{formatPrice(totalAmount, currency)}</span>
             </div>
 
-            <p className="mt-2 text-[11px] text-steel">
-              Exact charged currency: <strong className="text-ink">{currency}</strong>. Payments are secured by 256-bit SSL encryption.
+            <p className="mt-2 text-xs text-steel">
+              Charged currency: <strong className="text-ink">INR</strong>. Tax treatment:
+              <strong className="text-ink"> LEGAL REVIEW REQUIRED</strong>. No tax is included.
             </p>
 
             <div className="mt-6">

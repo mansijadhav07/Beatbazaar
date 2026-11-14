@@ -16,7 +16,7 @@ export interface BeatCardTrack {
   producerName?: string;
   waveform?: number[];
   previewKey?: string;
-  lowestPriceAmount: number;
+  lowestPriceAmount: number | null;
   lowestPriceCurrency: string;
   playCount?: number;
 }
@@ -122,7 +122,9 @@ export function BeatCard({ track }: { track: BeatCardTrack }) {
           </div>
 
           <div className="font-semibold text-ink">
-            {track.lowestPriceAmount === 0
+            {track.lowestPriceAmount === null
+              ? "Unavailable"
+              : track.lowestPriceAmount === 0
               ? "Free"
               : `₹${(track.lowestPriceAmount / 100).toLocaleString("en-IN")}`}
           </div>
@@ -131,4 +133,3 @@ export function BeatCard({ track }: { track: BeatCardTrack }) {
     </div>
   );
 }
-

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock server-only so Vitest runs outside of Next.js server runtime without throwing
 vi.mock("server-only", () => ({}));
@@ -34,6 +34,11 @@ import { requireRole, getCurrentUser } from "./guards";
 describe("requireRole server guard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    headersMock.mockResolvedValue(new Headers());
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("redirects to /login if there is no active session", async () => {
@@ -87,6 +92,22 @@ describe("requireRole server guard", () => {
     expect(result.user.id).toBe("prod_123");
     expect(result.user.role).toBe("producer");
     expect(redirectMock).not.toHaveBeenCalled();
+  });
+
+  it("requires the test secret and a loopback host for test role bypass", async () => {
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
+    vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
+    headersMock.mockResolvedValue(
+      new Headers({
+        host: "127.0.0.1:3456",
+        "x-playwright-test-role": "admin",
+        "x-playwright-test-secret": "test-secret",
+      })
+    );
+
+    const result = await requireRole(["admin"]);
+    expect(result.user.id).toBe("playwright_test_user");
+    expect(getSessionMock).not.toHaveBeenCalled();
   });
 });
 

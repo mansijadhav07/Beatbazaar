@@ -7,7 +7,7 @@ import type { IOrderItemSnapshot } from "@/server/db/models/Order";
 import { siteConfig } from "@/config/site";
 
 /**
- * Generates a signed license agreement PDF for a purchased beat order item.
+ * Generates a PDF snapshot of the producer-provided terms for a purchased beat.
  * Uses pdf-lib with fontkit. Handles non-Latin glyphs and unsupported characters
  * safely without throwing.
  */
@@ -206,4 +206,3 @@ export async function generateLicensePdf(
   const pdfBytes = await doc.save();
   return Buffer.from(pdfBytes);
 }
-

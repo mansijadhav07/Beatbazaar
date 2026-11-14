@@ -8,6 +8,7 @@ export interface IOrderItemSnapshot {
   licenseTier: "free" | "non_exclusive" | "exclusive";
   termsText: string;
   termsVersion: string;
+  platformFeeAmount: number;
   pricePaid: {
     amount: number;
     currency: "INR" | "USD";
@@ -16,13 +17,16 @@ export interface IOrderItemSnapshot {
 
 export interface IOrder extends Document {
   buyerId: string;
+  buyerEmail: string;
   status: "pending" | "paid" | "failed" | "refunded";
   currency: "INR" | "USD";
   totalAmount: number;
-  taxAmount: number;
+  taxAmount: number | null;
   platformFeeAmount: number;
   paymentProvider?: "razorpay" | "stripe";
+  providerOrderId?: string;
   paymentRef?: string;
+  gatewayFeeAmount?: number;
   items: IOrderItemSnapshot[];
   createdAt: Date;
   updatedAt: Date;
@@ -41,6 +45,7 @@ const OrderItemSnapshotSchema = new Schema<IOrderItemSnapshot>(
     },
     termsText: { type: String, required: true },
     termsVersion: { type: String, required: true },
+    platformFeeAmount: { type: Number, min: 0, default: 0 },
     pricePaid: {
       amount: { type: Number, required: true },
       currency: { type: String, enum: ["INR", "USD"], required: true },
@@ -52,6 +57,7 @@ const OrderItemSnapshotSchema = new Schema<IOrderItemSnapshot>(
 const OrderSchema = new Schema<IOrder>(
   {
     buyerId: { type: String, required: true, index: true },
+    buyerEmail: { type: String, required: true },
     status: {
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
@@ -60,10 +66,12 @@ const OrderSchema = new Schema<IOrder>(
     },
     currency: { type: String, enum: ["INR", "USD"], required: true },
     totalAmount: { type: Number, required: true },
-    taxAmount: { type: Number, default: 0 },
+    taxAmount: { type: Number, default: null },
     platformFeeAmount: { type: Number, default: 0 },
     paymentProvider: { type: String, enum: ["razorpay", "stripe"] },
+    providerOrderId: { type: String, sparse: true, unique: true },
     paymentRef: { type: String, sparse: true, unique: true },
+    gatewayFeeAmount: { type: Number, min: 0 },
     items: [OrderItemSnapshotSchema],
   },
   {
@@ -75,4 +83,3 @@ OrderSchema.index({ buyerId: 1, createdAt: -1 });
 
 export const OrderModel: Model<IOrder> =
   mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
-

@@ -20,7 +20,7 @@ export function Footer() {
               watermarked audio and purchase verified commercial production rights.
             </p>
             <p className="text-xs text-steel-dark">
-              Supporting UPI, cards, and net banking in INR, plus international payments in USD.
+              Checkout is currently available in INR in Razorpay test mode.
             </p>
           </div>
 
@@ -88,4 +88,3 @@ export function Footer() {
     </footer>
   );
 }
-

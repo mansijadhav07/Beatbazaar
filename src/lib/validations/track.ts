@@ -47,6 +47,7 @@ export const LicenseOptionSchema = z.object({
   name: z.string(),
   price: MoneySchema,
   includedFiles: z.array(FileKindSchema).min(1),
+  termsText: z.string().trim().min(1).max(5000),
   termsVersion: z.string().default("1.0"),
   enabled: z.boolean().default(true),
 });

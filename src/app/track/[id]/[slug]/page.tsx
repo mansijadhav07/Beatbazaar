@@ -5,10 +5,35 @@ import { getTrackById, getRelatedTracks } from "@/server/catalog/repository";
 import { BeatCard, type BeatCardTrack } from "@/components/catalog/BeatCard";
 import { TrackAudioPlayer } from "@/components/catalog/TrackAudioPlayer";
 import { TrackBuyButton } from "@/components/catalog/TrackBuyButton";
+import { ReportBeatDialog } from "@/components/catalog/ReportBeatDialog";
 import { siteConfig } from "@/config/site";
-import { ShieldCheck, FileAudio, Disc3, Lock } from "lucide-react";
+import { FileAudio, Lock } from "lucide-react";
+import type { ILicenseOption } from "@/server/db/models/Track";
 
 export const dynamic = "force-dynamic";
+
+function lowestAvailableInrLicense(
+  licenses: ILicenseOption[]
+): ILicenseOption | undefined {
+  return licenses.reduce<ILicenseOption | undefined>((lowest, license) => {
+    if (
+      !license.enabled ||
+      license.price.currency !== "INR" ||
+      !license.termsText?.trim()
+    ) {
+      return lowest;
+    }
+    if (!lowest || license.price.amount < lowest.price.amount) return license;
+    return lowest;
+  }, undefined);
+}
+
+function formatLicensePrice(license: ILicenseOption): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: license.price.currency,
+  }).format(license.price.amount / 100);
+}
 
 interface TrackPageProps {
   params: Promise<{
@@ -34,7 +59,7 @@ export async function generateMetadata({ params }: TrackPageProps): Promise<Meta
 
   const isSoldExclusive = track.status === "sold_exclusive";
   const title = `${track.title} by ${track.producerName || "Beatbazaar Producer"} (${track.bpm} BPM ${track.genre} Beat)`;
-  const description = `Listen to and license ${track.title}, an authentic ${track.genre} beat in ${track.key} at ${track.bpm} BPM. High-resolution stems and commercial licenses on ${siteConfig.name}.`;
+  const description = `Listen to ${track.title}, a ${track.genre} beat in ${track.key} at ${track.bpm} BPM. Review the producer's license options on ${siteConfig.name}.`;
 
   const coverUrl = track.coverKey
     ? `${siteConfig.publicR2Domain}/${track.coverKey.replace(/^\//, "")}`
@@ -84,8 +109,8 @@ export default async function TrackPage({ params }: TrackPageProps) {
       producerName: t.producerName,
       waveform: t.waveform,
       previewKey: t.files.find((f) => f.kind === "preview")?.r2Key,
-      lowestPriceAmount: t.licenses[0]?.price.amount || 0,
-      lowestPriceCurrency: t.licenses[0]?.price.currency || "INR",
+      lowestPriceAmount: lowestAvailableInrLicense(t.licenses)?.price.amount ?? null,
+      lowestPriceCurrency: "INR",
       playCount: t.playCount,
     }));
 
@@ -149,7 +174,12 @@ export default async function TrackPage({ params }: TrackPageProps) {
   const jsonLdOffers = isSoldExclusive
     ? []
     : track.licenses
-        .filter((l) => l.enabled)
+        .filter(
+          (license) =>
+            license.enabled &&
+            license.price.currency === "INR" &&
+            Boolean(license.termsText?.trim())
+        )
         .map((l) => ({
           "@type": "Offer",
           name: l.name,
@@ -171,14 +201,13 @@ export default async function TrackPage({ params }: TrackPageProps) {
           "@type": "MusicGroup",
           name: track.producerName || "Beatbazaar Producer",
         },
-        duration: "PT3M",
         image: coverUrl,
       },
       {
         "@type": "Product",
         "@id": `${siteConfig.url}/track/${track._id.toString()}/${track.slug}#product`,
         name: `${track.title} (License & Audio)`,
-        description: `Commercial license rights and stems for ${track.title}.`,
+        description: `License options and included files for ${track.title}.`,
         image: coverUrl,
         offers: jsonLdOffers,
       },
@@ -221,7 +250,7 @@ export default async function TrackPage({ params }: TrackPageProps) {
           <div className="mb-6 rounded-lg border border-border bg-surface-muted p-4 flex items-center gap-3">
             <Lock className="h-5 w-5 text-steel flex-shrink-0" />
             <div className="text-xs text-ink leading-relaxed">
-              <span className="font-bold">Exclusive Rights Acquired:</span> This beat has been sold exclusively and is no longer available for licensing. Auditioning is retained for archive purposes.
+              <span className="font-bold">No longer available:</span> This beat is no longer available for licensing. Its preview remains available.
             </div>
           </div>
         )}
@@ -285,14 +314,20 @@ export default async function TrackPage({ params }: TrackPageProps) {
         {/* License Options Section */}
         <div className="py-12 border-b border-border">
           <div className="mb-6">
-            <h2 className="text-lg font-bold text-ink">License Options & Rights</h2>
+            <h2 className="text-lg font-bold text-ink">License Options</h2>
             <p className="text-xs text-steel mt-0.5">
-              Instant digital delivery with certified legal license agreement upon purchase.
+              Review the producer-provided files and terms before checkout. License terms require legal review.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {track.licenses.map((lic) => {
+            {track.licenses
+              .filter(
+                (license) =>
+                  license.enabled &&
+                  (license.price.currency === "INR" || siteConfig.internationalPaymentsEnabled)
+              )
+              .map((lic) => {
               const isFree = lic.tier === "free";
               const isExclusive = lic.tier === "exclusive";
 
@@ -316,7 +351,7 @@ export default async function TrackPage({ params }: TrackPageProps) {
                     <div className="mt-3 text-2xl font-black text-ink">
                       {isFree
                         ? "Free"
-                        : `₹${(lic.price.amount / 100).toLocaleString("en-IN")}`}
+                        : formatLicensePrice(lic)}
                     </div>
 
                     <div className="mt-4 pt-4 border-t border-border space-y-2 text-xs text-ink">
@@ -324,41 +359,45 @@ export default async function TrackPage({ params }: TrackPageProps) {
                         <FileAudio className="h-4 w-4 text-steel flex-shrink-0" />
                         <span>Included: {lic.includedFiles.join(", ").toUpperCase()}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Disc3 className="h-4 w-4 text-steel flex-shrink-0" />
-                        <span>
-                          {isExclusive
-                            ? "Sole ownership buyout with stems"
-                            : "Streaming, distribution & radio broadcast"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4 text-steel flex-shrink-0" />
-                        <span>100% Royalty-Free Commercial Agreement</span>
+                      <div className="whitespace-pre-wrap rounded border border-border bg-surface-muted p-3 text-sm leading-relaxed">
+                        {lic.termsText?.trim() || "The producer has not provided terms for this license."}
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-border">
-                    <TrackBuyButton
-                      trackId={track._id.toString()}
-                      trackTitle={track.title}
-                      producerName={track.producerName || "Beatbazaar Producer"}
-                      coverKey={track.coverKey}
-                      licenseTier={lic.tier}
-                      isExclusive={isExclusive}
-                      isSoldExclusive={isSoldExclusive}
-                      priceFormatted={
-                        isFree
-                          ? "Free"
-                          : `₹${(lic.price.amount / 100).toLocaleString("en-IN")}`
-                      }
-                    />
+                    {lic.termsText?.trim() ? (
+                      <TrackBuyButton
+                        trackId={track._id.toString()}
+                        trackTitle={track.title}
+                        producerName={track.producerName || "Beatbazaar Producer"}
+                        coverKey={track.coverKey}
+                        licenseTier={lic.tier}
+                        isExclusive={isExclusive}
+                        isSoldExclusive={isSoldExclusive}
+                        priceFormatted={
+                          isFree
+                            ? "Free"
+                            : formatLicensePrice(lic)
+                        }
+                      />
+                    ) : (
+                      <p className="text-sm text-status-warning">
+                        This license is unavailable because its terms have not been provided.
+                      </p>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
+        </div>
+
+        <div className="flex flex-col gap-3 border-b border-border py-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-steel-dark">
+            Think there is a rights or listing issue with this beat?
+          </p>
+          <ReportBeatDialog trackId={track._id.toString()} trackTitle={track.title} />
         </div>
 
         {/* Tags & Metadata Footer */}

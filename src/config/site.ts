@@ -1,3 +1,11 @@
+function readPayoutMode(): "razorpay_route" | "manual" {
+  const value = process.env.PAYOUT_MODE || "razorpay_route";
+  if (value === "razorpay_route" || value === "manual") return value;
+  throw new Error("PAYOUT_MODE must be razorpay_route or manual.");
+}
+
+const payoutModeValue = readPayoutMode();
+
 export const siteConfig = {
   name: "Beatbazaar",
   description:
@@ -23,15 +31,16 @@ export const siteConfig = {
    * This is a placeholder. Do not display this to producers in the UI yet.
    * Confirm the final rate before launch.
    */
-  platformFeePercent: parseInt(process.env.PLATFORM_FEE_PERCENT || "20", 10),
+  platformFeePercent: process.env.PLATFORM_FEE_PERCENT
+    ? Number(process.env.PLATFORM_FEE_PERCENT)
+    : null,
 
   /**
    * When true, USD price options are shown and Razorpay orders are created in USD.
    * Requires "International Payments" to be enabled on the Razorpay dashboard.
    * When false, only INR is offered.
    */
-  internationalPaymentsEnabled:
-    process.env.NEXT_PUBLIC_INTERNATIONAL_PAYMENTS_ENABLED === "true",
+  internationalPaymentsEnabled: false,
 
   /**
    * Stored exchange rate used to derive USD price when a producer has not set one.
@@ -56,4 +65,9 @@ export const siteConfig = {
    * Released on payment failure or expiry.
    */
   exclusiveReservationTtlSeconds: 600,
+
+  // Placeholder for the owner-approved refund window. Confirm before launch.
+  refundWindowDays: Number(process.env.REFUND_WINDOW_DAYS || "14"),
+
+  payoutMode: payoutModeValue,
 };

@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: `Shopping Cart | ${siteConfig.name}`,
-  description: "Review your selected music licenses, stems, and commercial production contracts.",
+  description: "Review selected beats, producer-provided license terms, and included files.",
   robots: {
     index: false,
     follow: false,
@@ -16,4 +16,3 @@ export const metadata: Metadata = {
 export default function CartPage() {
   return <CartClient />;
 }
-
