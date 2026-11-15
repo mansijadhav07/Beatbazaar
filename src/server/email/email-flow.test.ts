@@ -6,7 +6,7 @@ describe("Email Verification and Reset Token Flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("EMAIL_SERVER_API_KEY", "mock");
-    vi.stubEnv("EMAIL_FROM", "test@beatbazaar.test");
+    vi.stubEnv("EMAIL_FROM", "test@astrylix.test");
   });
 
   afterEach(() => {
@@ -21,7 +21,7 @@ describe("Email Verification and Reset Token Flow", () => {
     await sendEmail({
       to: "artist@example.com",
       subject: "Verify Email",
-      html: "<p>Verification link: https://beatbazaar.com/verify?token=123</p>",
+      html: "<p>Verification link: https://astrylixbeats.com/verify?token=123</p>",
     });
 
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[DEV EMAIL LOG]"));

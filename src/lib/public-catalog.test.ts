@@ -68,7 +68,7 @@ describe("public catalog landing policy", () => {
   });
 
   it("includes derived catalog entries and breadcrumbs in structured data", () => {
-    const data = buildLandingJsonLd(fixture, "https://beatbazaar.example");
+    const data = buildLandingJsonLd(fixture, "https://astrylix.example");
     const graph = data["@graph"];
 
     expect(graph.map((entry) => entry["@type"])).toEqual([
@@ -77,7 +77,7 @@ describe("public catalog landing policy", () => {
     ]);
     expect(graph[1].itemListElement[0]).toMatchObject({
       name: "Test Fixture Beat",
-      url: "https://beatbazaar.example/track/507f1f77bcf86cd799439011/test-fixture-beat",
+      url: "https://astrylix.example/track/507f1f77bcf86cd799439011/test-fixture-beat",
     });
   });
 
@@ -104,7 +104,7 @@ describe("public catalog landing policy", () => {
         bio: "Fixture profile used in this unit test.",
         location: { country: "India", state: "Maharashtra", city: "Pune" },
       },
-      "https://beatbazaar.example"
+      "https://astrylix.example"
     );
     expect(data["@graph"].map((item) => item["@type"])).toEqual([
       "ProfilePage",

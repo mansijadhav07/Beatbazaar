@@ -114,7 +114,7 @@ describe("License PDF Generator", () => {
       trackId: "track123" as any,
       title: "Desi Drill Anthem",
       producerId: "prod456" as any,
-      producerName: "Beatbazaar Producer",
+      producerName: "Astrylix Producer",
       licenseTier: "non_exclusive" as const,
       termsText: "Producer-provided terms for this non-exclusive license.",
       termsVersion: "1.0",

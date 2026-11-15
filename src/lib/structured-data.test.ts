@@ -20,20 +20,20 @@ const trackLicense = {
 describe("public structured data", () => {
   it("provides Organization and WebSite SearchAction data", () => {
     const graph = buildSiteStructuredData(
-      "https://beatbazaar.example",
+      "https://astrylix.example",
       siteConfig.name,
       "Licensed beats"
     )["@graph"];
     expect(graph.map((item) => item["@type"])).toEqual(["Organization", "WebSite"]);
     expect(graph[1].potentialAction).toMatchObject({
       "@type": "SearchAction",
-      target: "https://beatbazaar.example/tracks?q={search_term_string}",
+      target: "https://astrylix.example/tracks?q={search_term_string}",
     });
   });
 
   it("provides MusicRecording, Product offers, and breadcrumbs for a track", () => {
     const graph = buildTrackStructuredData({
-      siteUrl: "https://beatbazaar.example",
+      siteUrl: "https://astrylix.example",
       id: "507f1f77bcf86cd799439011",
       slug: "fixture-track",
       title: "Fixture Track",
@@ -64,7 +64,7 @@ describe("public structured data", () => {
 
   it("does not advertise offers for an exclusive sale", () => {
     const graph = buildTrackStructuredData({
-      siteUrl: "https://beatbazaar.example",
+      siteUrl: "https://astrylix.example",
       id: "507f1f77bcf86cd799439011",
       slug: "fixture-track",
       title: "Fixture Track",

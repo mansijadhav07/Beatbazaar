@@ -96,7 +96,7 @@ export default function ProducerProfileForm() {
             <label className="text-xs font-medium text-ink">Storefront Handle (Slug)</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-steel">
-                beatbazaar.com/
+                astrylixbeats.com/
               </span>
               <Input
                 required

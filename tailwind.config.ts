@@ -24,6 +24,11 @@ const config: Config = {
           dark: "var(--brass-dark)",
           light: "var(--brass-light)",
         },
+        band: {
+          DEFAULT: "var(--band)",
+          light: "var(--band-light)",
+          dark: "var(--band-dark)",
+        },
         mist: {
           DEFAULT: "var(--mist)",
           light: "var(--mist-light)",

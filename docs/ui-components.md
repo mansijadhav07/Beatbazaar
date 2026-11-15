@@ -1,6 +1,6 @@
 # Admin UI components
 
-The admin UI follows the light Beatbazaar tokens, sentence-case labels, 16px form
+The admin UI follows the light Astrylix tokens, sentence-case labels, 16px form
 controls, and 4px or 6px radii. No component is installed by the Spectrum UI CLI.
 
 | Component | Spectrum source | Status | Changes |

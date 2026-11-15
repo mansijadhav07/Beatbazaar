@@ -11,7 +11,7 @@ checkout, payout hold, or invoice placeholders as launch-approved policy.
 Before issuing invoices or enabling live payments, a chartered accountant must
 confirm:
 
-- Whether Beatbazaar or each producer is the supplier for each license sale,
+- Whether Astrylix or each producer is the supplier for each license sale,
   and which party must issue the customer invoice.
 - GST registration, place-of-supply treatment, taxable value, tax collection,
   invoice fields, credit notes, and refund adjustments.
@@ -19,7 +19,7 @@ confirm:
   including the applicable classification, thresholds, rates, timing, deposits,
   returns, and producer certificates.
 - How Razorpay fees and taxes on those fees are accounted for and allocated
-  between Beatbazaar and producers.
+  between Astrylix and producers.
 - Required records and reporting for refunds, chargebacks, reversals, and
   producer settlements.
 - Any foreign exchange, withholding, or reporting obligations before

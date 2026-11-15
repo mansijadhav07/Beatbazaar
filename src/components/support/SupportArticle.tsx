@@ -16,10 +16,10 @@ export function SupportArticle({
   return (
     <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
       <header className="space-y-4">
-        <h1 className="text-3xl font-semibold leading-tight text-ink sm:text-4xl">
+        <h1 className="font-display text-[1.75rem] font-black leading-[1.12] tracking-[-0.04em] text-ink sm:text-[2.5rem]">
           {title}
         </h1>
-        <p className="text-base leading-7 text-ink">{intro}</p>
+        <p className="text-base leading-7 text-steel-dark">{intro}</p>
         {legalReview && (
           <>
             <p
@@ -53,7 +53,7 @@ export function SupportSection({
     <section aria-labelledby={title.toLowerCase().replaceAll(" ", "-")}>
       <h2
         id={title.toLowerCase().replaceAll(" ", "-")}
-        className="mb-3 text-xl font-semibold leading-7 text-ink"
+        className="mb-3 font-display text-lg font-black leading-7 text-ink"
       >
         {title}
       </h2>

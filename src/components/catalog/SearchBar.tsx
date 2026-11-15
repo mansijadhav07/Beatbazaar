@@ -44,7 +44,7 @@ export function SearchBar() {
       <button
         type="submit"
         aria-label="Search tracks"
-        className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-md bg-ink text-white hover:bg-ink-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel touch-manipulation"
+        className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-md bg-brass text-white hover:bg-brass-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel touch-manipulation"
       >
         <Search aria-hidden="true" className="h-5 w-5" />
       </button>

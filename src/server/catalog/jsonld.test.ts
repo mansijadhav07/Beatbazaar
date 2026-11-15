@@ -9,7 +9,7 @@ describe("Track Page JSON-LD Structured Data Schema", () => {
       genre: "Trap",
       bpm: 140,
       producerName: "Mumbai Beats",
-      coverUrl: "https://cdn.beatbazaar.com/covers/test.jpg",
+      coverUrl: "https://cdn.astrylixbeats.com/covers/test.jpg",
       licenses: [
         {
           tier: "non_exclusive",
@@ -32,7 +32,7 @@ describe("Track Page JSON-LD Structured Data Schema", () => {
             price: (l.price.amount / 100).toFixed(2),
             priceCurrency: l.price.currency,
             availability: "https://schema.org/InStock",
-            url: `https://beatbazaar.com/track/${track._id}/${track.slug}`,
+            url: `https://astrylixbeats.com/track/${track._id}/${track.slug}`,
           }));
 
     const jsonLd = {

@@ -10,11 +10,11 @@ export function ScrollReveal({ children }: { children: ReactNode }) {
     if (!container || !("IntersectionObserver" in window)) return;
     if (container.getBoundingClientRect().top <= window.innerHeight) return;
 
-    const revealItems = container.querySelectorAll<HTMLElement>("h2, p, img, .beat-card");
+    const revealItems = container.querySelectorAll<HTMLElement>("h2, h3, p, li, details, .beat-card");
     revealItems.forEach((item, index) => {
-      if (index >= 6) return;
+      if (index >= 12) return;
       item.dataset.revealItem = "true";
-      item.style.setProperty("--reveal-index", String(index));
+      item.style.setProperty("--reveal-index", String(index % 6));
     });
 
     const observer = new IntersectionObserver(

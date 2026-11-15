@@ -26,7 +26,7 @@ export default async function UnauthorizedPage({
       </p>
       <Link
         href="/login"
-        className="mt-5 inline-flex min-h-11 items-center bg-ink px-4 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+        className="mt-5 inline-flex min-h-11 items-center bg-brass px-4 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
       >
         Sign in with another account
       </Link>

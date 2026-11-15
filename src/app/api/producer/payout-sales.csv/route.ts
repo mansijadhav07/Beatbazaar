@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="beatbazaar-sales.csv"',
+      "Content-Disposition": 'attachment; filename="astrylix-sales.csv"',
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
     },

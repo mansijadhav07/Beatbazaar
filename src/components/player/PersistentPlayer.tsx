@@ -57,14 +57,14 @@ export function PersistentPlayer() {
 
   return (
     <div
-      className="persistent-player fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 bg-ink text-white md:bottom-0"
+      className="persistent-player fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 bg-band text-white md:bottom-0"
       role="region"
       aria-label="Audio player"
       data-expanded={isExpanded}
     >
       <div className="mx-auto grid max-w-container grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2 sm:px-6 lg:grid-cols-[minmax(12rem,1fr)_auto] lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="relative h-10 w-10 flex-none overflow-hidden bg-ink-light">
+          <div className="relative h-10 w-10 flex-none overflow-hidden bg-band-light">
             {currentTrack.coverUrl ? (
               <Image
                 src={currentTrack.coverUrl}
@@ -74,7 +74,7 @@ export function PersistentPlayer() {
                 className="object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-brass">
+              <div className="flex h-full w-full items-center justify-center text-brass-light">
                 <svg aria-hidden="true" viewBox="0 0 32 32" className="h-7 w-7">
                   <path
                     d="M3 16h4l2-7 4 15 4-19 4 22 4-15 3 8h2"
@@ -115,7 +115,7 @@ export function PersistentPlayer() {
             selected
             playing={isPlaying}
             hasPeaks={Boolean(currentTrack.waveform?.length)}
-            className="hidden text-brass sm:inline-flex"
+            className="hidden text-brass-light sm:inline-flex"
           />
         </div>
 
@@ -133,7 +133,7 @@ export function PersistentPlayer() {
           </button>
           <button
             type="button"
-            className="flex h-11 w-11 items-center justify-center text-white hover:bg-ink-light lg:hidden"
+            className="flex h-11 w-11 items-center justify-center text-white hover:bg-band-light lg:hidden"
             onClick={() => setIsExpanded((expanded) => !expanded)}
             aria-label={isExpanded ? "Collapse player" : "Expand player"}
             aria-expanded={isExpanded}
@@ -146,7 +146,7 @@ export function PersistentPlayer() {
           </button>
           <Link
             href={`/track/${currentTrack.id}/${currentTrack.slug}#license-options`}
-            className="hidden min-h-11 items-center gap-2 bg-brass px-3 text-sm font-semibold text-ink hover:bg-brass-light sm:inline-flex"
+            className="hidden min-h-11 items-center gap-2 bg-brass px-3 text-sm font-semibold text-ink hover:bg-brass-dark sm:inline-flex"
           >
             <ShoppingBag aria-hidden="true" className="h-4 w-4" />
             Choose license
@@ -157,14 +157,14 @@ export function PersistentPlayer() {
           <div className="flex items-center gap-2">
             <button
               onClick={prevTrack}
-              className="flex h-11 w-11 items-center justify-center text-white/80 hover:bg-ink-light hover:text-white"
+              className="flex h-11 w-11 items-center justify-center text-white/80 hover:bg-band-light hover:text-white"
               aria-label="Previous track"
             >
               <SkipBack aria-hidden="true" className="h-5 w-5" />
             </button>
             <button
               onClick={nextTrack}
-              className="flex h-11 w-11 items-center justify-center text-white/80 hover:bg-ink-light hover:text-white"
+              className="flex h-11 w-11 items-center justify-center text-white/80 hover:bg-band-light hover:text-white"
               aria-label="Next track"
             >
               <SkipForward aria-hidden="true" className="h-5 w-5" />
@@ -172,7 +172,7 @@ export function PersistentPlayer() {
             <button
               onClick={toggleRepeat}
               className={`flex h-11 w-11 items-center justify-center ${
-                repeat ? "text-brass" : "text-white/80 hover:bg-ink-light hover:text-white"
+                repeat ? "text-brass-light" : "text-white/80 hover:bg-band-light hover:text-white"
               }`}
               aria-label="Toggle repeat"
             >
@@ -197,7 +197,7 @@ export function PersistentPlayer() {
             <div className="hidden items-center justify-end gap-2 text-white/80 lg:flex">
             <button
               onClick={() => setMuted((m) => !m)}
-              className="flex h-10 w-10 items-center justify-center hover:bg-ink-light hover:text-white"
+              className="flex h-10 w-10 items-center justify-center hover:bg-band-light hover:text-white"
               aria-label={muted ? "Unmute" : "Mute"}
             >
               {muted ? (
@@ -210,7 +210,7 @@ export function PersistentPlayer() {
           )}
           <Link
             href={`/track/${currentTrack.id}/${currentTrack.slug}#license-options`}
-            className="col-span-2 flex min-h-11 items-center justify-center gap-2 bg-brass px-3 text-sm font-semibold text-ink hover:bg-brass-light sm:hidden"
+            className="col-span-2 flex min-h-11 items-center justify-center gap-2 bg-brass px-3 text-sm font-semibold text-ink hover:bg-brass-dark sm:hidden"
           >
             <ShoppingBag aria-hidden="true" className="h-4 w-4" />
             Choose license

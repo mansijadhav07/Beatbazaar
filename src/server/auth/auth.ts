@@ -39,11 +39,11 @@ async function buildAuth(): Promise<AuthInstance> {
               <p>Hello ${user.name || "there"},</p>
               <p>We received a request to reset your password for your ${siteConfig.name} account. Click the button below to choose a new password:</p>
               <p style="margin: 24px 0;">
-                <a href="${url}" rel="noopener noreferrer" style="background-color: #2C3947; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
+                <a href="${url}" rel="noopener noreferrer" style="background-color: #7C3AED; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
               </p>
               <p>This link expires in 1 hour. If you did not make this request, you can safely ignore this email.</p>
-              <hr style="border: none; border-top: 1px solid #E8EDF2; margin: 24px 0;" />
-              <p style="font-size: 12px; color: #547A95;">${siteConfig.name}</p>
+              <hr style="border: none; border-top: 1px solid #E5E0F0; margin: 24px 0;" />
+              <p style="font-size: 12px; color: #6B5B95;">${siteConfig.name}</p>
             </div>
           `,
           text: `Reset your ${siteConfig.name} password: ${url}\nThis link expires in 1 hour.`,
@@ -64,11 +64,11 @@ async function buildAuth(): Promise<AuthInstance> {
               <p>Welcome to ${siteConfig.name}, ${user.name || "there"}!</p>
               <p>Please confirm your email address by clicking the link below:</p>
               <p style="margin: 24px 0;">
-                <a href="${url}" rel="noopener noreferrer" style="background-color: #C2A56D; color: #2C3947; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verify Email Address</a>
+                <a href="${url}" rel="noopener noreferrer" style="background-color: #7C3AED; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verify Email Address</a>
               </p>
               <p>This verification link is valid for 24 hours.</p>
-              <hr style="border: none; border-top: 1px solid #E8EDF2; margin: 24px 0;" />
-              <p style="font-size: 12px; color: #547A95;">${siteConfig.name}</p>
+              <hr style="border: none; border-top: 1px solid #E5E0F0; margin: 24px 0;" />
+              <p style="font-size: 12px; color: #6B5B95;">${siteConfig.name}</p>
             </div>
           `,
           text: `Verify your ${siteConfig.name} account: ${url}\nThis link expires in 24 hours.`,

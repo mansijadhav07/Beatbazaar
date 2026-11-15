@@ -100,7 +100,7 @@ export function CopyrightReportForm({ tracks }: { tracks: ReportableTrack[] }) {
       <button
         type="submit"
         disabled={busy || details.trim().length < 10}
-        className="min-h-11 bg-ink px-4 font-semibold text-white hover:bg-ink-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-h-11 bg-brass px-4 font-semibold text-white hover:bg-brass-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel disabled:cursor-not-allowed disabled:opacity-60"
       >
         {busy ? "Submitting report" : "Submit report"}
       </button>

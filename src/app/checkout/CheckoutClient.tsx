@@ -165,7 +165,7 @@ export function CheckoutClient({ userEmail }: { userEmail: string }) {
           email: userEmail,
         },
         theme: {
-          color: "#2C3947", // ink brand color
+          color: "#7C3AED",
         },
         handler: function () {
           clearCart();

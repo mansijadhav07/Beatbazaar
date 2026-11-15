@@ -1,6 +1,6 @@
-# Beatbazaar
+# Astrylix
 
-Beatbazaar is an online marketplace where music producers publish beats and artists preview them before choosing a license. Producers set the available license terms, and buyers can purchase and download licensed files.
+Astrylix is an online marketplace where music producers publish beats and artists preview them before choosing a license. Producers set the available license terms, and buyers can purchase and download licensed files.
 
 ## Features by role
 
@@ -43,7 +43,7 @@ Beatbazaar is an online marketplace where music producers publish beats and arti
 3. Apply migrations to the isolated test database. `migrate-mongo` reads `MONGODB_URI`, so pass the test connection string for this command. Replace the sample connection string with the exact test URI configured in `.env.local`:
 
    ```sh
-   MONGODB_URI='mongodb://localhost:27017/beatbazaar_test' npm run db:migrate
+   MONGODB_URI='mongodb://localhost:27017/astrylix_test' npm run db:migrate
    ```
 
 4. Seed the local test database and save the generated passwords printed in that terminal:
@@ -52,7 +52,7 @@ Beatbazaar is an online marketplace where music producers publish beats and arti
    npm run db:seed
    ```
 
-   Seeding is development-only. It creates local buyer, producer, and admin accounts plus committed local demo beats. Passwords are random, printed once per seed run, and rotated when seeding is repeated.
+   Seeding is development-only. It creates local buyer, producer (Astrylix), and admin accounts plus 20 demo beats with committed cover photos (CC0, credits in `public/demo/CREDITS.md`). `npm run dev` runs the seed automatically when the local database has no live beats; set `SKIP_AUTO_SEED=true` to skip it. Passwords are random, printed once per seed run, and rotated when seeding is repeated.
 
 5. Start the web app. In another terminal, start the worker when testing audio processing with configured storage:
 

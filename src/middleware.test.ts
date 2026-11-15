@@ -38,7 +38,7 @@ describe("protected-route test identity", () => {
     // the valid secret succeeds regardless of hostname.
     vi.stubEnv("PLAYWRIGHT_TEST_AUTH_ENABLED", "true");
     vi.stubEnv("PLAYWRIGHT_TEST_AUTH_SECRET", "test-secret");
-    const request = new NextRequest("https://beatbazaar.example/admin", {
+    const request = new NextRequest("https://astrylix.example/admin", {
       headers: {
         "x-playwright-test-role": "buyer",
         "x-playwright-test-secret": "test-secret",

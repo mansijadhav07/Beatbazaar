@@ -6,7 +6,7 @@ that has not been exercised is marked `partial`.
 
 | Requirement | Status | Evidence | Root cause if incomplete | Fix applied |
 |---|---|---|---|---|
-| 1. Use the reference for capability only and keep Beatbazaar branding original | partial | `src/config/site.ts`; public pages under `src/app/` | This pass did not compare every copy and asset against the reference | No design or copy redesign requested |
+| 1. Use the reference for capability only and keep Astrylix branding original | partial | `src/config/site.ts`; public pages under `src/app/` | This pass did not compare every copy and asset against the reference | No design or copy redesign requested |
 | 2. Visitor, buyer, producer, and admin MVP roles | partial | `src/server/auth/guards.test.ts`; `src/server/auth/admin-rejection.test.ts`; `e2e/account-menu.spec.ts` | The full signup-to-refund marketplace journey is not yet automated | Role-aware navigation was added and verified. End-to-end journey remains missing |
 | 3. Next.js, TypeScript, Tailwind, MongoDB, Auth.js, R2, Razorpay, Zod, Vitest, Playwright | partial | `package.json`; `src/server/db/`; `src/server/storage/`; `npm run lint` | External R2, Google, and payment credentials are not exercised by local tests | Existing interfaces and mocked/test-only paths are retained |
 | 3. Use a queue without requiring a paid service | intentional deviation | `src/server/jobs/queue.ts`; `src/server/jobs/queue.test.ts` | MongoDB is used for jobs rather than Redis/BullMQ | Retained the existing MongoDB-backed queue to avoid a new paid dependency |

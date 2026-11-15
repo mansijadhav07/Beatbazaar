@@ -10,9 +10,9 @@ The direction's 24-tile minimum and index-with-preview motion were not used. A f
 
 ## Typography
 
-- **Fraunces** is the display family for the wordmark and headings. Its shaped, editorial forms distinguish headings from generic interface text.
-- **Noto Sans** is the text family. Its Latin and Devanagari subsets cover producer names in both scripts without switching to an unrelated fallback face.
-- **IBM Plex Mono** is reserved for tabular BPM, key, price, and playback time values.
+- **Unbounded** is the display family for the wordmark and headings. Its shaped, editorial forms distinguish headings from generic interface text.
+- **Outfit** is the text family. Its Latin and Devanagari subsets cover producer names in both scripts without switching to an unrelated fallback face.
+- **Space Mono** is reserved for tabular BPM, key, price, and playback time values.
 
 All three are loaded through `next/font/google`, which downloads the font files at build time and serves them from the application. System fallbacks remain configured for unavailable glyphs. Display sizes stay within the project limits: home title no larger than 44px on desktop or 30px on phones, and page titles 28px to 36px on desktop.
 
@@ -49,7 +49,7 @@ The before measurement used the emulated iPhone 14 profile, 4x CPU throttling, 1
 
 The home LCP increased by 352 ms from baseline; listing LCP was unchanged and track detail increased by 20 ms. All measured LCP values remain below the 2.5 s project target, CLS was 0, and interaction proxies were below 200 ms. The iPhone SE after LCP values were 1064 ms for home, 344 ms for `/tracks`, 348 ms for track detail, and 232 ms for the producer page. The home produced one observed long task per profile, 76 ms with reduced motion and 55 ms with normal motion; the script cannot attribute either task to animation. All other measured pages had zero observed long tasks.
 
-The final design inspector run reported 5 FAIL and 3 WARN. Some checks are incompatible with the approved brief: the project requires monospace for BPM/prices, thin borders, three self-hosted type families, a maximum 44 px desktop hero, and real local catalog art instead of stock or hotlinked photos. The inspector also did not find an honest video clip. Its checks found 15 thin dividers, 4 outlined boxes, two card rows, and no photo/interface fragments because the covers and waveform motif are local illustrations. The production browser check did load the self-hosted Fraunces face; the inspector was run against the existing development server and reported its fallback face.
+The final design inspector run reported 5 FAIL and 3 WARN. Some checks are incompatible with the approved brief: the project requires monospace for BPM/prices, thin borders, three self-hosted type families, a maximum 44 px desktop hero, and real local catalog art instead of stock or hotlinked photos. The inspector also did not find an honest video clip. Its checks found 15 thin dividers, 4 outlined boxes, two card rows, and no photo/interface fragments because the covers and waveform motif are local illustrations. The production browser check did load the self-hosted Unbounded face; the inspector was run against the existing development server and reported its fallback face.
 
 The final nine screenshots were captured from seeded local catalog records and visually inspected at 390, 768, and 1280 px for home, `/tracks`, and a live track. The reduced-motion, equalizer, overflow, and browser-error tests passed in all five requested Playwright profiles. Full test counts and known limitations are recorded in [PROJECT_STATE.md](./PROJECT_STATE.md).
 

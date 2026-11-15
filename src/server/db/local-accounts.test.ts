@@ -42,7 +42,7 @@ describe("provisionLocalAccount", () => {
     } as unknown as Db;
 
     await provisionLocalAccount(db, {
-      email: "ADMIN@BEATBAZAAR.TEST",
+      email: "ADMIN@ASTRYLIX.TEST",
       name: "Local Demo Admin",
       password: "local-demo-password",
       role: "admin",

@@ -36,7 +36,7 @@ export function TrackAudioPlayer({ track }: { track: PlayerTrack }) {
         <button
           onClick={handleToggle}
           aria-label={isThisPlaying ? "Pause audio preview" : "Play audio preview"}
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-ink text-brass hover:bg-ink-light active:scale-95 sm:h-10 sm:w-10"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-band text-brass-light hover:bg-band-light active:scale-95 sm:h-10 sm:w-10"
         >
           {isThisPlaying ? (
             <Pause aria-hidden="true" className="h-5 w-5 fill-current" />

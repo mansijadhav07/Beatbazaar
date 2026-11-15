@@ -2,7 +2,7 @@ export const motionTokens = {
   feedbackDurationMs: 160,
   entranceDurationMs: 380,
   easing: "cubic-bezier(0.2, 0.7, 0.2, 1)",
-  equalizerEvent: "beatbazaar:equalizer",
+  equalizerEvent: "astrylix:equalizer",
 } as const;
 
 export interface EqualizerPlaybackEvent {

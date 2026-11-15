@@ -27,7 +27,7 @@ export function SheetContent({
 }: ComponentProps<typeof DialogPrimitive.Content>) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-ink/40" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/70" />
       <DialogPrimitive.Content
         className={cn(
           "fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto rounded-t-md border border-border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-ink focus:outline-none",

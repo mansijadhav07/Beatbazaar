@@ -252,7 +252,7 @@ export default async function TrackPage({ params }: TrackPageProps) {
                 priority
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-ink px-3 text-center text-sm font-medium text-white">
+              <div className="flex h-full w-full items-center justify-center bg-band px-3 text-center text-sm font-medium text-white">
                 Artwork not provided
               </div>
             )}

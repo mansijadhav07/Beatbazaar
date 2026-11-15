@@ -67,14 +67,14 @@ describe("Cloudflare R2 Storage Service", () => {
     const downloadUrl = await createPresignedDownloadUrl(
       {
         key: "originals/sample.wav",
-        downloadFilename: "Beatbazaar-Exclusive-Track.wav",
+        downloadFilename: "Astrylix-Exclusive-Track.wav",
         expiresInSeconds: 300,
       },
       mockClient
     );
 
     expect(downloadUrl).toContain(privateBucketName);
-    expect(downloadUrl).toContain("Beatbazaar-Exclusive-Track.wav");
+    expect(downloadUrl).toContain("Astrylix-Exclusive-Track.wav");
     expect(downloadUrl).toContain("expires=300");
   });
 });

@@ -17,9 +17,9 @@ const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || "";
 const secretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || "";
 
 export const publicBucketName =
-  process.env.CLOUDFLARE_R2_PUBLIC_BUCKET_NAME || "beatbazaar-public";
+  process.env.CLOUDFLARE_R2_PUBLIC_BUCKET_NAME || "astrylix-public";
 export const privateBucketName =
-  process.env.CLOUDFLARE_R2_PRIVATE_BUCKET_NAME || "beatbazaar-private";
+  process.env.CLOUDFLARE_R2_PRIVATE_BUCKET_NAME || "astrylix-private";
 export const publicDomain =
   process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN || "https://cdn.example.invalid";
 

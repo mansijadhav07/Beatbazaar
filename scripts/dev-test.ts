@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import dotenv from "dotenv";
 import { getSeedDatabaseConfig } from "../src/server/db/seed-config";
 
@@ -19,6 +19,18 @@ const appEnvironment: NodeJS.ProcessEnv = {
 delete appEnvironment.MONGODB_APPLICATION_URI;
 
 console.log(`Starting local app against isolated test database "${databaseName}".`);
+
+if (process.env.SKIP_AUTO_SEED !== "true") {
+  console.log("Checking for demo data (set SKIP_AUTO_SEED=true to skip)...");
+  const seed = spawnSync(
+    process.execPath,
+    ["node_modules/tsx/dist/cli.mjs", "src/server/db/seed.ts", "--if-empty"],
+    { stdio: "inherit", env: { ...process.env, NODE_ENV: "development" } }
+  );
+  if (seed.status !== 0) {
+    console.warn("Demo seed did not complete. The app will start without demo beats.");
+  }
+}
 
 const server = spawn(
   process.execPath,

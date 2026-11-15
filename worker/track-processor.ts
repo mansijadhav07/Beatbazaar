@@ -71,7 +71,7 @@ export async function processTrackJob(
     throw new Error("No valid MP3 or WAV audio source found on track.");
   }
 
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "beatbazaar-transcode-"));
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "astrylix-transcode-"));
   const inputAudioPath = path.join(tempDir, `source-${sourceFile.kind}.${sourceFile.kind}`);
   const outputPreviewPath = path.join(tempDir, "preview.mp3");
 
@@ -89,9 +89,9 @@ export async function processTrackJob(
     }
 
     await fs.writeFile(inputAudioPath, buffer);
-    console.log(`[Beatbazaar Worker] Extracting 500 waveform peaks for track ${trackId}...`);
+    console.log(`[Astrylix Worker] Extracting 500 waveform peaks for track ${trackId}...`);
     const waveform = await extractWaveformPeaks(inputAudioPath, 500);
-    console.log(`[Beatbazaar Worker] Generating 128 kbps preview MP3 for track ${trackId}...`);
+    console.log(`[Astrylix Worker] Generating 128 kbps preview MP3 for track ${trackId}...`);
     await generatePreviewMp3({
       inputAudioPath,
       outputMp3Path: outputPreviewPath,
@@ -115,7 +115,7 @@ export async function processTrackJob(
     track.processingError = null;
     track.status = "pending";
     await track.save();
-    console.log(`[Beatbazaar Worker] Successfully processed track ${trackId} (${track.title}).`);
+    console.log(`[Astrylix Worker] Successfully processed track ${trackId} (${track.title}).`);
   } catch (error: unknown) {
     track.processingStatus = "failed";
     track.processingError = error instanceof Error ? error.message : "Processing failed";

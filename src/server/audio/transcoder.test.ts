@@ -10,7 +10,7 @@ describe("FFmpeg Audio Processing Engine", () => {
   let testSinePath: string;
 
   beforeAll(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "beatbazaar-test-audio-"));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "astrylix-test-audio-"));
     testSinePath = path.join(tempDir, "sine-test.wav");
 
     // Generate a 4-second sine wave at 440Hz test audio

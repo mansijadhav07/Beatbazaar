@@ -24,7 +24,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   }
 
   if (!cached.promise) {
-    const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/beatbazaar";
+    const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/astrylix";
     const opts = {
       bufferCommands: false,
       maxPoolSize: 10,

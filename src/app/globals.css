@@ -3,29 +3,31 @@
 @tailwind utilities;
 
 :root {
-  --ink: #2C3947;
-  --ink-dark: #1E2732;
-  --ink-light: #3D4E60;
-  --steel: #547A95;
-  --steel-dark: #3F5E75;
-  --steel-light: #6C93AF;
-  --brass: #C2A56D;
-  --brass-dark: #A38750;
-  --brass-light: #D4BD8D;
-  --mist: #E8EDF2;
-  --mist-light: #F4F7F9;
-  --mist-dark: #DCE3E8;
-  --surface: #FFFFFF;
-  --surface-muted: #F5F7FA;
-  --surface-subtle: #EBF0F4;
-  --border: #D8E0E6;
-  --border-strong: #A8B8C6;
-  --status-success: #2E6B4A;
-  --status-success-bg: #EDF7F2;
-  --status-warning: #8F5E24;
-  --status-warning-bg: #FCF5EB;
-  --status-danger: #9E3735;
-  --status-danger-bg: #FAEEEE;
+  --ink: #F4F0FF;
+  --ink-dark: #FFFFFF;
+  --ink-light: #D9CFF5;
+  --steel: #A89BCB;
+  --steel-dark: #BAAFD6;
+  --brass: #7C3AED;
+  --brass-dark: #6527CF;
+  --brass-light: #B596FF;
+  --mist: #1D1530;
+  --mist-light: #140F21;
+  --mist-dark: #2A1F45;
+  --surface: #09080D;
+  --surface-muted: #110E19;
+  --surface-subtle: #1A1428;
+  --border: #2A2140;
+  --border-strong: #4A3C70;
+  --band: #170F2B;
+  --band-light: #261A47;
+  --band-dark: #0E0919;
+  --status-success: #6FCF9B;
+  --status-success-bg: #112219;
+  --status-warning: #E3B25F;
+  --status-warning-bg: #261C0C;
+  --status-danger: #F08A87;
+  --status-danger-bg: #2A1214;
   --radius-control: 4px;
   --radius-surface: 8px;
   --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -34,6 +36,7 @@
 }
 
 html {
+  overflow-x: clip;
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
@@ -42,17 +45,19 @@ html {
 body {
   color: var(--ink);
   background-color: var(--surface);
+  color-scheme: dark;
   font-family: var(--font-text), "Noto Sans Devanagari", "Nirmala UI", "Mangal", sans-serif;
   line-height: 1.5;
   min-height: 100dvh;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 ::selection {
-  color: var(--ink);
-  background: var(--brass-light);
+  background: var(--brass);
+  color: #fff;
 }
 
 a,
@@ -79,7 +84,7 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--steel-dark);
+  outline: 2px solid var(--brass-light);
   outline-offset: 3px;
 }
 
@@ -126,5 +131,34 @@ body:has(.persistent-player) .page-content {
     scroll-behavior: auto !important;
     animation: none !important;
     transition: none !important;
+  }
+}
+
+.glass-bar {
+  background-color: rgb(22 16 38 / 0.9);
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+.glass-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.1) 0%,
+    rgb(255 255 255 / 0.02) 45%,
+    rgb(124 58 237 / 0.1) 100%
+  );
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass-bar {
+    background-color: rgb(30 22 52 / 0.8);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
   }
 }

@@ -2,9 +2,9 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 dotenv.config();
 
-const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/beatbazaar";
+const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/astrylix";
 
-let databaseName = "beatbazaar";
+let databaseName = "astrylix";
 try {
   const parsed = new URL(mongoUri.replace("mongodb+srv://", "http://").replace("mongodb://", "http://"));
   const pathname = parsed.pathname.replace(/^\//, "");

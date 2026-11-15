@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const requestedCurrency = parsed.data.currency;
     if (requestedCurrency === "USD" && !siteConfig.internationalPaymentsEnabled) {
       return NextResponse.json(
-        { error: "USD currency is not enabled on this marketplace." },
+        { error: "USD currency is not enabled on this store." },
         { status: 400 }
       );
     }

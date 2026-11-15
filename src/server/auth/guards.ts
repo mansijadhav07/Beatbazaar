@@ -66,7 +66,7 @@ export async function requireRole(
     return {
       user: {
         id: "playwright_test_user",
-        email: "test@beatbazaar.com",
+        email: "test@astrylixbeats.com",
         name: "Test Producer",
         role: identity.role,
         emailVerified: true,
@@ -137,7 +137,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       if (!identity) return null;
       return {
         id: "playwright_test_user",
-        email: "test@beatbazaar.com",
+        email: "test@astrylixbeats.com",
         name: "Test User",
         role: identity.role,
         emailVerified: true,

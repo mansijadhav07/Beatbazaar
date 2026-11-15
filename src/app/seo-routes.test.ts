@@ -58,8 +58,8 @@ describe("SEO metadata routes", () => {
   it("provides an install manifest with the project's light palette", () => {
     const result = manifest();
 
-    expect(result.theme_color).toBe("#2C3947");
-    expect(result.background_color).toBe("#E8EDF2");
+    expect(result.theme_color).toBe("#09080D");
+    expect(result.background_color).toBe("#09080D");
     expect(result.icons?.[0].src).toBe("/apple-touch-icon.svg");
   });
 });

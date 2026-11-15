@@ -2,7 +2,7 @@
 
 Project brief and working rules for building an online marketplace where producers sell music (beats) and artists buy licensed downloads. Read this file fully before writing any code. When a rule here conflicts with a default habit, this file wins.
 
-TODO before starting: pick the product name and replace "the store" in UI copy. Do not reuse the reference site's name, logo, copy or images.
+Product name: Astrylix (domain https://astrylixbeats.com). This is the single producer's own commercial store, not a multi-seller marketplace. Public copy must never invite other producers to sell. Do not reuse the reference site's name, logo, copy or images.
 
 ---
 
@@ -201,11 +201,12 @@ Location based SEO
    (`lucide-react`) or purpose-made SVG. Use real images that exist in `public/`. Never
    hotlink random stock images, never leave broken image paths, never use emoji as icons.
    Cover art on seeded or demo beats must be generated or licensed assets committed to the repo.
-5. **Palette.** Build a disciplined system around this palette:
-   - ink `#2C3947`, steel blue `#547A95`, brass `#C2A56D`, mist `#E8EDF2`, plus white
-   - neutral tints derived from these. Status colours (success, warning, danger) must be
-     muted and used only for meaning, never for decoration.
-   - Light theme. Meet WCAG AA contrast.
+5. **Palette (owner override, black and purple).** Dark theme. Tokens live in `src/app/globals.css`:
+   surface `#09080D`, bands `#170F2B`, primary purple `#7C3AED` (white text on it, 5.7:1),
+   light purple `#B596FF` for accents and text on dark, text `#F4F0FF`, muted text `#BAAFD6`.
+   Status colours stay muted. `npm run check:contrast` enforces WCAG AA on the token pairs.
+   The earlier ban on purple and gradients is lifted by the owner for this palette; keep gradients
+   subtle (one hero wash, header glass sheen), no gradient text, no emoji.
 6. **Craft.** Strong typographic hierarchy, a consistent 4/8px spacing scale, restrained radii
    (one or two values), thin borders over heavy shadows, dense but readable data tables,
    clear empty, loading and error states, keyboard focus styles, responsive from phone up.
@@ -217,13 +218,10 @@ Location based SEO
 
 ### Brand and motion
 
-- Light theme stays. Dark mode and a theme switcher are out of scope. Solid ink (`#2C3947`)
-  is allowed for the player bar and a limited number of section bands. The palette stays ink,
-  steel blue, brass, mist, white, and derived tints.
+- The theme is dark (black and purple). A theme switcher is out of scope. The header and mobile bottom bar use a small glass surface by owner request; avoid blur on large areas.
 - Purposeful motion is allowed under the rules in B2 of the approved Stage 1 brief.
   Decorative animation is not.
-- Everything else in this section still applies, including sizing, no gradients, no glow,
-  no glassmorphism, no emoji, 40px desktop and 44px touch controls, a 16px base size, and
+- Everything else in this section still applies, including sizing, no gradient text, no emoji, 40px desktop and 44px touch controls, a 16px base size, and
   two restrained radii.
 
 Sizing, responsiveness and iOS (mandatory)

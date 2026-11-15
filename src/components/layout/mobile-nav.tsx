@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, Search, ShoppingBag, UploadCloud, UserRound } from "lucide-react";
+import { House, Search, ShoppingBag, ScrollText, UploadCloud, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/validations/user";
 
@@ -13,11 +13,9 @@ export function MobileNav({ role }: { role: UserRole | null }) {
     { label: "Home", href: "/", icon: House },
     { label: "Tracks", href: "/tracks", icon: Search },
     { label: "Cart", href: "/cart", icon: ShoppingBag },
-    {
-      label: role === "producer" ? "Upload" : "Sell",
-      href: role === "producer" ? "/dashboard/beats/new" : "/login?intent=producer",
-      icon: UploadCloud,
-    },
+    role === "producer"
+      ? { label: "Upload", href: "/dashboard/beats/new", icon: UploadCloud }
+      : { label: "Licenses", href: "/license-overview", icon: ScrollText },
     {
       label: role === "admin" ? "Admin" : "Account",
       href: role === "admin" ? "/admin" : role ? "/dashboard" : "/login",
@@ -28,9 +26,9 @@ export function MobileNav({ role }: { role: UserRole | null }) {
   return (
     <nav
       aria-label="Mobile bottom navigation"
-      className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-surface pb-safe md:hidden"
+      className="fixed bottom-0 left-0 right-0 glass-bar z-30 border-t pb-safe md:hidden"
     >
-      <div className="mx-auto flex h-14 max-w-container items-center px-1">
+      <div className="relative z-10 mx-auto flex h-14 max-w-container items-center px-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;

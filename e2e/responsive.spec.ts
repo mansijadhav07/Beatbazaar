@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { siteConfig } from "@/config/site";
 
-test.describe("Beatbazaar Responsive Shell", () => {
+test.describe("Astrylix Responsive Shell", () => {
   test("loads the home page without horizontal overflow", async ({ page }) => {
     await page.goto("/");
 

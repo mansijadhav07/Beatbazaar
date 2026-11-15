@@ -59,7 +59,7 @@ export default function OnboardingForm() {
             autoComplete="name"
             required
             maxLength={200}
-            className="mt-1 h-11 w-full rounded border border-border bg-white px-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+            className="mt-1 h-11 w-full rounded border border-border bg-surface-muted px-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
           />
         </label>
         <label className="block text-sm font-medium text-ink">
@@ -70,7 +70,7 @@ export default function OnboardingForm() {
             autoComplete="tel"
             required
             inputMode="tel"
-            className="mt-1 h-11 w-full rounded border border-border bg-white px-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+            className="mt-1 h-11 w-full rounded border border-border bg-surface-muted px-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
           />
         </label>
         <label className="block text-sm font-medium text-ink">
@@ -79,7 +79,7 @@ export default function OnboardingForm() {
             name="pan"
             autoComplete="off"
             maxLength={10}
-            className="mt-1 h-11 w-full rounded border border-border bg-white px-3 text-base uppercase text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+            className="mt-1 h-11 w-full rounded border border-border bg-surface-muted px-3 text-base uppercase text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
           />
         </label>
         <label className="block text-sm font-medium text-ink">
@@ -89,7 +89,7 @@ export default function OnboardingForm() {
             autoComplete="off"
             required
             maxLength={200}
-            className="mt-1 h-11 w-full rounded border border-border bg-white px-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+            className="mt-1 h-11 w-full rounded border border-border bg-surface-muted px-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
           />
         </label>
         <label className="block text-sm font-medium text-ink">
@@ -101,7 +101,7 @@ export default function OnboardingForm() {
             inputMode="numeric"
             minLength={6}
             maxLength={20}
-            className="mt-1 h-11 w-full rounded border border-border bg-white px-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+            className="mt-1 h-11 w-full rounded border border-border bg-surface-muted px-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
           />
         </label>
         <label className="block text-sm font-medium text-ink">
@@ -111,7 +111,7 @@ export default function OnboardingForm() {
             autoComplete="off"
             required
             maxLength={11}
-            className="mt-1 h-11 w-full rounded border border-border bg-white px-3 text-base uppercase text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+            className="mt-1 h-11 w-full rounded border border-border bg-surface-muted px-3 text-base uppercase text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
           />
         </label>
       </div>
@@ -146,7 +146,7 @@ export default function OnboardingForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="h-11 min-w-40 rounded bg-ink px-4 text-sm font-semibold text-white hover:bg-steel disabled:cursor-not-allowed disabled:opacity-60"
+        className="h-11 min-w-40 rounded bg-brass px-4 text-sm font-semibold text-white hover:bg-brass-dark disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? "Sending details..." : "Set up payouts"}
       </button>

@@ -44,7 +44,7 @@ export function WaveformMotif() {
   return (
     <svg
       ref={motifRef}
-      className="hero-waveform h-full w-full text-brass"
+      className="hero-waveform h-full w-full text-brass-light"
       viewBox="0 0 640 160"
       role="img"
       aria-label="Waveform motif"

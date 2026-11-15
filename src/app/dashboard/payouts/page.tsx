@@ -320,7 +320,7 @@ export default async function ProducerPayoutsPage({
                 type="date"
                 name="from"
                 defaultValue={fromValue}
-                className="mt-1 block h-11 rounded border border-border bg-white px-3 text-base text-ink"
+                className="mt-1 block h-11 rounded border border-border bg-surface-muted px-3 text-base text-ink"
               />
             </label>
             <label className="text-sm text-steel-dark">
@@ -329,7 +329,7 @@ export default async function ProducerPayoutsPage({
                 type="date"
                 name="to"
                 defaultValue={toValue}
-                className="mt-1 block h-11 rounded border border-border bg-white px-3 text-base text-ink"
+                className="mt-1 block h-11 rounded border border-border bg-surface-muted px-3 text-base text-ink"
               />
             </label>
             {selectedStatus && (
@@ -448,7 +448,7 @@ export default async function ProducerPayoutsPage({
             <select
               name="status"
               defaultValue={selectedStatus}
-              className="mt-1 block h-11 rounded border border-border bg-white px-3 text-base text-ink"
+              className="mt-1 block h-11 rounded border border-border bg-surface-muted px-3 text-base text-ink"
             >
               <option value="">All statuses</option>
               <option value="awaiting_kyc">Awaiting payout setup</option>

@@ -51,7 +51,7 @@ const result = spawnSync(
       NEXT_PUBLIC_APP_URL: testBaseUrl,
       BETTER_AUTH_URL: testBaseUrl,
       EMAIL_SERVER_API_KEY: "mock",
-      EMAIL_FROM: "test@beatbazaar.test",
+      EMAIL_FROM: "test@astrylix.test",
       ...(usesAdminTestIdentity ? { PLAYWRIGHT_TEST_ALLOW_ADMIN: "true" } : {}),
     },
   }

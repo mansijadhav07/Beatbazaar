@@ -144,7 +144,7 @@
   left: 0;
   display: grid;
   padding: 0.5rem 0.75rem;
-  background: var(--ink);
+  background: var(--band);
   opacity: 0;
   transform: translateY(8px);
   visibility: hidden;

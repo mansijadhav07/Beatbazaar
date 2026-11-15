@@ -68,7 +68,7 @@ export default async function OpenGraphImage({
           alignItems: "center",
           gap: 48,
           padding: 48,
-          backgroundColor: "#2C3947",
+          backgroundColor: "#09080D",
           color: "#FFFFFF",
           fontFamily: "Arial",
         }}
@@ -89,7 +89,7 @@ export default async function OpenGraphImage({
               height: 500,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "#547A95",
+              backgroundColor: "#7C3AED",
               color: "#FFFFFF",
               fontSize: 36,
             }}
@@ -107,7 +107,7 @@ export default async function OpenGraphImage({
             padding: "12px 0",
           }}
         >
-          <div style={{ display: "flex", fontSize: 24, color: "#C2A56D" }}>
+          <div style={{ display: "flex", fontSize: 24, color: "#B596FF" }}>
             {siteConfig.name}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -124,7 +124,7 @@ export default async function OpenGraphImage({
               {content.title}
             </div>
             <div style={{ display: "flex", fontSize: 26 }}>{content.producerLabel}</div>
-            <div style={{ display: "flex", fontSize: 20, color: "#E8EDF2" }}>
+            <div style={{ display: "flex", fontSize: 20, color: "#1D1530" }}>
               {content.genre} · {content.bpm} BPM
             </div>
           </div>

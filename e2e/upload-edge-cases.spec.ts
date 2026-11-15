@@ -8,7 +8,7 @@ const multipartThreshold = 50 * MiB;
 const maxMp3Size = 200 * MiB;
 
 async function createSparseMp3(size: number): Promise<{ directory: string; filePath: string }> {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "beatbazaar-upload-e2e-"));
+  const directory = await mkdtemp(path.join(os.tmpdir(), "astrylix-upload-e2e-"));
   const filePath = path.join(directory, "test-track.mp3");
   await writeFile(filePath, Buffer.from("ID3"));
   const file = await open(filePath, "r+");

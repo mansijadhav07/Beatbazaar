@@ -70,7 +70,7 @@ export function BeatCard({
 
   return (
     <article className="beat-card group relative flex min-w-0 flex-col border border-border bg-surface p-2.5 sm:p-3">
-      <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius-control)] bg-ink">
+      <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius-control)] bg-band">
         {coverUrl ? (
           <Image
             src={coverUrl}
@@ -82,7 +82,7 @@ export function BeatCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center px-3 text-center text-sm text-white">
-            <svg aria-hidden="true" viewBox="0 0 120 48" className="h-12 w-28 text-brass">
+            <svg aria-hidden="true" viewBox="0 0 120 48" className="h-12 w-28 text-brass-light">
               <path
                 d="M3 24h8l5-12 8 26 8-34 8 37 8-24 8 14 8-19 8 30 8-19 8 12 8-18 8 28 8-20 8 12 6-13 6 8"
                 fill="none"
@@ -97,7 +97,7 @@ export function BeatCard({
         )}
 
         {isCurrent && (
-          <div className="absolute left-2 top-2 bg-ink p-1.5 text-brass">
+          <div className="absolute left-2 top-2 bg-band p-1.5 text-brass-light">
             <BeatEqualizer
               trackId={track.id}
               selected={isCurrent}
@@ -109,7 +109,7 @@ export function BeatCard({
         <button
           onClick={handlePlayClick}
           aria-label={isThisPlaying ? `Pause ${track.title}` : `Play ${track.title}`}
-          className="beat-card-play absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-ink text-brass active:scale-95 sm:h-10 sm:w-10"
+          className="beat-card-play absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-band text-brass-light active:scale-95 sm:h-10 sm:w-10"
         >
           {isThisPlaying ? (
             <Pause aria-hidden="true" className="h-5 w-5 fill-current" />

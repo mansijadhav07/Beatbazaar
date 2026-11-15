@@ -24,37 +24,25 @@ function contrast(first, second) {
   return (light + 0.05) / (dark + 0.05);
 }
 
-async function sourceFiles(directory) {
-  const entries = await fs.readdir(directory, { withFileTypes: true });
-  const nested = await Promise.all(
-    entries.map((entry) => {
-      const entryPath = path.join(directory, entry.name);
-      if (entry.isDirectory()) return sourceFiles(entryPath);
-      return /\.(?:tsx|jsx)$/.test(entry.name) ? [entryPath] : [];
-    })
-  );
-  return nested.flat();
-}
-
 const ink = readToken("ink");
 const steelDark = readToken("steel-dark");
+const steel = readToken("steel");
 const brass = readToken("brass");
-const mist = readToken("mist");
+const brassLight = readToken("brass-light");
 const white = "#FFFFFF";
-const lightSurfaces = [
-  ["white", white],
-  ["mist", mist],
-  ["mist-light", readToken("mist-light")],
-  ["surface-muted", readToken("surface-muted")],
-  ["surface-subtle", readToken("surface-subtle")],
-];
+const darkSurfaces = ["surface", "surface-muted", "surface-subtle", "mist", "mist-light", "band", "band-dark"];
 const textPairs = [
+  ["white on brass (primary button)", contrast(white, brass)],
   ["ink on brass", contrast(ink, brass)],
-  ["dark ink on brass", contrast(readToken("ink-dark"), brass)],
-  ...lightSurfaces.map(([surface, color]) => [`ink on ${surface}`, contrast(ink, color)]),
-  ...lightSurfaces.map(([surface, color]) => [`dark steel on ${surface}`, contrast(steelDark, color)]),
-  ["white on ink", contrast(white, ink)],
-  ["white on dark ink", contrast(white, readToken("ink-dark"))],
+  ...darkSurfaces.flatMap((name) => {
+    const color = readToken(name);
+    return [
+      [`ink on ${name}`, contrast(ink, color)],
+      [`steel on ${name}`, contrast(steel, color)],
+      [`steel-dark on ${name}`, contrast(steelDark, color)],
+      [`brass-light on ${name}`, contrast(brassLight, color)],
+    ];
+  }),
   ["success on success background", contrast(readToken("status-success"), readToken("status-success-bg"))],
   ["warning on warning background", contrast(readToken("status-warning"), readToken("status-warning-bg"))],
   ["danger on danger background", contrast(readToken("status-danger"), readToken("status-danger-bg"))],
@@ -65,42 +53,5 @@ for (const [label, value] of textPairs) {
   if (value < 4.5) throw new Error(`${label} does not meet WCAG AA for normal text.`);
 }
 
-const brassOnWhite = contrast(brass, white);
-const brassOnMist = contrast(brass, mist);
-console.log(`brass on white, not for text: ${brassOnWhite.toFixed(2)}:1`);
-console.log(`brass on mist, not for text: ${brassOnMist.toFixed(2)}:1`);
-if (brassOnWhite >= 4.5 || brassOnMist >= 4.5) {
-  throw new Error("The palette check expects brass to remain disallowed for text on light surfaces.");
-}
-
-const approvedBrassAccentCounts = new Map([
-  ["src/components/brand/WaveformMotif.tsx", 1],
-  ["src/components/catalog/BeatCard.tsx", 3],
-  ["src/components/catalog/TrackAudioPlayer.tsx", 1],
-  ["src/components/player/PersistentPlayer.tsx", 3],
-]);
-const violations = [];
-const occurrences = new Map();
-for (const file of await sourceFiles(path.join(root, "src"))) {
-  const relativePath = path.relative(root, file).split(path.sep).join("/");
-  const lines = (await fs.readFile(file, "utf8")).split(/\r?\n/);
-  lines.forEach((line, index) => {
-    if (/\btext-brass(?:-dark|-light)?\b/.test(line)) {
-      occurrences.set(relativePath, (occurrences.get(relativePath) || 0) + 1);
-      if (!approvedBrassAccentCounts.has(relativePath)) {
-        violations.push(`${relativePath}:${index + 1}`);
-      }
-    }
-  });
-}
-for (const [file, expectedCount] of approvedBrassAccentCounts) {
-  const actualCount = occurrences.get(file) || 0;
-  if (actualCount !== expectedCount) {
-    violations.push(`${file}: expected ${expectedCount} decorative or dark-surface accents, found ${actualCount}`);
-  }
-}
-if (violations.length) {
-  throw new Error(`Brass text classes require a dark surface or decorative use:\n${violations.join("\n")}`);
-}
-
-console.log("Brass text classes are limited to the approved dark-surface and decorative components.");
+const brassOnSurface = contrast(brass, readToken("surface"));
+console.log(`brass on surface, not for small text: ${brassOnSurface.toFixed(2)}:1`);

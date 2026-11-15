@@ -67,7 +67,7 @@ async function checkR2AndWorker(testUri: string): Promise<void> {
 
   const originalUri = process.env.MONGODB_URI;
   process.env.MONGODB_URI = testUri;
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "beatbazaar-smoke-"));
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "astrylix-smoke-"));
   let trackId: string | undefined;
   let sourceKey: string | undefined;
   let previewKey: string | undefined;

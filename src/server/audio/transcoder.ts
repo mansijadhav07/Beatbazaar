@@ -87,7 +87,7 @@ export async function probeAudio(filePath: string): Promise<AudioMetadata> {
  */
 export async function extractWaveformPeaks(filePath: string, targetPoints = 500): Promise<number[]> {
   // Convert audio to raw 8-bit or 16-bit PCM in memory and downsample
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "beatbazaar-wave-"));
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "astrylix-wave-"));
   const rawPcmPath = path.join(tempDir, "mono.raw");
 
   try {

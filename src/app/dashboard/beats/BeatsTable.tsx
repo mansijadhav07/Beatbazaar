@@ -197,7 +197,7 @@ export default function BeatsTable() {
 
       {/* Named Delete Confirmation Modal */}
       {deleteModalTrack && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-md rounded bg-surface p-6 border border-border shadow-md">
             <h3 className="text-sm font-bold text-ink">Delete Beat</h3>
             <p className="mt-2 text-xs text-steel-dark leading-relaxed">

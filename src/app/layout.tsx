@@ -11,25 +11,25 @@ import { AudioPlayerProvider } from "@/components/player/AudioPlayerContext";
 import { PersistentPlayer } from "@/components/player/PersistentPlayer";
 import { CartProvider } from "@/components/cart/CartContext";
 import { getCurrentUser } from "@/server/auth/guards";
-import { Fraunces, IBM_Plex_Mono, Noto_Sans } from "next/font/google";
+import { Outfit, Space_Mono, Unbounded } from "next/font/google";
 
-const displayFont = Fraunces({
+const displayFont = Unbounded({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["500", "700", "900"],
   display: "swap",
   variable: "--font-display",
 });
 
-const textFont = Noto_Sans({
-  subsets: ["devanagari", "latin"],
+const textFont = Outfit({
+  subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-text",
 });
 
-const dataFont = IBM_Plex_Mono({
+const dataFont = Space_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "700"],
   display: "swap",
   variable: "--font-data",
 });
@@ -38,12 +38,12 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#2C3947",
+  themeColor: "#09080D",
 };
 
 export const metadata: Metadata = {
   title: {
-    default: `${siteConfig.name} | Licensed beats from independent producers`,
+    default: `${siteConfig.name} | Beats and licenses by Astrylix`,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,

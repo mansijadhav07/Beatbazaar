@@ -148,7 +148,7 @@ test("producer signup through buyer purchase and admin refund revokes the old do
   const client = new MongoClient(uri);
   await client.connect();
   const tempDir = await import("node:fs/promises").then(({ mkdtemp }) =>
-    mkdtemp(`${process.env.TMPDIR || "/tmp"}/beatbazaar-journey-`)
+    mkdtemp(`${process.env.TMPDIR || "/tmp"}/astrylix-journey-`)
   );
   const audioPath = `${tempDir}/journey.mp3`;
   const producerEmail = `journey-producer-${randomUUID()}@example.test`;

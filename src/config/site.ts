@@ -27,9 +27,9 @@ export function readPayoutsEnabled(value = process.env.PAYOUTS_ENABLED): boolean
 const payoutModeValue = readPayoutMode();
 
 export const siteConfig = {
-  name: "Beatbazaar",
+  name: "Astrylix",
   description:
-    "The marketplace for authentic Indian and global music production beats, licenses, and stems.",
+    "Original beats, licenses and stems from the Astrylix studio. Preview free, license what fits, download instantly.",
   url: readSiteUrl(),
   supportEmail: readSupportEmail(),
   publicR2Domain:
