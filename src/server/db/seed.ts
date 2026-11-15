@@ -10,6 +10,8 @@ dotenv.config({ path: ".env.local", quiet: true });
 dotenv.config({ quiet: true });
 
 const skipIfSeeded = process.argv.includes("--if-empty");
+// Catalog-only mode targets MONGODB_URI (the live site database) and creates no login accounts.
+const catalogOnly = process.argv.includes("--catalog-only");
 // The three bundled preview clips are reused across the demo beats.
 const previewFiles = ["01", "02", "03"];
 
@@ -25,7 +27,20 @@ function createDemoPassword(): string {
 }
 
 async function runSeed(): Promise<void> {
-  const { uri, databaseName } = getSeedDatabaseConfig(process.env);
+  let uri: string;
+  let databaseName: string;
+  if (catalogOnly) {
+    if (process.env.ALLOW_CATALOG_SEED !== "yes") {
+      throw new Error("Set ALLOW_CATALOG_SEED=yes to seed the catalog into MONGODB_URI.");
+    }
+    uri = process.env.MONGODB_URI ?? "";
+    if (!uri) throw new Error("MONGODB_URI is not set.");
+    databaseName = decodeURIComponent(
+      new URL(uri.replace(/^mongodb\+srv:/, "https:").replace(/^mongodb:/, "http:")).pathname.slice(1)
+    );
+  } else {
+    ({ uri, databaseName } = getSeedDatabaseConfig(process.env));
+  }
   process.env.MONGODB_URI = uri;
 
   const [
@@ -44,7 +59,7 @@ async function runSeed(): Promise<void> {
     import("./mongodb"),
   ]);
 
-  console.log(`Connecting to isolated test database "${databaseName}" for local seed execution...`);
+  console.log(`Connecting to database "${databaseName}" for ${catalogOnly ? "catalog" : "local"} seed execution...`);
   const mongoose = await connectToDatabase();
   const mongoClient = await mongoClientPromise.default;
 
@@ -60,27 +75,43 @@ async function runSeed(): Promise<void> {
       buyer: createDemoPassword(),
     };
     const db = mongoClient.db(databaseName);
-    const accounts = await Promise.all([
-      provisionLocalAccount(db, {
-        email: "admin@astrylix.test",
-        name: "Local Demo Admin",
-        role: "admin",
-        password: passwordByRole.admin,
-      }),
-      provisionLocalAccount(db, {
-        email: demoProducer.email,
-        name: demoProducer.accountName,
-        role: "producer",
-        password: passwordByRole.producer,
-      }),
-      provisionLocalAccount(db, {
-        email: "buyer@astrylix.test",
-        name: "Local Demo Buyer",
-        role: "buyer",
-        password: passwordByRole.buyer,
-      }),
-    ]);
-    const [, producerId] = accounts;
+    let producerId: string;
+    if (catalogOnly) {
+      // The producer owns the catalog but gets no password, so no shared login exists on the live site.
+      const now = new Date();
+      const existing = await db.collection("user").findOne({ email: demoProducer.email });
+      const result = await db.collection("user").findOneAndUpdate(
+        { email: demoProducer.email },
+        {
+          $set: { name: demoProducer.accountName, role: "producer", emailVerified: true, updatedAt: now },
+          $setOnInsert: { createdAt: now, image: null },
+        },
+        { upsert: true, returnDocument: "after" }
+      );
+      producerId = String(existing?._id ?? result?._id);
+    } else {
+      const accounts = await Promise.all([
+        provisionLocalAccount(db, {
+          email: "admin@astrylix.test",
+          name: "Local Demo Admin",
+          role: "admin",
+          password: passwordByRole.admin,
+        }),
+        provisionLocalAccount(db, {
+          email: demoProducer.email,
+          name: demoProducer.accountName,
+          role: "producer",
+          password: passwordByRole.producer,
+        }),
+        provisionLocalAccount(db, {
+          email: "buyer@astrylix.test",
+          name: "Local Demo Buyer",
+          role: "buyer",
+          password: passwordByRole.buyer,
+        }),
+      ]);
+      producerId = accounts[1];
+    }
 
     await ProducerProfileModel.findOneAndUpdate(
       { userId: producerId },
@@ -202,6 +233,10 @@ async function runSeed(): Promise<void> {
     }
 
     const trackCount = await TrackModel.countDocuments({ producerId, status: "live" });
+    if (catalogOnly) {
+      console.log(`Seeded the Astrylix producer profile and ${trackCount} live beats. No login accounts were created.`);
+      return;
+    }
     console.log(`Seeded 3 local demo accounts and ${trackCount} live demo beats.`);
     console.log("Generated credentials, shown once. Save them before closing this terminal:");
     console.log(`Admin:    admin@astrylix.test / ${passwordByRole.admin}`);
