@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Music2, Lock, Mail, User as UserIcon, AlertCircle } from "lucide-react";
+import { Lock, Mail, User as UserIcon, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Wordmark } from "@/components/brand/Wordmark";
+import { siteConfig } from "@/config/site";
 import {
   EMAIL_DELIVERY_HELP_MESSAGE,
   resendVerificationEmail,
@@ -134,18 +136,17 @@ export default function LoginForm() {
   return (
     <div className="mx-auto flex min-h-[calc(100dvh_-_14rem)] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
       <div className="text-center mb-6">
-        <Link href="/" className="inline-flex items-center gap-2 font-bold text-lg text-ink">
-          <span className="flex h-8 w-8 items-center justify-center rounded bg-ink text-brass">
-            <Music2 className="h-4 w-4" />
-          </span>
-          <span className="text-xl">Beatbazaar</span>
+        <Link href="/" aria-label={`${siteConfig.name} home`} className="inline-flex">
+          <Wordmark />
         </Link>
       </div>
 
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">
-            {mode === "signin" ? "Sign In to Beatbazaar" : "Create your Beatbazaar Account"}
+            {mode === "signin"
+              ? `Sign in to ${siteConfig.name}`
+              : `Create your ${siteConfig.name} account`}
           </CardTitle>
           <CardDescription>
             {mode === "signin"

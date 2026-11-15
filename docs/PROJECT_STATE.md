@@ -8,6 +8,14 @@ device checks are kept separate from automated evidence.
 ## Summary
 
 - The project is a Next.js 15 marketplace for beats and licenses.
+- The root [README](../README.md) documents the verified setup and implemented
+  features. Stage 1 adds the shared design system, public navigation, player,
+  beat cards, and homepage. Stage 2 has not started and is waiting for explicit
+  owner approval.
+- Stage 1 uses Fraunces for display, Noto Sans for text, and IBM Plex Mono for
+  tabular values. Its nine locally captured page screenshots are in
+  [screenshots](./screenshots/), and its design rationale and inspection limits
+  are in [design-direction.md](./design-direction.md).
 - The application has real-data public catalog routes, role-specific account
   areas, producer upload and payout screens, admin routes, policy drafts, SEO
   metadata, and Razorpay test-mode payment/payout code.
@@ -52,6 +60,10 @@ device checks are kept separate from automated evidence.
   credentials.
 - Added a role-based link crawl and route URL map, audit, and feature test
   matrix.
+- Stabilized the link crawl after WebKit exposed navigation races: each route
+  now waits for a committed response and rendered main content, and the buyer
+  admin-404 check uses a separate page so a prior role redirect cannot cancel
+  it.
 - Fixed seeded admin sign-in: the seed wrote `account.userId` as a string while
   the Better Auth MongoDB adapter queried it as an ObjectId. A real login
   returned HTTP 401 before the fix. After normalizing the reference, browser
@@ -130,15 +142,8 @@ Final local verification:
   the MongoDB rate limiter integration test against the isolated test database.
 - `npm run lint`: zero ESLint warnings/errors and TypeScript check passed.
 - `npm run build:test`: production build passed against the isolated test
-  database. Build output reported 103 kB shared first-load JavaScript, 116 kB
-  for home, 129 kB for `/tracks`, and 143 kB for track detail.
-- Targeted E2E matrix for `phase2-journey.spec.ts`,
-  `upload-edge-cases.spec.ts`, and `public-report.spec.ts`: 5 passed, 20
-  skipped, 0 failed across Desktop Chrome, Desktop Safari, iPhone 14, iPhone
-  SE, and iPad Pro 11. All five cases are explicitly limited to Desktop
-  Chrome to avoid redundant device runs, duplicate database writes, and
-  repeated large sparse-file setup. Thus each test is run once, with four
-  device-profile skips per test.
+  database. Build output reported 103 kB shared first-load JavaScript, 127 kB
+  for home, 130 kB for `/tracks`, and 145 kB for track detail.
 - The full lifecycle test passed in a separate Desktop Chrome run after
   changing the buyer path to discover the new listing via `/tracks` search.
 - The production safety check for `npm run smoke:local` refused to run when
@@ -160,38 +165,65 @@ Final local verification:
 - Secret scan: `node scripts/scan-secrets.mjs` reported no recognized
   credentials in repository files or Git history.
 - Em-dash scan over `src`, `e2e`, `worker`, `scripts`, and `docs`: no matches.
-- Five-project Playwright matrix: 156 passed, 24 skipped, 0 failed, 180 total.
-  This is the earlier full-matrix run, not a rerun in this repair pass.
-  Skips were limited to iPhone 14-specific upload, admin-sheet, and
-  support-page checks, plus axe checks scoped to Desktop Chrome and iPhone 14.
-  Details are in [link-report.md](./link-report.md).
+- Final five-project Playwright matrix: 207 passed, 48 skipped, 0 failed,
+  255 total. It ran on Desktop Chrome, Desktop Safari, iPhone 14, iPhone SE,
+  and iPad Pro 11. Skips are intentional project scoping: axe checks run only
+  on Desktop Chrome and iPhone 14; the database-backed signup, full lifecycle,
+  and public report flows run once in Desktop Chrome; upload edge cases run
+  once in Desktop Chrome; and responsive upload, admin-sheet, and support-page
+  checks run only on iPhone 14. A final Stage 1 visual run after the reduced
+  motion adjustment passed all 20 tests across the same five projects.
 - The link-audit spec passed across the five selected projects. It checks
   routes, sitemap destinations, redirects, canonical origins and paths,
   external-link relations, role access, and desktop/mobile navigation.
 - Role-aware account navigation on Desktop Chrome and iPhone 14: 6 passed.
-- `npm run measure:perf:test`: production build, emulated iPhone 14, 4x CPU
-  throttling, 150 ms network latency, 1.6 Mbps download, 0.75 Mbps upload.
-  The interaction number is a single-interaction Event Timing proxy, not
-  field INP.
+- `npm run measure:perf:test`: production build, emulated mobile profiles,
+  4x CPU throttling, 150 ms network latency, 1.6 Mbps download, and 0.75 Mbps
+  upload. The interaction number is a single-interaction Event Timing proxy,
+  not field INP.
 
-| Page | LCP | Interaction proxy | CLS |
-|---|---:|---:|---:|
-| Home | 508 ms | 48 ms | 0 |
-| `/tracks` | 340 ms | 16 ms | 0 |
-| Track detail | 324 ms | 16 ms | 0 |
-| Producer profile | 336 ms | 16 ms | 0 |
+| Profile and page | Before LCP | After LCP | After interaction proxy | After CLS | After long tasks |
+|---|---:|---:|---:|---:|---:|
+| iPhone 14, home | 516 ms | 868 ms | 48 ms | 0 | 1, max 76 ms |
+| iPhone 14, `/tracks` | 344 ms | 344 ms | 16 ms | 0 | 0 |
+| iPhone 14, track detail | 328 ms | 348 ms | 16 ms | 0 | 0 |
+| iPhone 14, producer profile | Not measured | 344 ms | 16 ms | 0 | 0 |
+| iPhone SE, home | Not measured | 1064 ms | 40 ms | 0 | 1, max 55 ms |
+| iPhone SE, `/tracks` | Not measured | 344 ms | 16 ms | 0 | 0 |
+| iPhone SE, track detail | Not measured | 348 ms | 16 ms | 0 | 0 |
+| iPhone SE, producer profile | Not measured | 232 ms | 16 ms | 0 | 0 |
 
-These are synthetic local lab measurements. A before baseline was not captured
-in this verification, and no production field INP or real-device measurement
-is claimed.
+The iPhone 14 before values came from the pre-change baseline captured with
+the same lab script and 4x CPU/150 ms network settings. The after home LCP is
+352 ms higher than that baseline; track listing LCP is unchanged and track
+detail is 20 ms higher. All after LCP values remain below the 2.5 s target,
+CLS remained 0, and interaction proxies remained below 200 ms. The homepage
+had one measured long task in each current profile, both below 100 ms. The
+measurement does not attribute those startup tasks to animation. These are
+synthetic local results, not production field INP or physical-device results.
 
-The new lifecycle journey uses mocked upload URLs/storage and a mocked
+The producer-to-refund journey uses mocked upload URLs/storage and a mocked
 Razorpay checkout/webhook payload, while running the worker audio processor
 against in-memory test storage. It proves app-level refund revocation but does
 not prove live R2, Razorpay, or a physical-device flow.
 
-All current results and exact final counts must be refreshed after the
-remaining checks. See [compliance-audit.md](./compliance-audit.md),
+- `npm run screenshots:stage1` saved and the final nine screenshots were
+  visually inspected at 390, 768, and 1280 px for home, `/tracks`, and a live
+  test track.
+- The production browser check confirmed self-hosted Fraunces, Noto Sans, and
+  IBM Plex Mono font files loaded successfully. The design inspector's dev
+  server run resolved the display family to Fraunces Fallback instead.
+- The design inspector reported 5 FAIL and 3 WARN on the final homepage. Its
+  monospace, thin-border, and outlined-box findings conflict with the approved
+  product rules; the image and focal-point findings conflict with using only
+  real local catalog assets and the 44 px hero cap. Its three warnings are
+  the two catalog-card rows, the expressly required three font families, and
+  absence of an honest video clip. These conflicts are documented rather
+  than hidden or worked around with stock media or fake content.
+
+The em dash scan over repository code, UI copy, email templates, and docs
+reported no matches. `git diff --check` passed. See
+[compliance-audit.md](./compliance-audit.md),
 [link-report.md](./link-report.md), and
 [feature-test-matrix.md](./feature-test-matrix.md).
 
@@ -217,11 +249,10 @@ remaining checks. See [compliance-audit.md](./compliance-audit.md),
   redirect URI still require an owner-side sign-in test.
 - No local S3-compatible emulator has been added. Ask before adding an
   emulator or new dependency.
-- A before/after performance comparison, production field metrics, and a
-  manual physical iPhone run are not available in this local test pass.
-- Implement and run the complete producer-to-refund Playwright journey. Real
-  R2-backed processing and real provider operations still need credentials or
-  approved test doubles.
+- The lab performance numbers are synthetic. Production field metrics and a
+  manual physical iPhone run are not available.
+- Real R2-backed processing and real provider operations still need valid
+  test credentials and approved test buckets.
 
 ## Manual verification
 

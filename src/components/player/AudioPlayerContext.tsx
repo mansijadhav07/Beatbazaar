@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from "react";
 import { siteConfig } from "@/config/site";
+import { publishEqualizerLevels } from "@/lib/motion";
 
 export interface PlayerTrack {
   id: string;
@@ -178,6 +179,76 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     nextTrackRef.current = nextTrack;
   }, [nextTrack]);
+
+  useEffect(() => {
+    const activeTrack = currentTrack;
+    const audio = audioRef.current;
+    const peaks = activeTrack?.waveform;
+    if (!activeTrack || !audio || !isPlaying || !peaks?.length) return;
+
+    let frameId: number | null = null;
+    let lastPublishedAt = 0;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const publish = () => {
+      if (
+        document.visibilityState !== "visible" ||
+        reducedMotion.matches ||
+        !audio ||
+        !activeTrack
+      ) {
+        return;
+      }
+
+      const fraction =
+        Number.isFinite(audio.duration) && audio.duration > 0
+          ? Math.min(1, Math.max(0, audio.currentTime / audio.duration))
+          : 0;
+      const center = Math.min(peaks.length - 1, Math.floor(fraction * peaks.length));
+      const levels = [-5, -2, 0, 2, 5].map((offset) => {
+        const index = Math.min(peaks.length - 1, Math.max(0, center + offset));
+        return Math.min(1, Math.max(0.18, peaks[index] ?? 0.28));
+      });
+      publishEqualizerLevels({ trackId: activeTrack.id, levels });
+    };
+
+    const tick = (timestamp: number) => {
+      frameId = null;
+      if (document.visibilityState !== "visible" || reducedMotion.matches) return;
+      if (timestamp - lastPublishedAt >= 90) {
+        publish();
+        lastPublishedAt = timestamp;
+      }
+      frameId = window.requestAnimationFrame(tick);
+    };
+    const start = () => {
+      if (
+        frameId === null &&
+        document.visibilityState === "visible" &&
+        !reducedMotion.matches
+      ) {
+        frameId = window.requestAnimationFrame(tick);
+      }
+    };
+    const stop = () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      frameId = null;
+    };
+    const handleEnvironmentChange = () => {
+      stop();
+      start();
+    };
+
+    start();
+    document.addEventListener("visibilitychange", handleEnvironmentChange);
+    reducedMotion.addEventListener("change", handleEnvironmentChange);
+
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", handleEnvironmentChange);
+      reducedMotion.removeEventListener("change", handleEnvironmentChange);
+    };
+  }, [currentTrack, isPlaying]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("mediaSession" in navigator) || !currentTrack) return;

@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { siteConfig } from "@/config/site";
 
 test.describe("public support and SEO pages", () => {
   test("renders the support pages accessibly on iPhone 14", async ({ page, request }, testInfo) => {
@@ -9,9 +10,9 @@ test.describe("public support and SEO pages", () => {
 
     const pages = [
       ["/faq", "Questions about buying and selling beats"],
-      ["/help", "Help with Beatbazaar"],
-      ["/contact", "Contact Beatbazaar"],
-      ["/install", "Use Beatbazaar from your home screen"],
+      ["/help", `Help with ${siteConfig.name}`],
+      ["/contact", `Contact ${siteConfig.name}`],
+      ["/install", `Use ${siteConfig.name} from your home screen`],
       ["/terms", "Terms of service"],
       ["/privacy", "Privacy"],
       ["/refunds", "Refunds"],

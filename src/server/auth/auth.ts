@@ -4,6 +4,7 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import clientPromise from "@/server/db/mongodb";
 import { sendEmail } from "@/server/email";
+import { siteConfig } from "@/config/site";
 import { getAuthBaseUrl } from "./auth-url";
 import { accountLinkingConfig } from "./account-linking";
 
@@ -18,7 +19,7 @@ async function buildAuth(): Promise<AuthInstance> {
   const db = client.db();
 
   return betterAuth({
-    appName: "Beatbazaar",
+    appName: siteConfig.name,
     baseURL: getAuthBaseUrl(),
     secret:
       process.env.BETTER_AUTH_SECRET ||
@@ -31,21 +32,21 @@ async function buildAuth(): Promise<AuthInstance> {
       sendResetPassword: async ({ user, url }) => {
         await sendEmail({
           to: user.email,
-          subject: "Reset your Beatbazaar password",
+          subject: `Reset your ${siteConfig.name} password`,
           html: `
             <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
               <h2>Reset Your Password</h2>
               <p>Hello ${user.name || "there"},</p>
-              <p>We received a request to reset your password for your Beatbazaar account. Click the button below to choose a new password:</p>
+              <p>We received a request to reset your password for your ${siteConfig.name} account. Click the button below to choose a new password:</p>
               <p style="margin: 24px 0;">
                 <a href="${url}" rel="noopener noreferrer" style="background-color: #2C3947; color: #FFFFFF; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
               </p>
               <p>This link expires in 1 hour. If you did not make this request, you can safely ignore this email.</p>
               <hr style="border: none; border-top: 1px solid #E8EDF2; margin: 24px 0;" />
-              <p style="font-size: 12px; color: #547A95;">Beatbazaar Marketplace</p>
+              <p style="font-size: 12px; color: #547A95;">${siteConfig.name}</p>
             </div>
           `,
-          text: `Reset your Beatbazaar password: ${url}\nThis link expires in 1 hour.`,
+          text: `Reset your ${siteConfig.name} password: ${url}\nThis link expires in 1 hour.`,
         });
       },
     },
@@ -56,21 +57,21 @@ async function buildAuth(): Promise<AuthInstance> {
       sendVerificationEmail: async ({ user, url }) => {
         await sendEmail({
           to: user.email,
-          subject: "Verify your Beatbazaar account",
+          subject: `Verify your ${siteConfig.name} account`,
           html: `
             <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
               <h2>Verify Your Email</h2>
-              <p>Welcome to Beatbazaar, ${user.name || "there"}!</p>
+              <p>Welcome to ${siteConfig.name}, ${user.name || "there"}!</p>
               <p>Please confirm your email address by clicking the link below:</p>
               <p style="margin: 24px 0;">
                 <a href="${url}" rel="noopener noreferrer" style="background-color: #C2A56D; color: #2C3947; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verify Email Address</a>
               </p>
               <p>This verification link is valid for 24 hours.</p>
               <hr style="border: none; border-top: 1px solid #E8EDF2; margin: 24px 0;" />
-              <p style="font-size: 12px; color: #547A95;">Beatbazaar Marketplace</p>
+              <p style="font-size: 12px; color: #547A95;">${siteConfig.name}</p>
             </div>
           `,
-          text: `Verify your Beatbazaar account: ${url}\nThis link expires in 24 hours.`,
+          text: `Verify your ${siteConfig.name} account: ${url}\nThis link expires in 24 hours.`,
         });
       },
     },

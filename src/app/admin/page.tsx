@@ -15,6 +15,7 @@ import { TrackModel } from "@/server/db/models/Track";
 import { connectMongoose } from "@/server/db/mongoose";
 import { pageFilters, pageSize, queryPage, queryString, type AdminSearchParams } from "@/lib/admin-query";
 import Link from "next/link";
+import { siteConfig } from "@/config/site";
 
 export const dynamic = "force-dynamic";
 
@@ -157,7 +158,7 @@ export default async function AdminPage({
                             <AdminActionDialog
                               label="Approve"
                               title={`Approve ${track.title}?`}
-                              consequence="This will publish the beat on Beatbazaar."
+                              consequence={`This will publish the beat on ${siteConfig.name}.`}
                               confirmLabel="Approve beat"
                               targetId={track._id.toString()}
                               action="track_moderate"

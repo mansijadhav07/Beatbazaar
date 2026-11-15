@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { SupportArticle } from "@/components/support/SupportArticle";
 import { CopyrightReportForm } from "@/components/support/CopyrightReportForm";
 import { findPublicTracks } from "@/server/catalog/repository";
+import { siteConfig } from "@/config/site";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Report a beat",
-  description: "Submit a report about a published Beatbazaar listing.",
+  description: `Submit a report about a published ${siteConfig.name} listing.`,
   robots: { index: false, follow: true },
   alternates: { canonical: "/report" },
 };

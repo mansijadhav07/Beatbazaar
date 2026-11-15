@@ -1,9 +1,10 @@
 import { Suspense } from "react";
+import { siteConfig } from "@/config/site";
 import VerifyEmailContent from "./VerifyEmailContent";
 
 export const metadata = {
-  title: "Verify Email | Beatbazaar",
-  description: "Verify your email address to access all features on Beatbazaar.",
+  title: `Verify Email | ${siteConfig.name}`,
+  description: `Verify your email address to access all features on ${siteConfig.name}.`,
 };
 
 export default function VerifyEmailPage() {

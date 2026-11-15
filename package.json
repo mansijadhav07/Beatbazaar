@@ -8,6 +8,8 @@
     "build": "next build",
     "build:test": "tsx scripts/build-test.ts",
     "measure:perf:test": "node scripts/measure-lab-vitals.mjs",
+    "check:contrast": "node scripts/check-color-contrast.mjs",
+    "screenshots:stage1": "node scripts/capture-stage1-screenshots.mjs",
     "start": "next start",
     "worker": "NODE_OPTIONS=\"--conditions=react-server\" tsx worker/index.ts",
     "lint": "eslint . --max-warnings=0 && tsc --noEmit",

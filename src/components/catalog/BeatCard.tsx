@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Play, Pause } from "lucide-react";
 import { useAudioPlayer, type PlayerTrack } from "@/components/player/AudioPlayerContext";
+import { BeatEqualizer } from "@/components/player/BeatEqualizer";
+import { Chip } from "@/components/ui/chip";
 import { siteConfig } from "@/config/site";
 import { getPublicAssetUrl } from "@/lib/public-asset-url";
 
@@ -67,9 +69,8 @@ export function BeatCard({
     track.playCount !== undefined && track.playCount >= siteConfig.minPlayCountThreshold;
 
   return (
-    <div className="group relative flex flex-col rounded-lg border border-border bg-surface p-3 transition-shadow hover:shadow-md">
-      {/* Cover Artwork & Instant Play Button */}
-      <div className="relative aspect-square w-full overflow-hidden rounded-md bg-surface-muted border border-border/50">
+    <article className="beat-card group relative flex min-w-0 flex-col border border-border bg-surface p-2.5 sm:p-3">
+      <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius-control)] bg-ink">
         {coverUrl ? (
           <Image
             src={coverUrl}
@@ -77,46 +78,60 @@ export function BeatCard({
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
             priority={priority}
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-ink px-3 text-center text-sm font-medium text-white">
-            Artwork not provided
+          <div className="flex h-full w-full items-center justify-center px-3 text-center text-sm text-white">
+            <svg aria-hidden="true" viewBox="0 0 120 48" className="h-12 w-28 text-brass">
+              <path
+                d="M3 24h8l5-12 8 26 8-34 8 37 8-24 8 14 8-19 8 30 8-19 8 12 8-18 8 28 8-20 8 12 6-13 6 8"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+              />
+            </svg>
+            <span className="sr-only">Cover art not provided</span>
           </div>
         )}
 
-        {/* Play Overlay */}
+        {isCurrent && (
+          <div className="absolute left-2 top-2 bg-ink p-1.5 text-brass">
+            <BeatEqualizer
+              trackId={track.id}
+              selected={isCurrent}
+              playing={isThisPlaying}
+              hasPeaks={Boolean(track.waveform?.length)}
+            />
+          </div>
+        )}
         <button
           onClick={handlePlayClick}
           aria-label={isThisPlaying ? `Pause ${track.title}` : `Play ${track.title}`}
-          className={`absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-ink text-surface shadow-md transition-all active:scale-95 ${
-            isThisPlaying
-              ? "opacity-100 ring-2 ring-brass"
-              : "opacity-90 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-brass"
-          }`}
+          className="beat-card-play absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-ink text-brass active:scale-95 sm:h-10 sm:w-10"
         >
           {isThisPlaying ? (
-            <Pause className="h-5 w-5 fill-current" />
+            <Pause aria-hidden="true" className="h-5 w-5 fill-current" />
           ) : (
-            <Play className="h-5 w-5 fill-current ml-0.5" />
+            <Play aria-hidden="true" className="ml-0.5 h-5 w-5 fill-current" />
           )}
         </button>
       </div>
 
-      {/* Meta */}
-      <div className="mt-3 flex flex-1 flex-col justify-between">
-        <div>
+      <div className="mt-3 flex flex-1 flex-col">
+        <div className="min-w-0">
           <Link
             href={`/track/${track.id}/${track.slug}`}
-            className="text-xs sm:text-sm font-semibold text-ink line-clamp-1 hover:text-brass transition-colors"
+            className="block truncate text-sm font-semibold text-ink underline-offset-4 hover:text-steel-dark hover:underline"
           >
             {track.title}
           </Link>
-          <div className="mt-0.5 line-clamp-1 text-xs text-steel">
+          <div className="mt-1 truncate text-sm text-steel-dark">
             {track.producerUsername ? (
               <Link
                 href={`/producer/${track.producerUsername}`}
-                className="hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+                className="underline-offset-4 hover:text-ink hover:underline"
                 aria-label={`View producer ${track.producerName || "profile"}`}
                 onClick={(event) => event.stopPropagation()}
               >
@@ -128,28 +143,29 @@ export function BeatCard({
           </div>
         </div>
 
-        <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2 text-xs">
-          <div className="flex items-center gap-1.5 text-[11px] text-steel">
-            <span className="font-medium text-ink">{track.genre}</span>
-            <span>•</span>
-            <span>{track.bpm} BPM</span>
-            {showPlays && (
-              <>
-                <span>•</span>
-                <span>{track.playCount?.toLocaleString()} plays</span>
-              </>
-            )}
-          </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Chip className="min-h-7 border-0 bg-mist-light px-2 text-xs">
+            {track.genre}
+          </Chip>
+          <span className="font-data text-xs text-steel-dark">{track.bpm} BPM</span>
+          {showPlays ? (
+            <span className="text-xs text-steel-dark">
+              {track.playCount?.toLocaleString()} plays
+            </span>
+          ) : null}
+        </div>
 
-          <div className="font-semibold text-ink">
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3">
+          <span className="text-xs text-steel-dark">From</span>
+          <div className="font-data text-sm font-semibold text-ink">
             {track.lowestPriceAmount === null
               ? "Unavailable"
               : track.lowestPriceAmount === 0
-              ? "Free"
-              : `₹${(track.lowestPriceAmount / 100).toLocaleString("en-IN")}`}
+                ? "Free"
+                : `₹${(track.lowestPriceAmount / 100).toLocaleString("en-IN")}`}
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

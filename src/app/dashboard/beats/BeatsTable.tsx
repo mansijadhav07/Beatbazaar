@@ -128,7 +128,7 @@ export default function BeatsTable() {
               <TableRow key={track._id}>
                 <TableCell className="font-medium text-ink">
                   <div>{track.title}</div>
-                  <div className="text-[11px] text-steel">
+                  <div className="text-xs text-steel-dark">
                     Added {new Date(track.createdAt).toLocaleDateString()}
                   </div>
                 </TableCell>
@@ -137,25 +137,25 @@ export default function BeatsTable() {
                 </TableCell>
                 <TableCell>
                   <span
-                    className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded ${
+                    className={`inline-flex min-h-6 items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold ${
                       track.processingStatus === "ready"
                         ? "bg-surface-muted text-ink"
                         : track.processingStatus === "failed"
                         ? "bg-status-danger-bg text-status-danger"
-                        : "bg-surface-muted text-brass"
+                        : "bg-surface-muted text-ink"
                     }`}
                   >
-                    {track.processingStatus === "ready" && <CheckCircle2 className="h-3 w-3 text-brass" />}
+                    {track.processingStatus === "ready" && <CheckCircle2 className="h-4 w-4 text-status-success" />}
                     {track.processingStatus === "failed" && <AlertCircle className="h-3 w-3" />}
                     {(track.processingStatus === "queued" || track.processingStatus === "processing") && (
-                      <Clock className="h-3 w-3 animate-spin" />
+                      <Clock className="h-4 w-4" />
                     )}
                     <span className="capitalize">{track.processingStatus}</span>
                   </span>
                 </TableCell>
                 <TableCell>
                   <span
-                    className={`inline-block text-[11px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded ${
+                    className={`inline-block min-h-6 rounded px-2 py-0.5 text-xs font-semibold uppercase ${
                       track.status === "live"
                         ? "bg-surface-muted text-ink"
                         : track.status === "pending"
@@ -171,7 +171,7 @@ export default function BeatsTable() {
                     <Button
                       variant="outline"
                       onClick={() => handleRetry(track._id)}
-                      className="h-7 px-2 text-[11px]"
+                      className="h-11 px-2 text-xs sm:h-10"
                     >
                       <RefreshCw className="h-3 w-3 mr-1" />
                       Retry
@@ -184,7 +184,7 @@ export default function BeatsTable() {
                       setDeleteConfirmationInput("");
                       setActionError(null);
                     }}
-                    className="h-7 px-2 text-[11px] text-status-danger hover:text-status-danger"
+                    className="h-11 px-2 text-xs text-status-danger hover:text-status-danger sm:h-10"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -235,4 +235,3 @@ export default function BeatsTable() {
     </div>
   );
 }
-

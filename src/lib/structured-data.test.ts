@@ -5,6 +5,7 @@ import {
   buildTrackStructuredData,
   getIndexRobots,
 } from "./structured-data";
+import { siteConfig } from "@/config/site";
 
 const trackLicense = {
   tier: "non_exclusive" as const,
@@ -20,7 +21,7 @@ describe("public structured data", () => {
   it("provides Organization and WebSite SearchAction data", () => {
     const graph = buildSiteStructuredData(
       "https://beatbazaar.example",
-      "Beatbazaar",
+      siteConfig.name,
       "Licensed beats"
     )["@graph"];
     expect(graph.map((item) => item["@type"])).toEqual(["Organization", "WebSite"]);

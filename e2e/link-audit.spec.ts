@@ -66,6 +66,8 @@ for (const role of ["buyer", "producer", "admin"] as const) {
     test("visits feature routes and validates links, redirects, and canonicals", async ({
       page,
     }) => {
+      test.setTimeout(180_000);
+      page.setDefaultNavigationTimeout(60_000);
       const paths = new Set([...publicRoutes, ...roleRoutes[role]]);
       const sitemapResponse = await page.goto("/sitemap.xml");
       expect(sitemapResponse?.status()).toBe(200);
@@ -74,6 +76,7 @@ for (const role of ["buyer", "producer", "admin"] as const) {
       const sitemapUrls = [...sitemapXml.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) =>
         match[1].trim()
       );
+      const sitemapContentPaths = new Set<string>();
 
       for (const sitemapUrl of sitemapUrls) {
         const url = new URL(sitemapUrl, base);
@@ -84,10 +87,12 @@ for (const role of ["buyer", "producer", "admin"] as const) {
           for (const match of childXml.matchAll(/<loc>(.*?)<\/loc>/g)) {
             const location = new URL(match[1].trim(), base);
             if (location.origin === base.origin) {
+              sitemapContentPaths.add(location.pathname);
               paths.add(`${location.pathname}${location.search}`);
             }
           }
         } else if (url.origin === base.origin) {
+          sitemapContentPaths.add(url.pathname);
           paths.add(`${url.pathname}${url.search}`);
         }
       }
@@ -105,13 +110,21 @@ for (const role of ["buyer", "producer", "admin"] as const) {
           expect(apiStatus, `${role} could not open ${path}`).toBeLessThan(400);
           continue;
         }
-        const response = await page.goto(path, { waitUntil: "domcontentloaded" });
+        const response = await page.goto(path, { waitUntil: "commit" });
+        await expect(page.locator("main").first()).toBeVisible();
+        await expect(page.locator("main").first()).toContainText(/\S/);
         const status = response?.status() ?? 0;
         const expectedMissingAdminPage = role !== "admin" && path.startsWith("/admin");
-        expect(
-          expectedMissingAdminPage ? status === 404 : status < 400,
-          `${role} could not open ${path}: HTTP ${status}`
-        ).toBe(true);
+        const isQualityGatedLanding =
+          /^\/beats\/(?:genre|language|in)\//.test(pathUrl.pathname) ||
+          /^\/producers\/in\//.test(pathUrl.pathname);
+        const expectedThinLanding =
+          isQualityGatedLanding && !sitemapContentPaths.has(pathUrl.pathname);
+        if (expectedMissingAdminPage) {
+          expect(status, `${role} should not open ${path}`).toBe(404);
+        } else {
+          expect(status, `${role} received a server error at ${path}`).toBeLessThan(400);
+        }
         expect(
           getRedirectCount(response),
           `${path} used more than one redirect`
@@ -152,6 +165,11 @@ for (const role of ["buyer", "producer", "admin"] as const) {
         const canonical = await page.evaluate(
           () => document.querySelector('link[rel="canonical"]')?.getAttribute("href") ?? null
         );
+        if (expectedThinLanding && status === 200) {
+          const robots = await page.locator('meta[name="robots"]').getAttribute("content");
+          expect(robots, `${path} must remain out of the index below its configured threshold`)
+            .toMatch(/noindex/i);
+        }
         if (canonical) {
           const canonicalUrl = new URL(canonical, base);
           const finalUrl = new URL(page.url());
@@ -203,8 +221,13 @@ for (const role of ["buyer", "producer", "admin"] as const) {
         await expect(
           page.getByRole("heading", { name: "This account cannot open that page" })
         ).toBeVisible();
-        const adminResponse = await page.goto("/admin");
-        expect(adminResponse?.status()).toBe(404);
+        const adminPage = await page.context().newPage();
+        try {
+          const adminResponse = await adminPage.goto("/admin");
+          expect(adminResponse?.status()).toBe(404);
+        } finally {
+          await adminPage.close();
+        }
       }
 
       if (role === "producer") {

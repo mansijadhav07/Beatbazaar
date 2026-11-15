@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SupportArticle, SupportSection } from "@/components/support/SupportArticle";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Help",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 export default function HelpPage() {
   return (
     <SupportArticle
-      title="Help with Beatbazaar"
+      title={`Help with ${siteConfig.name}`}
       intro="Use these pages to find the next step for common tasks."
     >
       <SupportSection title="Buying a beat">

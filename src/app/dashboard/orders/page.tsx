@@ -90,7 +90,7 @@ export default async function BuyerOrdersPage() {
                       <div className="font-semibold text-ink">
                         {o.items.map((i) => i.title).join(", ")}
                       </div>
-                      <div className="text-[11px] text-steel">
+                      <div className="text-xs text-steel-dark">
                         {o.items.length} {o.items.length === 1 ? "track" : "tracks"}
                       </div>
                     </td>
@@ -99,22 +99,22 @@ export default async function BuyerOrdersPage() {
                     </td>
                     <td className="px-4 py-3.5">
                       {o.status === "paid" && (
-                        <span className="inline-block rounded bg-status-success-bg px-2 py-0.5 text-[11px] font-bold text-status-success">
+                        <span className="inline-flex min-h-6 items-center rounded bg-status-success-bg px-2 py-0.5 text-xs font-bold text-status-success">
                           Paid
                         </span>
                       )}
                       {o.status === "pending" && (
-                        <span className="inline-block rounded bg-status-warning-bg px-2 py-0.5 text-[11px] font-bold text-status-warning">
+                        <span className="inline-flex min-h-6 items-center rounded bg-status-warning-bg px-2 py-0.5 text-xs font-bold text-status-warning">
                           Pending
                         </span>
                       )}
                       {o.status === "failed" && (
-                        <span className="inline-block rounded bg-status-danger-bg px-2 py-0.5 text-[11px] font-bold text-status-danger">
+                        <span className="inline-flex min-h-6 items-center rounded bg-status-danger-bg px-2 py-0.5 text-xs font-bold text-status-danger">
                           Failed
                         </span>
                       )}
                       {o.status === "refunded" && (
-                        <span className="inline-block rounded bg-surface-muted px-2 py-0.5 text-[11px] font-bold text-steel">
+                        <span className="inline-flex min-h-6 items-center rounded bg-surface-muted px-2 py-0.5 text-xs font-bold text-steel-dark">
                           Refunded
                         </span>
                       )}

@@ -125,7 +125,7 @@ export async function generateLicensePdf(
   drawRow("Order ID:", orderId);
   drawRow("Issue Date:", orderDate.toISOString().split("T")[0]);
   drawRow("Licensee (Buyer):", buyerName || "Verified Buyer");
-  drawRow("Licensor (Producer):", item.producerName || "Beatbazaar Producer");
+  drawRow("Licensor (Producer):", item.producerName || `${siteConfig.name} Producer`);
   drawRow("Composition Title:", item.title);
   drawRow("License Tier:", item.licenseTier.toUpperCase());
   drawRow(
@@ -159,7 +159,7 @@ export async function generateLicensePdf(
     `2. USAGE RIGHTS AND LIMITATIONS: Licensee is permitted commercial distribution within the limits specified for the ${item.licenseTier} tier. Broadcast rights, streaming thresholds, and synchronization terms apply in accordance with standard marketplace guidelines.`,
     `3. CREDITS AND ATTRIBUTION: Licensee agrees to credit the Licensor as producer on all published and distributed copies (e.g. "Produced by ${item.producerName || "Producer"}").`,
     `4. EXCLUSIVITY: If exclusive rights are indicated, Licensor confirms that the Beat will not be sold to any subsequent parties following the completion of this order.`,
-    `5. GOVERNING LAW AND DISCLAIMER: Beatbazaar acts strictly as a marketplace intermediary and is not liable for copyright disputes or representations made by the parties. This agreement is governed by the laws of India.`,
+    `5. GOVERNING LAW AND DISCLAIMER: ${siteConfig.name} acts strictly as a marketplace intermediary and is not liable for copyright disputes or representations made by the parties. This agreement is governed by the laws of India.`,
   ];
 
   for (const paragraph of termsParagraphs) {

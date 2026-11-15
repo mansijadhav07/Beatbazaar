@@ -1,11 +1,12 @@
 export const dynamic = "force-dynamic";
 
 import { requireRole } from "@/server/auth/guards";
+import { siteConfig } from "@/config/site";
 import ProducerProfileForm from "./ProfileForm";
 
 export const metadata = {
-  title: "Producer Profile | Beatbazaar",
-  description: "Set up your Beatbazaar producer storefront, bio, and location.",
+  title: `Producer Profile | ${siteConfig.name}`,
+  description: `Set up your ${siteConfig.name} producer storefront, bio, and location.`,
 };
 
 export default async function ProducerProfilePage() {
@@ -23,4 +24,3 @@ export default async function ProducerProfilePage() {
     </div>
   );
 }
-

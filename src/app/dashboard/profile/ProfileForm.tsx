@@ -86,7 +86,7 @@ export default function ProducerProfileForm() {
                 : "bg-surface-muted text-ink border border-brass/30"
             }`}
           >
-            {msg.error ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4 text-brass" />}
+            {msg.error ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4 text-status-success" />}
             <span>{msg.text}</span>
           </div>
         )}
@@ -114,7 +114,7 @@ export default function ProducerProfileForm() {
                 className="pl-32 font-mono text-xs"
               />
             </div>
-            <p className="text-[11px] text-steel">
+            <p className="text-xs text-steel-dark">
               Unique lowercase handle for your profile URL. Hyphens and letters only.
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function ProducerProfileForm() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-steel">State</label>
+                <label className="text-xs text-steel-dark">State</label>
                 <select
                   value={state}
                   onChange={(e) => {
@@ -174,7 +174,7 @@ export default function ProducerProfileForm() {
               </div>
 
               <div>
-                <label className="text-[11px] text-steel">City</label>
+                <label className="text-xs text-steel-dark">City</label>
                 <select
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
@@ -198,4 +198,3 @@ export default function ProducerProfileForm() {
     </Card>
   );
 }
-

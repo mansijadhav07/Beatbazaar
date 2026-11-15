@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SupportArticle, SupportSection } from "@/components/support/SupportArticle";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "License overview",
-  description: "How Beatbazaar presents producer-defined beat license options.",
+  description: `How ${siteConfig.name} presents producer-defined beat license options.`,
   robots: { index: false, follow: true },
   alternates: { canonical: "/license-overview" },
 };

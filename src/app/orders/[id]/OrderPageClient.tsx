@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/config/site";
 import {
   Download,
   FileText,
@@ -104,7 +105,7 @@ export function OrderPageClient({ order }: OrderPageClientProps) {
             )}
             {currentStatus === "pending" && (
               <span className="inline-flex items-center gap-1.5 rounded bg-status-warning-bg px-3 py-1 text-xs font-bold text-status-warning border border-status-warning/30">
-                <Clock className="h-4 w-4 animate-spin" />
+                <Clock className="h-4 w-4" />
                 <span>Awaiting Payment Confirmation</span>
               </span>
             )}
@@ -166,10 +167,10 @@ export function OrderPageClient({ order }: OrderPageClientProps) {
                 <div>
                   <h3 className="text-base font-bold text-ink">{item.title}</h3>
                   <p className="text-xs text-steel mt-0.5">
-                    Producer: {item.producerName || "Beatbazaar Producer"}
+                    Producer: {item.producerName || `${siteConfig.name} Producer`}
                   </p>
                   <div className="mt-2 flex items-center gap-2 text-xs">
-                    <span className="rounded bg-surface-muted px-2.5 py-0.5 font-semibold text-brass border border-border">
+                    <span className="rounded bg-brass px-2.5 py-0.5 font-semibold text-ink">
                       {item.licenseTier.toUpperCase()} License
                     </span>
                     <span className="text-steel">

@@ -42,7 +42,7 @@ export async function generateMetadata({
     title: `${data.profile.displayName}, producer`,
     description:
       data.profile.bio.trim() ||
-      `Explore published beats by ${data.profile.displayName} on Beatbazaar.`,
+      `Explore published beats by ${data.profile.displayName} on ${siteConfig.name}.`,
     robots: indexable
       ? { index: true, follow: true }
       : { index: false, follow: true },

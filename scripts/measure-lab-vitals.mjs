@@ -65,64 +65,84 @@ try {
   if (!ready) throw new Error("Production test server did not become ready.");
 
   browser = await chromium.launch();
-  const context = await browser.newContext({
-    ...devices["iPhone 14"],
-    reducedMotion: "reduce",
-  });
-  const page = await context.newPage();
-  const cdp = await context.newCDPSession(page);
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-  await cdp.send("Network.enable");
-  await cdp.send("Network.emulateNetworkConditions", {
-    offline: false,
-    latency: 150,
-    downloadThroughput: 200_000,
-    uploadThroughput: 93_750,
-  });
-  await page.addInitScript(() => {
-    const metrics = { lcp: 0, cls: 0, inp: 0 };
-    Object.defineProperty(window, "__labVitals", { value: metrics });
-    if (!("PerformanceObserver" in window)) return;
-    try {
-      new PerformanceObserver((entries) => {
-        for (const entry of entries.getEntries()) {
-          metrics.lcp = entry.startTime;
-        }
-      }).observe({ type: "largest-contentful-paint", buffered: true });
-      new PerformanceObserver((entries) => {
-        for (const entry of entries.getEntries()) {
-          if (!entry.hadRecentInput) metrics.cls += entry.value;
-        }
-      }).observe({ type: "layout-shift", buffered: true });
-      new PerformanceObserver((entries) => {
-        for (const entry of entries.getEntries()) {
-          if (entry.interactionId) metrics.inp = Math.max(metrics.inp, entry.duration);
-        }
-      }).observe({ type: "event", buffered: true, durationThreshold: 16 });
-    } catch {}
-  });
-
   const paths = [
     "/",
     "/tracks",
     `/track/${track._id.toString()}/${track.slug}`,
     `/producer/${producer.slug}`,
   ];
-  for (const path of paths) {
-    await page.goto(`${baseUrl}${path}`, { waitUntil: "load", timeout: 60_000 });
-    const menuButton = page.getByRole("button", { name: "Toggle menu" });
-    await menuButton.click();
-    await menuButton.click();
-    await page.waitForTimeout(1500);
-    const metrics = await page.evaluate(() => window.__labVitals);
-    console.log(
-      JSON.stringify({
-        path,
-        lcpMs: Math.round(metrics.lcp),
-        inpApproximationMs: Math.round(metrics.inp),
-        cls: Number(metrics.cls.toFixed(4)),
-      })
-    );
+  const profiles = [
+    { device: "iPhone 14", reducedMotion: "reduce" },
+    { device: "iPhone SE", reducedMotion: "no-preference" },
+  ];
+  for (const profile of profiles) {
+    const context = await browser.newContext({
+      ...devices[profile.device],
+      reducedMotion: profile.reducedMotion,
+    });
+    const page = await context.newPage();
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    await cdp.send("Network.enable");
+    await cdp.send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: 150,
+      downloadThroughput: 200_000,
+      uploadThroughput: 93_750,
+    });
+    await page.addInitScript(() => {
+      const metrics = { lcp: 0, cls: 0, inp: 0, longTaskCount: 0, longestTaskMs: 0 };
+      Object.defineProperty(window, "__labVitals", { value: metrics });
+      if (!("PerformanceObserver" in window)) return;
+      try {
+        new PerformanceObserver((entries) => {
+          for (const entry of entries.getEntries()) {
+            metrics.lcp = entry.startTime;
+          }
+        }).observe({ type: "largest-contentful-paint", buffered: true });
+        new PerformanceObserver((entries) => {
+          for (const entry of entries.getEntries()) {
+            if (!entry.hadRecentInput) metrics.cls += entry.value;
+          }
+        }).observe({ type: "layout-shift", buffered: true });
+        new PerformanceObserver((entries) => {
+          for (const entry of entries.getEntries()) {
+            if (entry.interactionId) metrics.inp = Math.max(metrics.inp, entry.duration);
+          }
+        }).observe({ type: "event", buffered: true, durationThreshold: 16 });
+        new PerformanceObserver((entries) => {
+          for (const entry of entries.getEntries()) {
+            metrics.longTaskCount += 1;
+            metrics.longestTaskMs = Math.max(metrics.longestTaskMs, entry.duration);
+          }
+        }).observe({ type: "longtask", buffered: true });
+      } catch {}
+    });
+
+    try {
+      for (const path of paths) {
+        await page.goto(`${baseUrl}${path}`, { waitUntil: "load", timeout: 60_000 });
+        const menuButton = page.getByRole("button", { name: "Toggle menu" });
+        await menuButton.click();
+        await menuButton.click();
+        await page.waitForTimeout(1500);
+        const metrics = await page.evaluate(() => window.__labVitals);
+        console.log(
+          JSON.stringify({
+            device: profile.device,
+            reducedMotion: profile.reducedMotion,
+            path,
+            lcpMs: Math.round(metrics.lcp),
+            inpApproximationMs: Math.round(metrics.inp),
+            cls: Number(metrics.cls.toFixed(4)),
+            longTaskCount: metrics.longTaskCount,
+            longestTaskMs: Math.round(metrics.longestTaskMs),
+          })
+        );
+      }
+    } finally {
+      await context.close();
+    }
   }
 } finally {
   await browser?.close();

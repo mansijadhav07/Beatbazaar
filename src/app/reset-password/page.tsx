@@ -1,9 +1,10 @@
 import { Suspense } from "react";
+import { siteConfig } from "@/config/site";
 import ResetPasswordContent from "./ResetPasswordContent";
 
 export const metadata = {
-  title: "Reset Password | Beatbazaar",
-  description: "Reset your Beatbazaar account password.",
+  title: `Reset Password | ${siteConfig.name}`,
+  description: `Reset your ${siteConfig.name} account password.`,
 };
 
 export default function ResetPasswordPage() {

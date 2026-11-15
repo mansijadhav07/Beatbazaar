@@ -10,25 +10,29 @@ for (const role of ["buyer", "producer", "admin"] as const) {
       await page.setViewportSize({ width: 1280, height: 900 });
       await page.goto("/");
 
-      await expect(page.getByRole("link", { name: "Dashboard" })).toBeVisible();
+      await page.getByRole("button", { name: "Account" }).click();
+      await expect(page.getByRole("menuitem", { name: "Dashboard" })).toBeVisible();
       if (role === "admin") {
-        await expect(page.getByRole("link", { name: "Admin", exact: true })).toBeVisible();
+        await expect(page.getByRole("menuitem", { name: "Admin", exact: true })).toBeVisible();
       } else {
-        await expect(page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
+        await expect(page.getByRole("menuitem", { name: "Admin", exact: true })).toHaveCount(0);
       }
 
       await page.setViewportSize({ width: 390, height: 844 });
       await page.reload();
       await page.getByRole("button", { name: "Toggle menu" }).click();
-      await expect(page.getByRole("link", { name: "Dashboard" })).toBeVisible();
+      const mobileMenu = page.getByRole("navigation", { name: "Mobile menu" });
+      await expect(mobileMenu.getByRole("link", { name: "Dashboard" })).toBeVisible();
       if (role === "admin") {
-        await expect(page.getByRole("link", { name: "Admin", exact: true })).toBeVisible();
+        await expect(mobileMenu.getByRole("link", { name: "Admin", exact: true })).toBeVisible();
       } else {
-        await expect(page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
+        await expect(mobileMenu.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
       }
 
-      const uploadLink = page.getByRole("link", { name: role === "producer" ? "Upload" : "Sell" });
-      await expect(uploadLink).toHaveAttribute(
+      const headerSellOrUpload = mobileMenu.getByRole("link", {
+        name: role === "producer" ? "Upload" : "Sell beats",
+      });
+      await expect(headerSellOrUpload).toHaveAttribute(
         "href",
         role === "producer" ? "/dashboard/beats/new" : "/login?intent=producer"
       );

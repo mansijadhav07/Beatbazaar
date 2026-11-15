@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PublicLandingPage } from "@/components/catalog/PublicLandingPage";
 import { getPublicLandingRobots } from "@/lib/public-catalog";
 import { getPublicLandingPage } from "@/server/catalog/repository";
+import { siteConfig } from "@/config/site";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export async function generateMetadata({ params }: GenrePageProps): Promise<Meta
   if (!data) return { title: "Genre not found", robots: { index: false, follow: false } };
   return {
     title: `${data.label} beats`,
-    description: `${data.trackCount} published ${data.label} beats in the Beatbazaar catalog.`,
+    description: `${data.trackCount} published ${data.label} beats in the ${siteConfig.name} catalog.`,
     robots: getPublicLandingRobots(data),
     alternates: { canonical: data.path },
   };

@@ -18,6 +18,7 @@ import { buildTrackStructuredData } from "@/lib/structured-data";
 import { getPublicAssetUrl } from "@/lib/public-asset-url";
 import { FileAudio, Lock } from "lucide-react";
 import type { ILicenseOption } from "@/server/db/models/Track";
+import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +71,7 @@ export async function generateMetadata({ params }: TrackPageProps): Promise<Meta
   }
 
   const isSoldExclusive = track.status === "sold_exclusive";
-  const title = `${track.title} by ${track.producerName || "Beatbazaar Producer"} (${track.bpm} BPM ${track.genre} Beat)`;
+  const title = `${track.title} by ${track.producerName || `${siteConfig.name} Producer`} (${track.bpm} BPM ${track.genre} Beat)`;
   const description = `Listen to ${track.title}, a ${track.genre} beat in ${track.key} at ${track.bpm} BPM. Review the producer's license options on ${siteConfig.name}.`;
 
   const openGraphImageUrl = `${siteConfig.url}/track/${track._id.toString()}/${track.slug}/opengraph-image`;
@@ -151,8 +152,8 @@ export default async function TrackPage({ params }: TrackPageProps) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-bold text-ink">Beat Removed (410 Gone)</h1>
-        <p className="text-xs text-steel mt-2 max-w-md mx-auto">
-          This beat has been taken down by the producer or is no longer available on Beatbazaar. Explore similar beats below:
+        <p className="text-sm text-steel-dark mt-2 max-w-md mx-auto">
+          This beat has been taken down by the producer or is no longer available on {siteConfig.name}. Explore similar beats below:
         </p>
         <div className="mt-12 text-left">
           <h2 className="text-sm font-bold text-ink uppercase tracking-wider mb-4">
@@ -309,7 +310,7 @@ export default async function TrackPage({ params }: TrackPageProps) {
         </div>
 
         {/* License Options Section */}
-        <div className="py-12 border-b border-border">
+        <div id="license-options" className="py-12 border-b border-border">
           <div className="mb-6">
             <h2 className="text-lg font-bold text-ink">License Options</h2>
             <p className="text-xs text-steel mt-0.5">
@@ -339,9 +340,9 @@ export default async function TrackPage({ params }: TrackPageProps) {
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-bold text-ink">{lic.name}</h3>
                       {isExclusive && (
-                        <span className="text-[10px] font-bold text-brass uppercase tracking-wider bg-brass/10 px-2 py-0.5 rounded">
+                        <Badge variant="brass">
                           Exclusive
-                        </span>
+                        </Badge>
                       )}
                     </div>
 
@@ -367,7 +368,7 @@ export default async function TrackPage({ params }: TrackPageProps) {
                       <TrackBuyButton
                         trackId={track._id.toString()}
                         trackTitle={track.title}
-                        producerName={track.producerName || "Beatbazaar Producer"}
+                        producerName={track.producerName || `${siteConfig.name} Producer`}
                         coverKey={track.coverKey}
                         licenseTier={lic.tier}
                         isExclusive={isExclusive}

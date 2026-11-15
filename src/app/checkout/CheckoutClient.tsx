@@ -252,9 +252,9 @@ export function CheckoutClient({ userEmail }: { userEmail: string }) {
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-bold text-ink truncate">{item.title}</h3>
                   <p className="text-xs text-steel">
-                    Producer: {item.producerName || "Beatbazaar Producer"}
+                    Producer: {item.producerName || `${siteConfig.name} Producer`}
                   </p>
-                  <span className="inline-block mt-1 text-[11px] font-semibold text-brass">
+                  <span className="inline-block mt-1 text-xs font-semibold text-ink">
                     {item.licenseTier.toUpperCase()} License
                   </span>
                 </div>
@@ -269,7 +269,7 @@ export function CheckoutClient({ userEmail }: { userEmail: string }) {
 
           <div className="rounded border border-border bg-surface-muted/60 p-4 text-xs space-y-2">
             <h3 className="font-bold text-ink flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-brass" />
+              <ShieldCheck className="h-4 w-4 text-steel-dark" />
               <span>License terms and files</span>
             </h3>
             <p className="text-steel-dark leading-relaxed">
@@ -282,7 +282,7 @@ export function CheckoutClient({ userEmail }: { userEmail: string }) {
         <div className="lg:col-span-5">
           <div className="rounded border border-border bg-surface p-6 shadow-sm">
             <h2 className="text-base font-bold text-ink flex items-center gap-2">
-              <Lock className="h-4 w-4 text-brass" />
+              <Lock className="h-4 w-4 text-steel-dark" />
               <span>Payment Confirmation</span>
             </h2>
 

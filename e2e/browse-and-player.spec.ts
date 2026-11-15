@@ -1,9 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { siteConfig } from "@/config/site";
 
 test.describe("Phase 3: Catalog Browsing, Search, and Track Page", () => {
   test("loads /tracks browse page with search and filters", async ({ page }) => {
     await page.goto("/tracks");
-    await expect(page).toHaveTitle(/Browse Beats and Instrumentals | Beatbazaar/);
+    await expect(page).toHaveTitle(
+      new RegExp(`Browse Beats and Instrumentals \\| ${siteConfig.name}`)
+    );
 
     // Verify search input exists
     const searchInput = page.getByPlaceholder(/Search beats by title/i);

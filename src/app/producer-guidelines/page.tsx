@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SupportArticle, SupportSection } from "@/components/support/SupportArticle";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Producer guidelines",
-  description: "Draft guidance for producers submitting beats to Beatbazaar.",
+  description: `Draft guidance for producers submitting beats to ${siteConfig.name}.`,
   robots: { index: false, follow: true },
   alternates: { canonical: "/producer-guidelines" },
 };
@@ -33,7 +34,7 @@ export default function ProducerGuidelinesPage() {
       <SupportSection title="Account and payouts">
         <p>
           Producer payout setup requires provider onboarding and review. Never
-          send identity or bank details to Beatbazaar support. The final seller
+          send identity or bank details to {siteConfig.name} support. The final seller
           agreement and payout disclosures require legal review.
         </p>
       </SupportSection>

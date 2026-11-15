@@ -5,9 +5,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import BeatsTable from "./BeatsTable";
+import { siteConfig } from "@/config/site";
 
 export const metadata = {
-  title: "My Beats | Beatbazaar",
+  title: `My Beats | ${siteConfig.name}`,
   description: "Manage your uploaded beats, moderation status, and processing queue.",
 };
 
@@ -35,4 +36,3 @@ export default async function ProducerBeatsPage() {
     </div>
   );
 }
-

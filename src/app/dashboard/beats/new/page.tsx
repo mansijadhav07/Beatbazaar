@@ -2,10 +2,11 @@ export const dynamic = "force-dynamic";
 
 import { requireRole } from "@/server/auth/guards";
 import UploadBeatWizard from "./UploadBeatWizard";
+import { siteConfig } from "@/config/site";
 
 export const metadata = {
-  title: "Upload Beat | Beatbazaar",
-  description: "Upload your beat, audio files, stems, and set licensing options on Beatbazaar.",
+  title: `Upload Beat | ${siteConfig.name}`,
+  description: `Upload your beat, audio files, stems, and set licensing options on ${siteConfig.name}.`,
 };
 
 export default async function NewBeatPage() {
@@ -23,4 +24,3 @@ export default async function NewBeatPage() {
     </div>
   );
 }
-

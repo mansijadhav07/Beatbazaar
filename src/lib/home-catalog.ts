@@ -16,7 +16,7 @@ export function getVisibleHomeSections<TTrack>(
   catalog: HomeCatalogSections<TTrack>
 ): VisibleHomeSection<TTrack>[] {
   return [
-    { title: "Featured by Beatbazaar", tracks: catalog.featured },
+    { title: "Featured beats", tracks: catalog.featured },
     { title: "Trending this week", tracks: catalog.trending },
     { title: "Recently published", tracks: catalog.newest },
   ].filter((section) => section.tracks.length > 0);

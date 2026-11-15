@@ -48,21 +48,17 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          '"Segoe UI"',
-          "Roboto",
-          '"Helvetica Neue"',
-          "Arial",
-          "sans-serif",
-        ],
+        sans: ["var(--font-text)", '"Noto Sans Devanagari"', '"Nirmala UI"', "sans-serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
+        mono: ["var(--font-data)", '"SFMono-Regular"', "Consolas", "monospace"],
       },
       borderRadius: {
-        sm: "3px",
+        sm: "4px",
         DEFAULT: "4px",
-        md: "6px",
+        md: "8px",
         lg: "8px",
+        xl: "8px",
+        "2xl": "8px",
       },
       spacing: {
         4.5: "1.125rem",
@@ -77,4 +73,3 @@ const config: Config = {
 };
 
 export default config;
-

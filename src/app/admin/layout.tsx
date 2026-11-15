@@ -12,6 +12,7 @@ import {
   AdminMobileNavigation,
   AdminSidebar,
 } from "@/components/admin/AdminNavigation";
+import { siteConfig } from "@/config/site";
 
 export default async function AdminLayout({
   children,
@@ -30,7 +31,7 @@ export default async function AdminLayout({
                 <div className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-steel-dark" aria-hidden="true" />
                   <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">
-                    Beatbazaar administration
+                    {siteConfig.name} administration
                   </h1>
                 </div>
                 <p className="mt-1 text-sm text-steel-dark">

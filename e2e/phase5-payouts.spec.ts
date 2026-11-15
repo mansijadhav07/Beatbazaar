@@ -48,6 +48,10 @@ test.describe("Phase 5 producer payouts on iPhone 14", () => {
       await page.getByRole("checkbox").check();
       await page.getByRole("button", { name: "Set up payouts" }).click();
       await expect.poll(() => onboardingRequests).toBe(1);
+      await page.waitForLoadState("load");
+      await expect(
+        page.getByRole("heading", { name: "Earnings and payouts" })
+      ).toBeVisible();
     }
 
     const dimensions = await page.evaluate(() => ({

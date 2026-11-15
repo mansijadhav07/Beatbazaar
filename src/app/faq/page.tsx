@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SupportArticle } from "@/components/support/SupportArticle";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { buildFaqStructuredData } from "@/lib/structured-data";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Frequently asked questions",
@@ -43,7 +44,7 @@ export default function FaqPage() {
     <>
       <SupportArticle
         title="Questions about buying and selling beats"
-        intro="Straight answers about the current Beatbazaar experience."
+        intro={`Straight answers about the current ${siteConfig.name} experience.`}
       >
         <div className="space-y-5">
           {questions.map(({ question, answer }) => (

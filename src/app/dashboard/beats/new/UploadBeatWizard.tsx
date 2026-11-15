@@ -180,7 +180,7 @@ export default function UploadBeatWizard() {
                     : current.filter((file) => file !== kind)
                 );
               }}
-              className="h-4 w-4 rounded border-border text-brass focus:ring-brass"
+              className="h-4 w-4 rounded border-border text-steel-dark focus:ring-steel"
             />
             {label}
           </label>
@@ -485,7 +485,7 @@ export default function UploadBeatWizard() {
 
         {loading && (
           <div className="mb-4 flex items-center gap-2 rounded border border-border bg-surface-muted p-3 text-xs text-ink">
-            <Upload className="h-4 w-4 animate-bounce text-brass" />
+            <Upload className="h-4 w-4 text-steel-dark" />
             <span>{progressText}</span>
           </div>
         )}
@@ -582,10 +582,10 @@ export default function UploadBeatWizard() {
           <form onSubmit={handleNextFromStep2} className="space-y-4">
             <div className="space-y-1 border border-border rounded p-3 bg-surface-muted">
               <label className="text-xs font-semibold text-ink flex items-center gap-1.5">
-                <Music className="h-3.5 w-3.5 text-brass" />
+                <Music className="h-4 w-4 text-steel-dark" />
                 <span>MP3 Audio Master (Required)</span>
               </label>
-              <p className="text-[11px] text-steel">Full quality 320 kbps MP3 master.</p>
+              <p className="text-xs text-steel-dark">Full quality 320 kbps MP3 master.</p>
               <input
                 required
                 type="file"
@@ -597,7 +597,7 @@ export default function UploadBeatWizard() {
 
             <div className="space-y-1 border border-border rounded p-3">
               <label className="text-xs font-medium text-ink">WAV Master (Optional)</label>
-              <p className="text-[11px] text-steel">Uncompressed 24-bit 44.1kHz or 48kHz WAV.</p>
+              <p className="text-xs text-steel-dark">Uncompressed 24-bit 44.1kHz or 48kHz WAV.</p>
               <input
                 type="file"
                 accept=".wav,audio/wav"
@@ -608,7 +608,7 @@ export default function UploadBeatWizard() {
 
             <div className="space-y-1 border border-border rounded p-3">
               <label className="text-xs font-medium text-ink">Stems Archive (Optional)</label>
-              <p className="text-[11px] text-steel">ZIP archive with individual track stems.</p>
+              <p className="text-xs text-steel-dark">ZIP archive with individual track stems.</p>
               <input
                 type="file"
                 accept=".zip,application/zip"
@@ -619,7 +619,7 @@ export default function UploadBeatWizard() {
 
             <div className="space-y-1 border border-border rounded p-3">
               <label className="text-xs font-medium text-ink">Cover Artwork (Optional)</label>
-              <p className="text-[11px] text-steel">Square image (JPEG/PNG/WebP, min 1000x1000px).</p>
+              <p className="text-xs text-steel-dark">Square image (JPEG/PNG/WebP, min 1000x1000px).</p>
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -653,7 +653,7 @@ export default function UploadBeatWizard() {
                     type="checkbox"
                     checked={freeLicenseEnabled}
                     onChange={(event) => setFreeLicenseEnabled(event.target.checked)}
-                    className="h-4 w-4 rounded border-border text-brass focus:ring-brass"
+                    className="h-4 w-4 rounded border-border text-steel-dark focus:ring-steel"
                   />
                   Offer a free license
                 </label>
@@ -747,11 +747,11 @@ export default function UploadBeatWizard() {
                   type="checkbox"
                   checked={rightsConfirmed}
                   onChange={(e) => setRightsConfirmed(e.target.checked)}
-                  className="mt-0.5 rounded border-border text-brass focus:ring-brass"
+                  className="mt-0.5 rounded border-border text-steel-dark focus:ring-steel"
                 />
                 <div className="text-xs text-ink leading-relaxed">
                   <span className="font-semibold flex items-center gap-1">
-                    <ShieldCheck className="h-3.5 w-3.5 text-brass" />
+                    <ShieldCheck className="h-4 w-4 text-steel-dark" />
                     Rights Confirmation
                   </span>
                   I confirm that I own or have obtained the rights needed to offer this beat and that any samples have been cleared.

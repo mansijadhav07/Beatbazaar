@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./motion.css";
 import { siteConfig } from "@/config/site";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { buildSiteStructuredData } from "@/lib/structured-data";
@@ -10,6 +11,28 @@ import { AudioPlayerProvider } from "@/components/player/AudioPlayerContext";
 import { PersistentPlayer } from "@/components/player/PersistentPlayer";
 import { CartProvider } from "@/components/cart/CartContext";
 import { getCurrentUser } from "@/server/auth/guards";
+import { Fraunces, IBM_Plex_Mono, Noto_Sans } from "next/font/google";
+
+const displayFont = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-display",
+});
+
+const textFont = Noto_Sans({
+  subsets: ["devanagari", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-text",
+});
+
+const dataFont = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  variable: "--font-data",
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -48,7 +71,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en-IN">
-      <body className="flex min-h-[100dvh] flex-col bg-surface text-ink antialiased">
+      <body
+        className={`${displayFont.variable} ${textFont.variable} ${dataFont.variable} flex min-h-[100dvh] flex-col bg-surface text-ink antialiased`}
+      >
         <AudioPlayerProvider>
           <CartProvider>
             <script
@@ -64,7 +89,7 @@ export default async function RootLayout({
               }}
             />
             <Header role={user?.role ?? null} />
-            <main className="flex-1 pb-24 md:pb-20">{children}</main>
+            <main className="page-content flex-1 pb-24 md:pb-20">{children}</main>
             <Footer />
             <PersistentPlayer />
             <MobileNav role={user?.role ?? null} />

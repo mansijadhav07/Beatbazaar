@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAudioPlayer } from "./AudioPlayerContext";
 import { LazyWaveformScrubber } from "./LazyWaveformScrubber";
+import { BeatEqualizer } from "./BeatEqualizer";
 import {
   Play,
   Pause,
@@ -13,6 +14,9 @@ import {
   Repeat,
   Volume2,
   VolumeX,
+  ChevronDown,
+  ChevronUp,
+  ShoppingBag,
 } from "lucide-react";
 
 function formatSeconds(secs: number): string {
@@ -38,6 +42,7 @@ export function PersistentPlayer() {
 
   const [isIos, setIsIos] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     // Detect iOS to hide hardware volume slider
@@ -52,25 +57,34 @@ export function PersistentPlayer() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border shadow-lg pb-[env(safe-area-inset-bottom)]"
+      className="persistent-player fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 bg-ink text-white md:bottom-0"
       role="region"
-      aria-label="Persistent Audio Player"
+      aria-label="Audio player"
+      data-expanded={isExpanded}
     >
-      <div className="max-w-7xl mx-auto px-4 py-2 sm:py-3 flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
-        {/* Track Meta & Cover */}
-        <div className="flex items-center gap-3 w-full sm:w-64 min-w-0">
-          <div className="h-10 w-10 sm:h-12 sm:w-12 rounded bg-surface-muted border border-border flex-shrink-0 overflow-hidden relative">
+      <div className="mx-auto grid max-w-container grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2 sm:px-6 lg:grid-cols-[minmax(12rem,1fr)_auto] lg:px-8">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="relative h-10 w-10 flex-none overflow-hidden bg-ink-light">
             {currentTrack.coverUrl ? (
               <Image
                 src={currentTrack.coverUrl}
-                alt={currentTrack.title}
+                alt=""
                 fill
                 sizes="48px"
                 className="object-cover"
               />
             ) : (
-              <div className="h-full w-full flex items-center justify-center text-steel font-mono text-xs">
-                BEAT
+              <div className="flex h-full w-full items-center justify-center text-brass">
+                <svg aria-hidden="true" viewBox="0 0 32 32" className="h-7 w-7">
+                  <path
+                    d="M3 16h4l2-7 4 15 4-19 4 22 4-15 3 8h2"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                  />
+                </svg>
               </div>
             )}
           </div>
@@ -78,70 +92,96 @@ export function PersistentPlayer() {
           <div className="min-w-0 flex-1">
             <Link
               href={`/track/${currentTrack.id}/${currentTrack.slug}`}
-              className="text-xs sm:text-sm font-semibold text-ink truncate block hover:text-brass transition-colors"
+              className="block truncate text-sm font-semibold text-white underline-offset-4 hover:underline"
             >
               {currentTrack.title}
             </Link>
-            <div className="truncate text-xs text-steel">
+            <div className="flex min-w-0 items-center gap-2 truncate text-sm text-white/80">
               {currentTrack.producerUsername ? (
                 <Link
                   href={`/producer/${currentTrack.producerUsername}`}
-                  className="hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
+                  className="truncate underline-offset-4 hover:text-white hover:underline"
                 >
                   {currentTrack.producerName}
                 </Link>
               ) : (
                 currentTrack.producerName || "Producer not listed"
-              )}{" "}
-              · {currentTrack.bpm} BPM
+              )}
+              <span className="font-data text-xs text-white/80">{currentTrack.bpm} BPM</span>
             </div>
           </div>
+          <BeatEqualizer
+            trackId={currentTrack.id}
+            selected
+            playing={isPlaying}
+            hasPeaks={Boolean(currentTrack.waveform?.length)}
+            className="hidden text-brass sm:inline-flex"
+          />
         </div>
 
-        {/* Center Controls & Waveform Scrubber */}
-        <div className="flex-1 w-full max-w-2xl flex flex-col gap-1 items-center">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-end gap-2 lg:justify-center">
+          <button
+            onClick={togglePlay}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-brass text-ink active:scale-95 sm:h-10 sm:w-10"
+            aria-label={isPlaying ? "Pause" : "Play"}
+          >
+            {isPlaying ? (
+              <Pause aria-hidden="true" className="h-5 w-5 fill-current" />
+            ) : (
+              <Play aria-hidden="true" className="ml-0.5 h-5 w-5 fill-current" />
+            )}
+          </button>
+          <button
+            type="button"
+            className="flex h-11 w-11 items-center justify-center text-white hover:bg-ink-light lg:hidden"
+            onClick={() => setIsExpanded((expanded) => !expanded)}
+            aria-label={isExpanded ? "Collapse player" : "Expand player"}
+            aria-expanded={isExpanded}
+          >
+            {isExpanded ? (
+              <ChevronDown aria-hidden="true" className="h-5 w-5" />
+            ) : (
+              <ChevronUp aria-hidden="true" className="h-5 w-5" />
+            )}
+          </button>
+          <Link
+            href={`/track/${currentTrack.id}/${currentTrack.slug}#license-options`}
+            className="hidden min-h-11 items-center gap-2 bg-brass px-3 text-sm font-semibold text-ink hover:bg-brass-light sm:inline-flex"
+          >
+            <ShoppingBag aria-hidden="true" className="h-4 w-4" />
+            Choose license
+          </Link>
+        </div>
+
+        <div className="player-expanded-content col-span-2 min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
+          <div className="flex items-center gap-2">
             <button
               onClick={prevTrack}
-              className="text-steel hover:text-ink transition-colors p-1"
+              className="flex h-11 w-11 items-center justify-center text-white/80 hover:bg-ink-light hover:text-white"
               aria-label="Previous track"
             >
-              <SkipBack className="h-4 w-4" />
+              <SkipBack aria-hidden="true" className="h-5 w-5" />
             </button>
-
-            <button
-              onClick={togglePlay}
-              className="h-8 w-8 rounded-full bg-ink text-surface flex items-center justify-center hover:bg-ink/90 transition-transform active:scale-95"
-              aria-label={isPlaying ? "Pause" : "Play"}
-            >
-              {isPlaying ? (
-                <Pause className="h-4 w-4 fill-current" />
-              ) : (
-                <Play className="h-4 w-4 fill-current ml-0.5" />
-              )}
-            </button>
-
             <button
               onClick={nextTrack}
-              className="text-steel hover:text-ink transition-colors p-1"
+              className="flex h-11 w-11 items-center justify-center text-white/80 hover:bg-ink-light hover:text-white"
               aria-label="Next track"
             >
-              <SkipForward className="h-4 w-4" />
+              <SkipForward aria-hidden="true" className="h-5 w-5" />
             </button>
-
             <button
               onClick={toggleRepeat}
-              className={`p-1 transition-colors ${
-                repeat ? "text-brass" : "text-steel hover:text-ink"
+              className={`flex h-11 w-11 items-center justify-center ${
+                repeat ? "text-brass" : "text-white/80 hover:bg-ink-light hover:text-white"
               }`}
               aria-label="Toggle repeat"
             >
-              <Repeat className="h-3.5 w-3.5" />
+              <Repeat aria-hidden="true" className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="w-full flex items-center gap-2 text-[10px] text-steel font-mono">
-            <span className="w-8 text-right">{formatSeconds(currentTime)}</span>
+          <div className="flex min-w-0 items-center gap-2 text-xs text-white/80">
+            <span className="w-9 text-right font-data">{formatSeconds(currentTime)}</span>
             <div className="flex-1">
               <LazyWaveformScrubber
                 peaks={currentTrack.waveform}
@@ -150,22 +190,32 @@ export function PersistentPlayer() {
                 onSeek={seek}
               />
             </div>
-            <span className="w-8">{formatSeconds(duration)}</span>
+            <span className="w-9 font-data">{formatSeconds(duration)}</span>
           </div>
-        </div>
 
-        {/* Right Volume (Hidden on iOS) */}
-        {!isIos && (
-          <div className="hidden sm:flex items-center gap-2 w-32 justify-end text-steel">
+          {!isIos && (
+            <div className="hidden items-center justify-end gap-2 text-white/80 lg:flex">
             <button
               onClick={() => setMuted((m) => !m)}
-              className="hover:text-ink transition-colors"
+              className="flex h-10 w-10 items-center justify-center hover:bg-ink-light hover:text-white"
               aria-label={muted ? "Unmute" : "Mute"}
             >
-              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              {muted ? (
+                <VolumeX aria-hidden="true" className="h-5 w-5" />
+              ) : (
+                <Volume2 aria-hidden="true" className="h-5 w-5" />
+              )}
             </button>
-          </div>
-        )}
+            </div>
+          )}
+          <Link
+            href={`/track/${currentTrack.id}/${currentTrack.slug}#license-options`}
+            className="col-span-2 flex min-h-11 items-center justify-center gap-2 bg-brass px-3 text-sm font-semibold text-ink hover:bg-brass-light sm:hidden"
+          >
+            <ShoppingBag aria-hidden="true" className="h-4 w-4" />
+            Choose license
+          </Link>
+        </div>
       </div>
     </div>
   );

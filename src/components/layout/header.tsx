@@ -2,160 +2,104 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Music2, User, Menu, X, ShoppingCart } from "lucide-react";
+import { Menu, ShoppingCart, X } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
 import { signOut } from "@/server/auth/auth-client";
 import type { UserRole } from "@/lib/validations/user";
+import { AccountMenu } from "@/components/layout/AccountMenu";
+import { Wordmark } from "@/components/brand/Wordmark";
+import { siteConfig } from "@/config/site";
 
 export function Header({ role }: { role: UserRole | null }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { itemCount } = useCart();
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-surface/95 backdrop-blur-none pt-safe">
-      <div className="mx-auto flex h-14 max-w-container items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand Wordmark */}
-        <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-ink font-bold text-lg tracking-tight hover:opacity-90"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded bg-ink text-brass">
-              <Music2 className="h-4 w-4" />
-            </span>
-            <span className="text-xl font-bold tracking-tight text-ink">
-              Beatbazaar
-            </span>
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-surface pt-safe">
+      <div className="mx-auto flex min-h-16 max-w-container items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <Link href="/" aria-label={`${siteConfig.name} home`} className="shrink-0">
+          <Wordmark />
+        </Link>
+
+        <nav aria-label="Main navigation" className="hidden items-center gap-6 text-sm font-medium lg:flex">
+          <Link href="/tracks" className="text-ink hover:text-steel-dark">
+            Browse beats
           </Link>
+          <Link href="/license-overview" className="text-ink hover:text-steel-dark">
+            Licenses
+          </Link>
+        </nav>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-steel-dark">
-            <Link
-              href="/tracks"
-              className="transition-colors hover:text-ink"
-            >
-              Tracks
-            </Link>
-            <Link
-              href="/tracks"
-              className="transition-colors hover:text-ink"
-            >
-              Genres
-            </Link>
-            <Link
-              href="/license-overview"
-              className="transition-colors hover:text-ink"
-            >
-              Licenses
-            </Link>
-          </nav>
-        </div>
-
-        {/* Right Actions */}
-        <div className="flex items-center gap-3">
-          {/* Cart Link with Badge */}
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/cart"
             aria-label="View shopping cart"
-            className="relative flex h-9 w-9 items-center justify-center rounded border border-border text-steel-dark hover:bg-surface-muted hover:text-ink transition-colors"
+            className="relative flex h-11 w-11 items-center justify-center border border-border text-ink hover:bg-surface-muted sm:h-10 sm:w-10"
           >
-            <ShoppingCart className="h-4 w-4" />
+            <ShoppingCart aria-hidden="true" className="h-5 w-5" />
             {itemCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-brass px-1 text-[10px] font-bold text-ink-dark">
+              <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-brass px-1 text-xs font-semibold text-ink">
                 {itemCount}
               </span>
             )}
           </Link>
 
-          {role ? (
-            <div className="hidden items-center gap-2 sm:flex">
-              <Link
-                href="/dashboard"
-                className="inline-flex h-10 items-center gap-1.5 rounded border border-border px-3 text-sm font-medium text-ink hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
-              >
-                <User aria-hidden="true" className="h-4 w-4" />
-                <span>Dashboard</span>
-              </Link>
-              {role === "admin" && (
-                <Link
-                  href="/admin"
-                  className="inline-flex h-10 items-center rounded border border-border px-3 text-sm font-medium text-ink hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
-                >
-                  Admin
-                </Link>
-              )}
-              <button
-                type="button"
-                onClick={async () => {
-                  await signOut();
-                  window.location.assign("/");
-                }}
-                className="inline-flex h-10 items-center px-2 text-sm font-medium text-steel-dark hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel"
-              >
-                Sign out
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="hidden h-10 items-center gap-1.5 rounded border border-border px-3 text-sm font-medium text-ink hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel sm:inline-flex"
-            >
-              <User aria-hidden="true" className="h-4 w-4" />
-              <span>Sign In</span>
-            </Link>
-          )}
-
-          {/* Sell Beats CTA */}
+          <div className="hidden sm:block">
+            <AccountMenu role={role} />
+          </div>
           <Link
-            href="/login?intent=producer"
-            className="hidden h-10 items-center bg-ink px-3 text-sm font-semibold text-white hover:bg-ink-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel sm:inline-flex"
+            href={role === "producer" ? "/dashboard/beats/new" : "/login?intent=producer"}
+            className="hidden h-10 items-center justify-center bg-brass px-4 text-sm font-semibold text-ink hover:bg-brass-light sm:inline-flex"
           >
-            Sell Beats
+            {role === "producer" ? "Upload a beat" : "Sell beats"}
           </Link>
 
-          {/* Mobile menu toggle */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="inline-flex md:hidden p-2 text-steel-dark hover:text-ink"
+            className="inline-flex h-11 w-11 items-center justify-center text-ink hover:bg-surface-muted lg:hidden"
             aria-label="Toggle menu"
+            aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? (
+              <X aria-hidden="true" className="h-5 w-5" />
+            ) : (
+              <Menu aria-hidden="true" className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="border-b border-border bg-surface px-4 py-3 md:hidden space-y-2">
-          <Link
-            href="/tracks"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block py-2 text-sm font-medium text-ink hover:text-brass-dark"
-          >
-            Browse Tracks
-          </Link>
-          <Link
-            href="/tracks"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block py-2 text-sm font-medium text-ink hover:text-brass-dark"
-          >
-            Music Genres
-          </Link>
-          <Link
-            href="/license-overview"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block py-2 text-sm font-medium text-ink hover:text-brass-dark"
-          >
-            License Tiers
-          </Link>
-          <div className="pt-2 border-t border-border flex justify-end">
+        <nav aria-label="Mobile menu" className="border-t border-border bg-surface px-4 py-3 lg:hidden">
+          <div className="mx-auto grid max-w-container gap-1">
+            <Link
+              href="/tracks"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex min-h-11 items-center text-sm font-medium text-ink"
+            >
+              Browse beats
+            </Link>
+            <Link
+              href="/license-overview"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex min-h-11 items-center text-sm font-medium text-ink"
+            >
+              Licenses
+            </Link>
+            <Link
+              href={role === "producer" ? "/dashboard/beats/new" : "/login?intent=producer"}
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex min-h-11 items-center text-sm font-medium text-ink"
+            >
+              {role === "producer" ? "Upload" : "Sell beats"}
+            </Link>
             {role ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col border-t border-border pt-2">
                 <Link
                   href="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-sm font-semibold text-ink"
+                  className="flex min-h-11 items-center text-sm font-medium text-ink"
                 >
                   Dashboard
                 </Link>
@@ -163,7 +107,7 @@ export function Header({ role }: { role: UserRole | null }) {
                   <Link
                     href="/admin"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-sm font-semibold text-ink"
+                    className="flex min-h-11 items-center text-sm font-medium text-ink"
                   >
                     Admin
                   </Link>
@@ -174,7 +118,7 @@ export function Header({ role }: { role: UserRole | null }) {
                     await signOut();
                     window.location.assign("/");
                   }}
-                  className="self-end py-2 text-sm font-semibold text-ink"
+                  className="min-h-11 text-left text-sm font-medium text-ink"
                 >
                   Sign out
                 </button>
@@ -183,13 +127,13 @@ export function Header({ role }: { role: UserRole | null }) {
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-sm font-semibold text-ink"
+                className="flex min-h-11 items-center text-sm font-medium text-ink"
               >
-                Account
+                Sign in
               </Link>
             )}
           </div>
-        </div>
+        </nav>
       )}
     </header>
   );

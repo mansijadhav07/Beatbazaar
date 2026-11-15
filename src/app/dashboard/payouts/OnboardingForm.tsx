@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { siteConfig } from "@/config/site";
 
 export default function OnboardingForm() {
   const [message, setMessage] = useState("");
@@ -116,7 +117,7 @@ export default function OnboardingForm() {
       </div>
       <p className="text-sm leading-6 text-steel-dark">
         Bank details and PAN are sent to Razorpay over HTTPS and are not saved
-        by Beatbazaar. Aadhaar and identity documents are not collected here.
+        by {siteConfig.name}. Aadhaar and identity documents are not collected here.
       </p>
       <p className="text-sm leading-6 text-steel-dark">
         This form currently supports individual account holders only. Registered

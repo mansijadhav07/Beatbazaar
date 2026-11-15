@@ -85,7 +85,7 @@ export default async function ProducerSalesPage() {
 
       {/* Notice about payouts */}
       <div className="rounded border border-border bg-surface-muted p-4 text-xs text-steel-dark mb-6 flex items-start gap-2.5">
-        <ShieldCheck className="h-4 w-4 text-brass shrink-0 mt-0.5" />
+        <ShieldCheck className="h-4 w-4 text-steel-dark shrink-0 mt-0.5" />
         <p className="leading-relaxed">
           Producer KYC verification and automated bank payouts will open in the upcoming payout release. All earnings are tracked append-only in your immutable ledger.
         </p>
@@ -144,17 +144,17 @@ export default async function ProducerSalesPage() {
                     <td className="px-4 py-3 text-steel-dark">{dateStr}</td>
                     <td className="px-4 py-3 font-semibold text-ink">{e.trackTitle}</td>
                     <td className="px-4 py-3">
-                      <span className="rounded bg-surface-muted px-2 py-0.5 text-[11px] font-semibold text-brass border border-border">
+                      <span className="rounded bg-brass px-2 py-0.5 text-xs font-semibold text-ink">
                         {e.licenseTier.toUpperCase()}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       {isReversal ? (
-                        <span className="text-status-danger font-bold uppercase text-[10px]">
+                        <span className="text-xs font-bold uppercase text-status-danger">
                           Reversal (Refund)
                         </span>
                       ) : (
-                        <span className="text-status-success font-semibold text-[10px] uppercase">
+                        <span className="text-xs font-semibold uppercase text-status-success">
                           Sale
                         </span>
                       )}
@@ -183,4 +183,3 @@ export default async function ProducerSalesPage() {
     </div>
   );
 }
-

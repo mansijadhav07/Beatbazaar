@@ -1,9 +1,10 @@
 import { Suspense } from "react";
+import { siteConfig } from "@/config/site";
 import LoginForm from "./LoginForm";
 
 export const metadata = {
   title: "Sign in",
-  description: "Sign in to Beatbazaar to access your beats, licenses, and producer dashboard.",
+  description: `Sign in to ${siteConfig.name} to access your beats, licenses, and producer dashboard.`,
   robots: { index: false, follow: false },
 };
 

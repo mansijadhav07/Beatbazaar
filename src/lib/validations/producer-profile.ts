@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isReservedProducerUsername } from "@/lib/producer-username";
+import { siteConfig } from "@/config/site";
 
 export const KycStatusSchema = z.enum([
   "not_started",
@@ -36,7 +37,7 @@ export const ProducerProfileSchema = z.object({
       message: "Slug must contain only lowercase letters, numbers, and single hyphens",
     })
     .refine((username) => !isReservedProducerUsername(username), {
-      message: "This username is reserved for a Beatbazaar route.",
+      message: `This username is reserved for a ${siteConfig.name} route.`,
     }),
   displayName: z.string().min(2).max(80),
   bio: z.string().max(500).default(""),

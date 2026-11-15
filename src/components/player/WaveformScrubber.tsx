@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useState } from "react";
 
 interface WaveformScrubberProps {
   peaks?: number[];
@@ -18,6 +18,8 @@ export function WaveformScrubber({
   className = "",
 }: WaveformScrubberProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isScrubbingRef = useRef(false);
+  const [previewFraction, setPreviewFraction] = useState<number | null>(null);
 
   // Normalize or default peaks array to 100 bars for compact UI rendering
   const bars = useMemo(() => {
@@ -37,12 +39,44 @@ export function WaveformScrubber({
 
   const progressFraction = duration > 0 ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
 
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!containerRef.current || duration <= 0) return;
+  const getPointerFraction = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return null;
     const rect = containerRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const fraction = Math.max(0, Math.min(1, clickX / rect.width));
+    if (rect.width <= 0) return null;
+    return Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (duration <= 0) return;
+    const fraction = getPointerFraction(event);
+    if (fraction === null) return;
+    isScrubbingRef.current = true;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setPreviewFraction(fraction);
     onSeek(fraction * duration);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const fraction = getPointerFraction(event);
+    if (fraction === null) return;
+    if (event.pointerType !== "touch" || isScrubbingRef.current) {
+      setPreviewFraction(fraction);
+    }
+    if (isScrubbingRef.current && duration > 0) {
+      onSeek(fraction * duration);
+    }
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    isScrubbingRef.current = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const formatPreviewTime = (fraction: number) => {
+    const seconds = Math.floor(fraction * duration);
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -73,13 +107,20 @@ export function WaveformScrubber({
     <div
       ref={containerRef}
       onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onPointerLeave={() => {
+        if (!isScrubbingRef.current) setPreviewFraction(null);
+      }}
       onKeyDown={handleKeyDown}
-      className={`group relative flex h-11 cursor-pointer touch-manipulation select-none items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel sm:h-8 ${className}`}
+      className={`group relative flex h-11 cursor-pointer touch-pan-y select-none items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel sm:h-8 ${className}`}
       role="slider"
       aria-label="Seek waveform"
       aria-valuemin={0}
       aria-valuemax={duration}
       aria-valuenow={currentTime}
+      aria-valuetext={`${formatPreviewTime(progressFraction)} of ${formatPreviewTime(1)}`}
       tabIndex={0}
     >
       {bars.length === 0 && (
@@ -90,8 +131,8 @@ export function WaveformScrubber({
           />
           <div
             aria-hidden="true"
-            className="absolute left-0 top-1/2 h-1 -translate-y-1/2 bg-steel"
-            style={{ width: `${progressFraction * 100}%` }}
+            className="absolute left-0 top-1/2 h-1 w-full origin-left -translate-y-1/2 bg-ink transition-transform duration-100"
+            style={{ transform: `translateY(-50%) scaleX(${progressFraction})` }}
           />
         </>
       )}
@@ -105,15 +146,26 @@ export function WaveformScrubber({
             <span
               key={idx}
               style={{ height: `${heightPercent}%` }}
-              className={`flex-1 rounded-sm transition-colors duration-75 ${
+              className={`flex-1 rounded-sm ${
                 isPlayed
-                  ? "bg-brass group-hover:bg-brass-dark"
-                  : "bg-surface-muted border-border group-hover:bg-steel/30"
+                  ? "bg-steel-dark"
+                  : "bg-mist-dark"
               }`}
             />
           );
         })}
       </div>
+      {previewFraction !== null && duration > 0 && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 z-20 w-px bg-ink"
+          style={{ left: `${previewFraction * 100}%` }}
+        >
+          <span className="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 whitespace-nowrap bg-ink px-2 py-1 text-xs text-white">
+            {formatPreviewTime(previewFraction)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

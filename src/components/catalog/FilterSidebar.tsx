@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 
 const GENRES = ["All Genres", "Trap", "Hip Hop", "Boom Bap", "Drill", "R&B", "Pop", "Afrobeats", "Desi Hip Hop"];
 const KEYS = ["All Keys", "C Minor", "C Major", "D Minor", "D Major", "E Minor", "F Minor", "G Minor", "A Minor", "B Minor"];
@@ -48,18 +49,17 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
         <label htmlFor="track-sort" className="mb-2 block text-sm font-bold text-ink">
           Sort By
         </label>
-        <select
+        <Select
           id="track-sort"
           value={currentSort}
           onChange={(e) => updateParam("sort", e.target.value)}
-          className="min-h-11 w-full rounded border border-border bg-surface px-2.5 text-base text-ink focus:border-brass focus:outline-none"
         >
           {SORTS.map((s) => (
             <option key={s.value} value={s.value}>
               {s.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {/* Genre Filter */}
@@ -123,18 +123,17 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
         <label htmlFor="track-key" className="mb-2 block text-sm font-bold text-ink">
           Key
         </label>
-        <select
+        <Select
           id="track-key"
           value={currentKey}
           onChange={(e) => updateParam("key", e.target.value === "All Keys" ? null : e.target.value)}
-          className="min-h-11 w-full rounded border border-border bg-surface px-2.5 text-base text-ink focus:border-brass focus:outline-none"
         >
           {KEYS.map((k) => (
             <option key={k} value={k}>
               {k}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {/* Free Only Toggle */}
@@ -144,7 +143,7 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
             type="checkbox"
             checked={currentFreeOnly}
             onChange={(e) => updateParam("freeOnly", e.target.checked ? "true" : null)}
-            className="rounded border-border text-brass focus:ring-brass"
+            className="rounded border-border text-steel-dark focus:ring-steel"
           />
           Free Downloads Only
         </label>
@@ -192,7 +191,7 @@ export function FilterSidebar({ totalResults }: { totalResults: number }) {
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-xs">
+        <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/40">
           <div
             className="w-full rounded-t-xl bg-surface border-t border-border p-5 max-h-[85dvh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1.5rem)] animate-in slide-in-from-bottom"
             role="dialog"

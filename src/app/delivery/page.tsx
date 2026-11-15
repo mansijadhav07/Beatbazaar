@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SupportArticle, SupportSection } from "@/components/support/SupportArticle";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Delivery",
@@ -12,7 +13,7 @@ export default function DeliveryPage() {
   return (
     <SupportArticle
       title="Digital delivery"
-      intro="Beatbazaar currently runs checkout in test mode. This draft describes the implemented test flow and is not a final delivery policy."
+      intro={`${siteConfig.name} currently runs checkout in test mode. This draft describes the implemented test flow and is not a final delivery policy.`}
       legalReview
     >
       <SupportSection title="Current test flow">

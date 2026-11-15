@@ -131,13 +131,13 @@ test.describe("accessibility on Desktop Chrome and iPhone 14", () => {
         await page.goto(route);
         if (route === "/") {
           await expect(
-            page.getByRole("heading", { name: "Featured by Beatbazaar" })
+            page.getByRole("heading", { name: "Featured beats" })
           ).toBeVisible();
           await expect(
             page.getByRole("heading", { name: "Recently published" })
           ).toBeVisible();
           await expect(
-            page.getByRole("heading", { name: "Browse genres" })
+            page.getByRole("heading", { name: "Browse by genre" })
           ).toBeVisible();
         }
         await checkAccessibility(page);

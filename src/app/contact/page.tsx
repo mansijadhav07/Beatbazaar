@@ -4,7 +4,7 @@ import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Contact Beatbazaar support.",
+  description: `Contact ${siteConfig.name} support.`,
   robots: siteConfig.supportEmail
     ? { index: true, follow: true }
     : { index: false, follow: true },
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <SupportArticle
-      title="Contact Beatbazaar"
+      title={`Contact ${siteConfig.name}`}
       intro="For questions about an order, include the order ID and the email on your buyer account. Do not email payment card details or identity documents."
     >
       {siteConfig.supportEmail ? (

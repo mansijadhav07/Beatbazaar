@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/config/site";
 
 const adminLinks = [
   { href: "/admin", label: "Moderation" },
@@ -57,7 +58,7 @@ function AdminLinkList({ close }: { close?: () => void }) {
 export function AdminSidebar() {
   return (
     <aside className="hidden w-56 flex-none px-3 py-4 lg:block">
-      <p className="mb-5 px-3 text-lg font-semibold text-ink">Beatbazaar</p>
+      <p className="mb-5 px-3 text-lg font-semibold text-ink">{siteConfig.name}</p>
       <AdminLinkList />
     </aside>
   );

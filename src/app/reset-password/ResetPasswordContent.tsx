@@ -103,7 +103,7 @@ export default function ResetPasswordContent() {
 
           {successMsg && (
             <div className="mb-4 flex items-start gap-2 rounded border border-brass/30 bg-surface-muted p-3 text-xs text-ink">
-              <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-brass mt-0.5" />
+              <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-status-success mt-0.5" />
               <span>{successMsg}</span>
             </div>
           )}

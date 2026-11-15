@@ -212,7 +212,7 @@ export function CartClient() {
                             {item.title}
                           </Link>
                           <p className="text-xs text-steel mt-0.5">
-                            By {item.producerName || "Beatbazaar Producer"}
+                            By {item.producerName || `${siteConfig.name} Producer`}
                           </p>
                         </div>
 
@@ -230,7 +230,7 @@ export function CartClient() {
                       <div className="mt-3 rounded bg-surface-muted p-2.5 text-xs border border-border/60">
                         <div className="flex items-center justify-between font-semibold text-ink-dark">
                           <span>{item.licenseTier.replace("_", " ")} License</span>
-                          <span className="text-[11px] text-steel font-normal">
+                          <span className="text-xs text-steel-dark font-normal">
                             Includes: {item.includedFiles?.join(", ").toUpperCase() || "Not specified"}
                           </span>
                         </div>
@@ -309,7 +309,7 @@ export function CartClient() {
               <span>{formatPrice(totalAmount, currency)}</span>
             </div>
 
-            <p className="mt-2 text-[11px] text-steel leading-relaxed">
+            <p className="mt-2 text-xs text-steel-dark leading-relaxed">
               Checkout currency: {currency}. Download access is issued after payment confirmation. Tax treatment is LEGAL REVIEW REQUIRED.
             </p>
 
@@ -330,13 +330,13 @@ export function CartClient() {
               </p>
             )}
 
-            <div className="mt-6 border-t border-border pt-4 text-[11px] text-steel space-y-2">
+            <div className="mt-6 border-t border-border pt-4 text-xs text-steel-dark space-y-2">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-brass shrink-0" />
+                <ShieldCheck className="h-4 w-4 text-steel-dark shrink-0" />
                 <span>Producer rights confirmation recorded at upload</span>
               </div>
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-brass shrink-0" />
+                <ShieldCheck className="h-4 w-4 text-steel-dark shrink-0" />
                 <span>Secure payment processing via Razorpay</span>
               </div>
             </div>

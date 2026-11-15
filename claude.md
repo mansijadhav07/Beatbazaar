@@ -215,6 +215,17 @@ Location based SEO
 7. **Destructive actions** always get a confirmation that names what will happen, and the
    admin panel requires step-up re-authentication for every change.
 
+### Brand and motion
+
+- Light theme stays. Dark mode and a theme switcher are out of scope. Solid ink (`#2C3947`)
+  is allowed for the player bar and a limited number of section bands. The palette stays ink,
+  steel blue, brass, mist, white, and derived tints.
+- Purposeful motion is allowed under the rules in B2 of the approved Stage 1 brief.
+  Decorative animation is not.
+- Everything else in this section still applies, including sizing, no gradients, no glow,
+  no glassmorphism, no emoji, 40px desktop and 44px touch controls, a 16px base size, and
+  two restrained radii.
+
 Sizing, responsiveness and iOS (mandatory)
 
 - **Standard sizes, not zoomed in.** The UI must look like a normal modern web app at 100% browser zoom. Base font 16px (`1rem`). Body text 15 to 16px, secondary text 13 to 14px, never below 12px. Headings stay modest: page title about 28 to 36px on desktop and 24 to 28px on phones, section titles 20 to 24px. No giant hero type, no oversized buttons, icons or paddings. Use `rem`, never viewport-unit font sizes. Never use `transform: scale` or CSS `zoom` to fit a layout.

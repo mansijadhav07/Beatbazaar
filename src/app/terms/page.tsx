@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SupportArticle, SupportSection } from "@/components/support/SupportArticle";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Terms",
@@ -12,7 +13,7 @@ export default function TermsPage() {
   return (
     <SupportArticle
       title="Terms of service"
-      intro="This page is not the final agreement for using Beatbazaar."
+      intro={`This page is not the final agreement for using ${siteConfig.name}.`}
       legalReview
     >
       <SupportSection title="Topics for legal review">

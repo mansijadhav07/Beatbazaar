@@ -69,9 +69,9 @@ export function TrackBuyButton({
         <Button
           variant="outline"
           onClick={() => router.push("/cart")}
-          className="w-full text-xs gap-1.5 border-brass text-ink hover:bg-brass/10"
+          className="w-full gap-2 border-border text-ink hover:bg-mist"
         >
-          <Check className="h-3.5 w-3.5 text-brass" />
+          <Check aria-hidden="true" className="h-4 w-4 text-steel-dark" />
           <span>In Cart - View Cart</span>
         </Button>
       </div>
@@ -86,21 +86,20 @@ export function TrackBuyButton({
     >
       {justAdded ? (
         <>
-          <Check className="h-3.5 w-3.5 text-status-success" />
+          <Check aria-hidden="true" className="h-4 w-4 text-status-success" />
           <span>Added to Cart</span>
         </>
       ) : isExclusive ? (
         <>
           <span>Buy Exclusive ({priceFormatted})</span>
-          <ArrowRight className="h-3.5 w-3.5" />
+          <ArrowRight aria-hidden="true" className="h-4 w-4" />
         </>
       ) : (
         <>
-          <ShoppingCart className="h-3.5 w-3.5" />
+          <ShoppingCart aria-hidden="true" className="h-4 w-4" />
           <span>Add to Cart ({priceFormatted})</span>
         </>
       )}
     </Button>
   );
 }
-
